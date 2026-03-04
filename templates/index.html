@@ -451,6 +451,8 @@
       border-radius: 14px;
       padding:10px;
       margin-bottom:10px;
+    }
+    .pathStrip.pinned{
       position: sticky;
       top: 0;
       z-index: 9;
@@ -1158,6 +1160,7 @@ const state = {
 
   huntOn: true,
   pathOn: false,
+  pathPinned: true,
   packOn: true,
 
   sideTab: "focus",
@@ -1865,7 +1868,7 @@ function renderPathStrip(selDoc){
   }
 
   const strip = document.createElement("div");
-  strip.className = "pathStrip hotPanel";
+  strip.className = `pathStrip hotPanel ${state.pathPinned ? "pinned" : ""}`.trim();
   strip.innerHTML = `
     <div class="row">
       <div class="title">
@@ -1876,6 +1879,7 @@ function renderPathStrip(selDoc){
         <span class="chip">age ${ageDaysFrom(selDoc.Timestamp)}d</span>
         <span class="chip">tech ${(selDoc.Techniques||[]).length}</span>
         <button class="btn secondary sm" id="openDocFromPath">Open Doc</button>
+        <button class="btn secondary sm" id="togglePin">${state.pathPinned ? "Unpin" : "Pin"} Attack Path</button>
         <button class="btn sm" id="togglePack">${state.packOn ? "Hide" : "Show"} Hunt Pack</button>
       </div>
     </div>
@@ -1935,6 +1939,11 @@ function renderPathStrip(selDoc){
   });
 
   strip.querySelector("#openDocFromPath").addEventListener("click", ()=> openDocModal(selDoc));
+  strip.querySelector("#togglePin").addEventListener("click", ()=>{
+    state.pathPinned = !state.pathPinned;
+    syncHash();
+    render();
+  });
   strip.querySelector("#togglePack").addEventListener("click", ()=>{
     state.packOn = !state.packOn;
     syncHash();
@@ -2459,6 +2468,7 @@ $("clearAll").addEventListener("click", ()=>{
     actor:"ALL", tool:"ALL",
     selectedDocId:null, selectedTechId:null,
     huntOn:true, pathOn:false,
+    pathPinned:true,
     packOn:true,
     sideTab:"focus",
     autoCheck: $("autoCheck").checked,
@@ -2536,6 +2546,7 @@ function syncHash(){
   p.set("tool", state.tool);
   p.set("hunt", state.huntOn ? "1" : "0");
   p.set("path", state.pathOn ? "1" : "0");
+  p.set("pathpin", state.pathPinned ? "1" : "0");
   p.set("pack", state.packOn ? "1" : "0");
   if(state.selectedDocId) p.set("doc", state.selectedDocId);
   if(state.selectedTechId) p.set("tech", state.selectedTechId);
@@ -2551,6 +2562,7 @@ function loadHash(){
   state.tool = p.get("tool") || "ALL";
   state.huntOn = (p.get("hunt") || "1") === "1";
   state.pathOn = (p.get("path") || "0") === "1";
+  state.pathPinned = (p.get("pathpin") || "1") === "1";
   state.packOn = (p.get("pack") || "1") === "1";
   state.selectedDocId = p.get("doc");
   state.selectedTechId = p.get("tech");
