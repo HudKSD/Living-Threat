@@ -4,6 +4,7 @@ import sys
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
+import app as app_module
 from app import _parse_iso_dt, _normalize_severity, app
 
 
@@ -30,3 +31,35 @@ def test_healthz_endpoint_ok():
     r = client.get("/healthz")
     assert r.status_code == 200
     assert r.get_json() == {"ok": True}
+
+
+def test_heartbeat_supports_since_seq(monkeypatch):
+    def fake_search_safe(**kwargs):
+        return {"hits": {"hits": [{"_source": {"Timestamp": "2026-01-01T00:00:00Z", "sequence": 42}}]}}
+
+    monkeypatch.setattr(app_module, "es_search_safe", fake_search_safe)
+    monkeypatch.setattr(app_module, "es_count_safe", lambda **kwargs: 3)
+
+    client = app.test_client()
+    r = client.get("/api/heartbeat?since_seq=40")
+    assert r.status_code == 200
+    payload = r.get_json()
+    assert payload["ok"] is True
+    assert payload["latest_seq"] == 42
+    assert payload["new_count"] == 3
+
+
+def test_heartbeat_supports_since_ts_alias(monkeypatch):
+    def fake_search_safe(**kwargs):
+        return {"hits": {"hits": [{"_source": {"Timestamp": "2026-01-01T00:00:00z", "sequence": None}}]}}
+
+    monkeypatch.setattr(app_module, "es_search_safe", fake_search_safe)
+    monkeypatch.setattr(app_module, "es_count_safe", lambda **kwargs: 2)
+
+    client = app.test_client()
+    r = client.get("/api/heartbeat?since=2025-12-31T00:00:00Z")
+    assert r.status_code == 200
+    payload = r.get_json()
+    assert payload["ok"] is True
+    assert payload["latest_ts"] == "2026-01-01T00:00:00Z"
+    assert payload["new_count"] == 2
