@@ -436,6 +436,10 @@
       border-radius: 14px;
       padding:10px;
       margin-bottom:10px;
+      position: sticky;
+      top: 0;
+      z-index: 9;
+      backdrop-filter: blur(6px);
     }
     .pathStrip.hotPanel{
       border-color: var(--hlRed);
@@ -656,7 +660,8 @@
       font-size:16px;
     }
     .modalBd{ padding:12px; overflow:auto; }
-    .modalTitle{ font-size:14px; font-weight:950; line-height:1.25; margin:0 0 8px; }
+    .modalTitle{ font-size:14px; font-weight:950; line-height:1.25; margin:0 0 8px; color:rgba(214,247,255,.96); }
+    .modalBd{ color:rgba(214,247,255,.90); }
     .grid2{ display:grid; grid-template-columns: 1fr 1fr; gap:10px; }
     @media (max-width: 860px){ .grid2{ grid-template-columns: 1fr; } }
 
@@ -900,6 +905,7 @@
 
         <button class="btn secondary mobileOnly" id="docsBtn">Docs</button>
 
+        <button class="btn secondary" id="shareBtn">Share</button>
         <button class="btn secondary" id="helpBtn">Help</button>
         <button class="btn secondary" id="aboutBtn">About</button>
 
@@ -2371,6 +2377,17 @@ $("switcherModal").addEventListener("keydown", (e)=>{
   if(e.key === "ArrowDown"){ e.preventDefault(); switcherIdx = Math.min(items.length-1, switcherIdx+1); renderSwitcher(); }
   if(e.key === "ArrowUp"){ e.preventDefault(); switcherIdx = Math.max(0, switcherIdx-1); renderSwitcher(); }
   if(e.key === "Enter"){ e.preventDefault(); items[switcherIdx].click(); }
+});
+
+/* Share */
+$("shareBtn").addEventListener("click", async ()=>{
+  try{
+    const shareUrl = `${location.origin}${location.pathname}${location.hash || ""}`;
+    await navigator.clipboard.writeText(shareUrl);
+    toast("Share link copied");
+  }catch{
+    toast("Unable to copy link");
+  }
 });
 
 /* Help/About */
