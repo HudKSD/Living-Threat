@@ -119,7 +119,7 @@ def _parse_iso_dt(s: Any) -> Optional[datetime]:
     if not s:
         return None
     # Normalize Z to +00:00 for Python parsing
-    if s.endswith("Z"):
+    if s.endswith(("Z", "z")):
         s = s[:-1] + "+00:00"
     try:
         dt = datetime.fromisoformat(s)
