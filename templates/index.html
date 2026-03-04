@@ -1357,6 +1357,7 @@ async function pollHeartbeat(){
     const params = new URLSearchParams();
     if(loadedLatestSeq !== null && loadedLatestSeq !== undefined){
       params.set("since_seq", String(loadedLatestSeq));
+      if(loadedLatestTs) params.set("since_ts", loadedLatestTs);
     }else if(loadedLatestTs){
       params.set("since_ts", loadedLatestTs);
     }else{
@@ -1415,7 +1416,14 @@ async function bootstrapFromServer({reason="Load"} = {}){
   uiNow = uiNowParsed || new Date();
 
   const nowStr = fmtDate(data?.meta?.ui_now);
-  $("envChip").textContent = nowStr !== "—" ? `now=${nowStr}` : "now";
+  const mode = String(data?.meta?.ui_now_mode || "latest");
+  const fresh = data?.meta?.data_freshness || {};
+  const ageSec = Number(fresh?.latest_age_seconds);
+  const ageTxt = Number.isFinite(ageSec) ? `${Math.floor(ageSec/3600)}h` : "n/a";
+  const staleTxt = fresh?.is_stale ? "stale" : "fresh";
+  $("envChip").textContent = nowStr !== "—"
+    ? `mode=${mode} • now=${nowStr} • ${staleTxt}(${ageTxt})`
+    : `mode=${mode}`;
 
   loadedLatestTs = data?.meta?.latest_ts || null;
   loadedLatestSeq = (data?.meta?.latest_seq !== null && data?.meta?.latest_seq !== undefined)

@@ -36,6 +36,7 @@ UI_NOW_MODE = os.getenv("UI_NOW_MODE", "latest").strip().lower()
 UI_NOW_FIXED = os.getenv("UI_NOW_FIXED", "").strip()
 UI_NOW_LATEST_OFFSET_DAYS = int(os.getenv("UI_NOW_LATEST_OFFSET_DAYS", "0"))
 UI_NOW_FUTURE_CLAMP_DAYS = int(os.getenv("UI_NOW_FUTURE_CLAMP_DAYS", "2"))
+DATA_STALE_SECONDS = int(os.getenv("DATA_STALE_SECONDS", "21600"))
 
 # MITRE ATT&CK STIX to map technique_id -> tactics
 ATTACK_STIX_URL = os.getenv(
@@ -366,6 +367,20 @@ def _build_attack_map(bundle: Dict[str, Any]) -> Dict[str, Dict[str, Any]]:
     return out
 
 
+
+
+def _freshness_meta(latest_ts: Optional[str]) -> Dict[str, Any]:
+    dt_latest = _parse_iso_dt(latest_ts or "")
+    if not dt_latest:
+        return {"has_latest": False, "latest_age_seconds": None, "is_stale": True}
+
+    age_seconds = max(0, int((utcnow() - dt_latest).total_seconds()))
+    return {
+        "has_latest": True,
+        "latest_age_seconds": age_seconds,
+        "is_stale": age_seconds > max(60, DATA_STALE_SECONDS),
+    }
+
 def get_attack_map() -> Dict[str, Dict[str, Any]]:
     global _attack_map
     with _attack_lock:
@@ -540,6 +555,35 @@ def healthz():
     return jsonify({"ok": True})
 
 
+
+
+@app.get("/healthz/deps")
+def healthz_deps():
+    started = time.time()
+    ping_ok = False
+    count = 0
+    error: Optional[str] = None
+    try:
+        ping_ok = bool(es.ping())
+        count = es_count_safe(index=ES_INDEX, query={"match_all": {}})
+    except Exception as e:
+        error = str(e)
+
+    latency_ms = int((time.time() - started) * 1000)
+    ok = ping_ok and error is None
+    status = 200 if ok else 503
+    return jsonify({
+        "ok": ok,
+        "es": {
+            "ping": ping_ok,
+            "sample_count": count,
+            "index": ES_INDEX,
+            "latency_ms": latency_ms,
+            "error": error,
+        },
+    }), status
+
+
 @app.get("/api/bootstrap")
 def api_bootstrap():
     global _bootstrap_cache, _bootstrap_cache_at, _bootstrap_cache_size
@@ -592,6 +636,7 @@ def api_bootstrap():
     latest_seq = max(seqs) if seqs else None
     anchor_ts = latest_plausible_timestamp(docs)
     ui_now = compute_ui_now(anchor_ts)
+    freshness = _freshness_meta(latest_ts)
 
     catalog = build_catalog_for_docs(docs, name_hints)
 
@@ -603,6 +648,8 @@ def api_bootstrap():
             "latest_seq": latest_seq,
             "anchor_ts": anchor_ts,
             "ui_now": ui_now,
+            "ui_now_mode": UI_NOW_MODE or "latest",
+            "data_freshness": freshness,
             "fetched_at": _iso(utcnow()),
         },
         "count": len(docs),
@@ -653,6 +700,8 @@ def api_heartbeat():
             new_count = es_count_safe(index=ES_INDEX, query={"range": {"sequence": {"gt": int(since_seq)}}})
         except Exception:
             new_count = 0
+        if new_count == 0 and since_ts:
+            new_count = es_count_safe(index=ES_INDEX, query={"range": {"Timestamp": {"gt": since_ts}}})
     elif since_ts:
         new_count = es_count_safe(index=ES_INDEX, query={"range": {"Timestamp": {"gt": since_ts}}})
 

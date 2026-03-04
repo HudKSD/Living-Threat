@@ -78,3 +78,52 @@ def test_compute_ui_now_latest_applies_positive_offset(monkeypatch):
     monkeypatch.setattr(app_module, "UI_NOW_LATEST_OFFSET_DAYS", 2)
     out = app_module.compute_ui_now("2026-01-01T00:00:00Z")
     assert out == "2026-01-03T00:00:00Z"
+
+
+def test_freshness_meta_flags_stale(monkeypatch):
+    monkeypatch.setattr(app_module, "DATA_STALE_SECONDS", 10)
+    fresh = app_module._freshness_meta("2099-01-01T00:00:00Z")
+    assert fresh["is_stale"] is False
+    stale = app_module._freshness_meta("2000-01-01T00:00:00Z")
+    assert stale["is_stale"] is True
+
+
+def test_healthz_deps_reports_es_status(monkeypatch):
+    class DummyES:
+        def ping(self):
+            return True
+
+    monkeypatch.setattr(app_module, "es", DummyES())
+    monkeypatch.setattr(app_module, "es_count_safe", lambda **kwargs: 7)
+
+    client = app.test_client()
+    r = client.get("/healthz/deps")
+    assert r.status_code == 200
+    payload = r.get_json()
+    assert payload["ok"] is True
+    assert payload["es"]["sample_count"] == 7
+
+
+def test_bootstrap_includes_freshness_meta(monkeypatch):
+    def fake_search_safe(**kwargs):
+        return {
+            "hits": {
+                "hits": [
+                    {
+                        "_id": "1",
+                        "_index": "idx",
+                        "_source": {"Timestamp": "2026-01-01T00:00:00Z", "Title": "x", "Analyses": []},
+                    }
+                ]
+            }
+        }
+
+    monkeypatch.setattr(app_module, "es_search_safe", fake_search_safe)
+    monkeypatch.setattr(app_module, "build_catalog_for_docs", lambda docs, hints: {"tactic_order": [], "techniques": {}})
+
+    client = app.test_client()
+    r = client.get("/api/bootstrap")
+    assert r.status_code == 200
+    payload = r.get_json()
+    assert "data_freshness" in payload["meta"]
+    assert "ui_now_mode" in payload["meta"]
