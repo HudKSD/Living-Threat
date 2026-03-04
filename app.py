@@ -6,7 +6,11 @@ from datetime import datetime, timedelta, timezone
 from typing import Any, Dict, List, Optional, Tuple
 
 import requests
-from elasticsearch import Elasticsearch, NotFoundError
+from elasticsearch import Elasticsearch
+try:
+    from elasticsearch import NotFoundError
+except Exception:  # pragma: no cover
+    from elasticsearch.exceptions import NotFoundError  # type: ignore
 from flask import Flask, jsonify, render_template, request
 
 app = Flask(__name__)
@@ -25,10 +29,11 @@ ES_CA_CERTS = os.getenv("ES_CA_CERTS") or None
 BOOTSTRAP_SIZE = int(os.getenv("BOOTSTRAP_SIZE", "2000"))
 
 # UI time anchor behavior:
-# - "latest": UI "now" = latest plausible doc Timestamp
-# - "now": UI "now" = server UTC now
-# - ISO datetime string: fixed time anchor
-UI_NOW_FIXED = os.getenv("UI_NOW_FIXED", "latest").strip()
+# - UI_NOW_FIXED (optional): fixed ISO datetime string; wins when set
+# - UI_NOW_MODE=latest: UI "now" = latest doc Timestamp (+ optional offset days)
+# - UI_NOW_MODE=utc: UI "now" = server UTC now
+UI_NOW_MODE = os.getenv("UI_NOW_MODE", "latest").strip().lower()
+UI_NOW_FIXED = os.getenv("UI_NOW_FIXED", "").strip()
 UI_NOW_LATEST_OFFSET_DAYS = int(os.getenv("UI_NOW_LATEST_OFFSET_DAYS", "0"))
 UI_NOW_FUTURE_CLAMP_DAYS = int(os.getenv("UI_NOW_FUTURE_CLAMP_DAYS", "2"))
 
@@ -255,18 +260,23 @@ def latest_plausible_timestamp(docs: List[Dict[str, Any]]) -> Optional[str]:
 
 
 def compute_ui_now(latest_ts: Optional[str]) -> str:
-    fixed = _norm(UI_NOW_FIXED).lower()
+    fixed = _norm(UI_NOW_FIXED)
+    mode = _norm(UI_NOW_MODE).lower()
     offset = timedelta(days=max(0, UI_NOW_LATEST_OFFSET_DAYS))
 
-    if fixed and fixed not in ("latest", "auto", "1"):
-        if fixed in ("now", "utcnow"):
+    if fixed:
+        fixed_l = fixed.lower()
+        if fixed_l in ("now", "utc", "utcnow"):
             return _iso(utcnow())
         dt = _parse_iso_dt(UI_NOW_FIXED)
         return _iso(dt) if dt else _iso(utcnow())
 
+    if mode in ("utc", "now", "utcnow"):
+        return _iso(utcnow())
+
     dt_latest = _parse_iso_dt(latest_ts or "")
     if dt_latest:
-        return _iso(dt_latest - offset)
+        return _iso(dt_latest + offset)
     return _iso(utcnow())
 
 

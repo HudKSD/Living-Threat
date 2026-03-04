@@ -63,3 +63,18 @@ def test_heartbeat_supports_since_ts_alias(monkeypatch):
     assert payload["ok"] is True
     assert payload["latest_ts"] == "2026-01-01T00:00:00Z"
     assert payload["new_count"] == 2
+
+
+def test_compute_ui_now_uses_mode_utc(monkeypatch):
+    monkeypatch.setattr(app_module, "UI_NOW_MODE", "utc")
+    monkeypatch.setattr(app_module, "UI_NOW_FIXED", "")
+    out = app_module.compute_ui_now("2026-01-01T00:00:00Z")
+    assert out.endswith("Z")
+
+
+def test_compute_ui_now_latest_applies_positive_offset(monkeypatch):
+    monkeypatch.setattr(app_module, "UI_NOW_MODE", "latest")
+    monkeypatch.setattr(app_module, "UI_NOW_FIXED", "")
+    monkeypatch.setattr(app_module, "UI_NOW_LATEST_OFFSET_DAYS", 2)
+    out = app_module.compute_ui_now("2026-01-01T00:00:00Z")
+    assert out == "2026-01-03T00:00:00Z"
