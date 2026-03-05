@@ -453,10 +453,12 @@
       margin-bottom:10px;
     }
     .pathStrip.pinned{
-      position: sticky;
-      top: 0;
-      z-index: 9;
+      position: fixed;
+      z-index: 30;
       backdrop-filter: blur(6px);
+    }
+    .pathStripSpacer{
+      width:100%;
     }
     .pathStrip.hotPanel{
       border-color: var(--hlRed);
@@ -1902,6 +1904,20 @@ function renderPathStrip(selDoc){
   `;
   host.appendChild(strip);
 
+  if(state.pathPinned){
+    const topbar = document.querySelector(".topbar");
+    const topOffset = (topbar ? topbar.offsetHeight : 70) + 8;
+    const rect = host.getBoundingClientRect();
+    strip.style.top = `${topOffset}px`;
+    strip.style.left = `${rect.left}px`;
+    strip.style.width = `${rect.width}px`;
+
+    const spacer = document.createElement("div");
+    spacer.className = "pathStripSpacer";
+    spacer.style.height = `${strip.offsetHeight}px`;
+    host.insertBefore(spacer, strip);
+  }
+
   const stagesHost = strip.querySelector("#stagesHost");
   for(const stage of STAGE_ORDER){
     const color = STAGE_COL[stage] || "#77ffb0";
@@ -2584,6 +2600,7 @@ function loadHash(){
   }
 }
 window.addEventListener("hashchange", ()=>{ loadHash(); render(); });
+window.addEventListener("resize", ()=>{ if(state.pathOn) render(); });
 
 /* Init */
 (async function init(){
