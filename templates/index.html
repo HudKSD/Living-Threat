@@ -289,6 +289,42 @@
     .matrixPanel .panelHd{
       background: linear-gradient(180deg, rgba(0,245,255,.06), rgba(0,0,0,.0));
     }
+    .timelineWrap{
+      border-bottom:1px solid rgba(0,245,255,.12);
+      background: linear-gradient(180deg, rgba(0,245,255,.04), rgba(0,0,0,.04));
+      padding:10px 12px 8px;
+    }
+    .timelineTop{
+      display:flex; align-items:center; justify-content:space-between; gap:10px;
+      margin-bottom:8px;
+    }
+    .timelineTop b{ font-size:12px; letter-spacing:.15px; }
+    .timelineBars{
+      display:grid;
+      grid-template-columns: repeat(var(--bins, 14), minmax(6px, 1fr));
+      gap:4px;
+      align-items:end;
+      height:56px;
+    }
+    .timelineBar{
+      border:1px solid rgba(0,245,255,.18);
+      background: linear-gradient(180deg, rgba(0,245,255,.42), rgba(119,255,176,.34));
+      border-radius: 6px 6px 4px 4px;
+      min-height: 3px;
+      cursor:pointer;
+      transition: filter .15s ease, border-color .2s ease;
+    }
+    .timelineBar:hover{ filter:brightness(1.15); border-color: rgba(0,245,255,.42); }
+    .timelineBar.hot{
+      border-color: rgba(255, 90, 122, .58);
+      background: linear-gradient(180deg, rgba(255,90,122,.48), rgba(255,204,102,.38));
+      box-shadow: 0 0 12px rgba(255,90,122,.26);
+    }
+    .timelineAxis{
+      margin-top:6px;
+      display:flex; justify-content:space-between; gap:10px;
+      font-family:var(--mono); font-size:10px; color:rgba(214,247,255,.62);
+    }
 
     .matrixBody{
       height: calc(100vh - 84px - 14px - 14px);
@@ -1095,6 +1131,14 @@
 
   <main class="main">
     <section class="panel matrixPanel" id="matrixPanel">
+      <div class="timelineWrap" id="timelineWrap">
+        <div class="timelineTop">
+          <b>Event Timeline</b>
+          <span class="chip" id="timelineMeta">—</span>
+        </div>
+        <div class="timelineBars" id="timelineBars"></div>
+        <div class="timelineAxis"><span id="timelineStart">—</span><span id="timelineEnd">—</span></div>
+      </div>
       <div class="panelHd">
         <div class="h">Navigator <span class="chip" id="matrixMeta">—</span></div>
         <div class="meta" id="selMeta">Loading…</div>
@@ -1858,6 +1902,39 @@ function buildHuntPack(doc){
   return { checks, post, exfil, pivots, coverage, phases };
 }
 
+function renderTimeline(docs){
+  const bars = $("timelineBars");
+  if(!bars) return;
+
+  const binCount = state.allTime ? 21 : Math.max(7, Math.min(21, state.rangeDays));
+  const dayMs = 24*60*60*1000;
+  const end = new Date(Date.UTC(uiNow.getUTCFullYear(), uiNow.getUTCMonth(), uiNow.getUTCDate(), 23,59,59,999));
+  const start = new Date(end.getTime() - (binCount-1)*dayMs);
+
+  const counts = Array(binCount).fill(0);
+  for(const d of docs){
+    const dt = parseDateSafe(d.Timestamp);
+    if(!dt) continue;
+    const day = new Date(Date.UTC(dt.getUTCFullYear(), dt.getUTCMonth(), dt.getUTCDate()));
+    const idx = Math.floor((day.getTime() - new Date(Date.UTC(start.getUTCFullYear(), start.getUTCMonth(), start.getUTCDate())).getTime())/dayMs);
+    if(idx>=0 && idx<binCount) counts[idx] += 1;
+  }
+
+  const maxC = Math.max(1, ...counts);
+  bars.style.setProperty("--bins", String(binCount));
+  bars.innerHTML = counts.map((c,i)=>{
+    const h = Math.max(6, Math.round((c/maxC)*52));
+    const day = new Date(start.getTime() + i*dayMs);
+    const dateIso = `${day.getUTCFullYear()}-${String(day.getUTCMonth()+1).padStart(2,"0")}-${String(day.getUTCDate()).padStart(2,"0")}`;
+    const cls = c>=Math.max(2, Math.ceil(maxC*0.7)) ? "timelineBar hot" : "timelineBar";
+    return `<div class="${cls}" style="height:${h}px" title="${dateIso} • ${c} event${c===1?"":"s"}"></div>`;
+  }).join("");
+
+  $("timelineMeta").textContent = `${docs.length} events • ${binCount}d view`;
+  $("timelineStart").textContent = fmtDate(start.toISOString());
+  $("timelineEnd").textContent = fmtDate(end.toISOString());
+}
+
 /* =========================================================
    RENDER
    ========================================================= */
@@ -1887,6 +1964,7 @@ function render(){
   renderOperationalPriorities(docs);
   renderTechniqueFocus(docs, techStats);
   renderPathStrip(selDocNow);
+  renderTimeline(docs);
   renderMatrix(docs, techStats, selDocNow);
 
   renderDocList(docs, $("docList"), $("emptyDocs"), $("docCount"));
