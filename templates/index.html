@@ -1,5 +1,20 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+  <meta name="theme-color" content="#06131a" />
+  <meta name="description" content="A living threat repository where real-world incidents are continuously mapped to ATT&CK tactics and techniques, in a Navigator-style view." />
+  <link rel="icon" href="https://news.rabitanoor.com/content/images/2024/10/1-2.png">
+  <title>Living MITRE Repository • Navigator-style Threat Mapping</title>
 
+  <style>
+    :root{
+      --bg0:#04080c; --bg1:#06131a;
+      --text:#d6f7ff;
 
+      --cyan:#00f5ff; --green:#77ffb0; --violet:#b58bff;
+      --amber:#ffcc66; --pink:#ff5a7a; --blue:#54a6ff; --orange:#ff7a59;
       --shadow: 0 14px 40px rgba(0,0,0,.46);
 
       --panelA: rgba(7,26,34,.78);
@@ -99,6 +114,14 @@
       font-size:13px;
       min-width: 120px;
     }
+    select option{ background:#081019; color:#d6f7ff; }
+    .fctl select,
+    .fctl select:focus{
+      background: rgba(3,9,16,.95);
+      color:#d6f7ff;
+      border-radius:8px;
+      padding:4px 6px;
+    }
     input[type="text"]::placeholder{ color:rgba(214,247,255,.45); }
 
     .rangeCtl{ gap:10px; }
@@ -154,6 +177,13 @@
     }
     .btn.sm{ padding:7px 10px; font-size:12px; }
     .btn:disabled{ opacity:.5; cursor:not-allowed; transform:none; }
+    #pathBtn{
+      border-color: rgba(255, 132, 132, .75);
+      box-shadow: 0 0 0 1px rgba(255,132,132,.28), 0 0 22px rgba(255,214,97,.22);
+      background: linear-gradient(180deg, rgba(255,132,132,.20), rgba(255,132,132,.08));
+      font-weight:700;
+    }
+    #refreshBtn{ font-weight:700; }
 
     .toggle input{ accent-color: var(--violet); }
     .toggle span{ font-size:12.5px; color:rgba(214,247,255,.86); white-space:nowrap; }
@@ -180,6 +210,19 @@
     .badge.hot .dot{
       background: rgba(255, 132, 132, .95);
       box-shadow: 0 0 18px rgba(255, 214, 97, .32);
+      animation: pulse 1s infinite;
+    }
+    .liveDot{
+      width:8px; height:8px; border-radius:50%; display:inline-block;
+      background:#77ffb0; box-shadow:0 0 16px rgba(119,255,176,.6);
+      animation: pulse 1.4s infinite;
+    }
+    .beacon{ animation: pulse 1.2s infinite; }
+    .recentBadge{
+      border-color: rgba(255, 90, 122, .55);
+      background: rgba(255,90,122,.14);
+      color: #ffd5df;
+      animation: pulse 1.2s infinite;
     }
 
     .main{
@@ -437,6 +480,21 @@
       padding:10px;
       margin-bottom:10px;
     }
+    .pathStrip.pinned{
+      position: fixed;
+      z-index: 30;
+      backdrop-filter: blur(6px);
+      max-height: calc(100vh - 120px);
+      overflow:auto;
+    }
+    .pathStrip.pinned .huntPack{
+      max-height: 46vh;
+      overflow:auto;
+      padding-right:6px;
+    }
+    .pathStripSpacer{
+      width:100%;
+    }
     .pathStrip.hotPanel{
       border-color: var(--hlRed);
       box-shadow: 0 0 0 1px var(--hlRed2), 0 0 34px var(--hlGlow);
@@ -656,7 +714,8 @@
       font-size:16px;
     }
     .modalBd{ padding:12px; overflow:auto; }
-    .modalTitle{ font-size:14px; font-weight:950; line-height:1.25; margin:0 0 8px; }
+    .modalTitle{ font-size:14px; font-weight:950; line-height:1.25; margin:0 0 8px; color:rgba(214,247,255,.96); }
+    .modalBd{ color:rgba(214,247,255,.90); }
     .grid2{ display:grid; grid-template-columns: 1fr 1fr; gap:10px; }
     @media (max-width: 860px){ .grid2{ grid-template-columns: 1fr; } }
 
@@ -819,6 +878,12 @@
       z-index:80;
     }
     .toast.show{ opacity:1; }
+
+    @keyframes pulse{
+      0%{ transform:scale(1); opacity:1; }
+      50%{ transform:scale(1.05); opacity:.72; }
+      100%{ transform:scale(1); opacity:1; }
+    }
   </style>
 </head>
 
@@ -833,6 +898,7 @@
     <div class="loaderBd">
       <div class="progressWrap"><div class="progressBar" id="loaderBar"></div></div>
       <div class="loaderMsg" id="loaderMsg">Starting…</div>
+      <div class="muted" id="loaderGuide" style="font-size:11px; margin-top:8px; min-height:16px;">Preparing your threat intelligence workspace…</div>
       <div class="muted" style="font-size:11px; margin-top:10px;">
         Tip: Press <b>Ctrl+K</b> to jump to a document.
       </div>
@@ -844,7 +910,7 @@
   <header class="topbar">
     <div class="topbarInner">
       <div class="brand">
-        <div class="title"><span class="dot"></span>Living MITRE Repository <span class="chip" id="envChip">connecting…</span></div>
+        <div class="title"><span class="dot"></span>Living MITRE Repository <span class="chip" id="envChip">connecting…</span><span class="chip" title="Live status indicator"><span class="liveDot"></span> live</span></div>
         <div class="sub">
           A living threat repository where real-world incidents are continuously mapped to <b>ATT&CK tactics</b> and <b>techniques</b>, in a Navigator-style view.
           Select a document to enter <b>Hunt Mode</b>. Toggle <b>Attack Path</b> to see phases and the hunt pack.
@@ -885,9 +951,9 @@
           <span>Hunt Mode</span>
         </div>
 
-        <button class="btn secondary" id="pathBtn" disabled>Attack Path</button>
+        <button class="btn secondary beacon" id="pathBtn" disabled title="Critical: open attack path and hunt pack workflow">Attack Path</button>
 
-        <button class="btn" id="refreshBtn">Refresh</button>
+        <button class="btn beacon" id="refreshBtn" title="Critical: refresh latest intelligence dataset">Refresh</button>
         <span class="badge" id="newBadge" style="display:none;">
           <span class="dot"></span>
           <span id="newBadgeTxt">New</span>
@@ -900,8 +966,9 @@
 
         <button class="btn secondary mobileOnly" id="docsBtn">Docs</button>
 
-        <button class="btn secondary" id="helpBtn">Help</button>
-        <button class="btn secondary" id="aboutBtn">About</button>
+        <button class="btn secondary" id="shareBtn">Share</button>
+        <button class="btn secondary" id="helpBtn" title="Open platform guide">Help</button>
+        <button class="btn secondary" id="aboutBtn" title="About this platform">About</button>
 
         <button class="btn danger" id="clearAll">Reset</button>
       </div>
@@ -937,11 +1004,18 @@
           <h3>Aggregations <span class="chip" id="aggChip">—</span></h3>
           <div class="kv" id="aggKv"></div>
           <div class="filters">
-            <div class="fctl"><label>Actor</label><select id="actorF"></select></div>
-            <div class="fctl"><label>Tool</label><select id="toolF"></select></div>
+            <div class="fctl"><label>Actor</label><select id="actorF" title="Filter by actor relevant to current dataset"></select></div>
+            <div class="fctl"><label>Tool</label><select id="toolF" title="Filter by tools/malware present in current dataset"></select></div>
           </div>
         </div>
 
+
+
+        <div class="box" id="prioBox">
+          <h3>Operational Priorities <span class="chip" id="prioChip">—</span></h3>
+          <div class="docList" id="prioList"></div>
+          <div class="muted" id="prioEmpty" style="display:none; margin-top:8px;">No priorities for current filters.</div>
+        </div>
         <div class="tabsRow desktopOnly">
           <button class="tabBtn active" id="tabBtnFocus" data-tab="focus">Focus</button>
           <button class="tabBtn" id="tabBtnDocs" data-tab="docs">Documents</button>
@@ -1022,6 +1096,16 @@
       <div class="blockquote">
         Refresh loads the latest dataset (BOOTSTRAP_SIZE). “New docs” badge uses a light heartbeat poll.
         No automatic full refresh loop — avoids reloading thousands of docs repeatedly.
+      </div>
+
+      <div class="hr"></div>
+
+      <h2 class="modalTitle">How to use this efficiently</h2>
+      <div class="blockquote">
+        1) Start with <b>Operational Priorities</b> to identify top items quickly.<br/>
+        2) Select a document and open <b>Attack Path</b> to see stage-by-stage guidance.<br/>
+        3) Use <b>Actor</b>/<b>Tool</b> filters and <b>Search</b> to narrow to your environment.<br/>
+        4) Use <b>Share</b> to copy your exact filtered state for team collaboration.
       </div>
 
       <div class="hr"></div>
@@ -1137,6 +1221,7 @@ const state = {
 
   huntOn: true,
   pathOn: false,
+  pathPinned: true,
   packOn: true,
 
   sideTab: "focus",
@@ -1212,6 +1297,15 @@ function ageDaysFrom(iso){
   if(!d) return 0;
   const delta = uiNow.getTime() - d.getTime();
   return Math.max(0, Math.floor(delta / (24*60*60*1000)));
+}
+function ageHoursFrom(iso){
+  const d = parseDateSafe(iso);
+  if(!d) return 999999;
+  const delta = uiNow.getTime() - d.getTime();
+  return Math.max(0, Math.floor(delta / (60*60*1000)));
+}
+function isRecent48h(doc){
+  return ageHoursFrom(doc?.Timestamp) <= 48;
 }
 
 function sevPass(doc){
@@ -1293,16 +1387,27 @@ function sevPill(sev){
    ========================================================= */
 let loaderTimer = null;
 let loaderPct = 0;
+let loaderGuideTimer = null;
+let loaderGuideIdx = 0;
+const LOADER_GUIDE_LINES = [
+  "Welcome — this platform maps real incidents into actionable ATT&CK context.",
+  "Operational Priorities highlight the most urgent items first.",
+  "Attack Path shows stage-by-stage behavior, detections, and remediation.",
+  "Use Actor and Tool filters to focus on your environment.",
+  "Use Share to collaborate with your team on the same view."
+];
 
 function showLoader(title="Loading", msg="Starting…"){
   $("loaderTitle").textContent = title;
   $("loaderMsg").textContent = msg;
   setLoaderPct(0);
   $("loader").style.display = "flex";
+  startLoaderGuide();
 }
 function hideLoader(){
   $("loader").style.display = "none";
   stopLoaderTick();
+  stopLoaderGuide();
 }
 function setLoaderPct(p){
   loaderPct = Math.max(0, Math.min(100, Math.round(p)));
@@ -1310,6 +1415,19 @@ function setLoaderPct(p){
   $("loaderBar").style.width = `${loaderPct}%`;
 }
 function setLoaderMsg(msg){ $("loaderMsg").textContent = msg; }
+function startLoaderGuide(){
+  stopLoaderGuide();
+  loaderGuideIdx = 0;
+  const el = $("loaderGuide");
+  if(el) el.textContent = LOADER_GUIDE_LINES[0];
+  loaderGuideTimer = setInterval(()=>{
+    loaderGuideIdx = (loaderGuideIdx + 1) % LOADER_GUIDE_LINES.length;
+    if(el) el.textContent = LOADER_GUIDE_LINES[loaderGuideIdx];
+  }, 1700);
+}
+function stopLoaderGuide(){
+  if(loaderGuideTimer){ clearInterval(loaderGuideTimer); loaderGuideTimer = null; }
+}
 
 function startLoaderTick(target=35){
   stopLoaderTick();
@@ -1351,6 +1469,7 @@ async function pollHeartbeat(){
     const params = new URLSearchParams();
     if(loadedLatestSeq !== null && loadedLatestSeq !== undefined){
       params.set("since_seq", String(loadedLatestSeq));
+      if(loadedLatestTs) params.set("since_ts", loadedLatestTs);
     }else if(loadedLatestTs){
       params.set("since_ts", loadedLatestTs);
     }else{
@@ -1409,7 +1528,14 @@ async function bootstrapFromServer({reason="Load"} = {}){
   uiNow = uiNowParsed || new Date();
 
   const nowStr = fmtDate(data?.meta?.ui_now);
-  $("envChip").textContent = nowStr !== "—" ? `now=${nowStr}` : "now";
+  const mode = String(data?.meta?.ui_now_mode || "latest");
+  const fresh = data?.meta?.data_freshness || {};
+  const ageSec = Number(fresh?.latest_age_seconds);
+  const ageTxt = Number.isFinite(ageSec) ? `${Math.floor(ageSec/3600)}h` : "n/a";
+  const staleTxt = fresh?.is_stale ? "stale" : "fresh";
+  $("envChip").textContent = nowStr !== "—"
+    ? `mode=${mode} • now=${nowStr} • ${staleTxt}(${ageTxt})`
+    : `mode=${mode}`;
 
   loadedLatestTs = data?.meta?.latest_ts || null;
   loadedLatestSeq = (data?.meta?.latest_seq !== null && data?.meta?.latest_seq !== undefined)
@@ -1606,6 +1732,7 @@ function render(){
   buildSideFilters(docs);
   renderSelectedDocBox(selDocNow);
   renderAggBox(docs);
+  renderOperationalPriorities(docs);
   renderTechniqueFocus(docs, techStats);
   renderPathStrip(selDocNow);
   renderMatrix(docs, techStats, selDocNow);
@@ -1664,6 +1791,46 @@ function renderAggBox(docs){
     <div class="k">Top Tools</div><div class="v">${escapeHtml(topTools)}</div>
     <div class="k">Top CVEs</div><div class="v">${escapeHtml(topCVEs)}</div>
   `;
+}
+
+
+function renderOperationalPriorities(docs){
+  const host = $("prioList");
+  const empty = $("prioEmpty");
+  host.innerHTML = "";
+
+  const ranked = docs
+    .slice()
+    .sort((a,b)=> (Number(b.priority_score||0)-Number(a.priority_score||0)) || (Number(b.relevance_score||0)-Number(a.relevance_score||0)))
+    .slice(0,5);
+
+  $("prioChip").textContent = `${ranked.length}`;
+  empty.style.display = ranked.length ? "none" : "block";
+
+  for(const d of ranked){
+    const item = document.createElement("div");
+    item.className = "docItem" + (state.selectedDocId===d.id ? " active" : "") + (isRecent48h(d) ? " hotGlow" : "");
+    const tags = Array.isArray(d.operational_tags) ? d.operational_tags : [];
+    const next = (d.Detection_Rules_And_Indicators||[])[0] || (d.Post_Incident_Recommendations||[])[0] || "Review attack path runbook";
+    item.innerHTML = `
+      <div class="row">
+        <div class="t">${sevPill(d.Severity)} ${escapeHtml(shortTitle(d.Title, 56))} ${isRecent48h(d) ? `<span class="pill recentBadge">NEW ≤48h</span>` : ``}</div>
+        <div class="ts">P${Number(d.priority_score||0)} • R${Number(d.relevance_score||0)}</div>
+      </div>
+      <div class="m">${escapeHtml(shortTitle(next, 130))}</div>
+      <div style="margin-top:8px; display:flex; gap:6px; flex-wrap:wrap;">
+        ${tags.slice(0,3).map(t=>`<span class="pill amber">${escapeHtml(t)}</span>`).join("") || `<span class="pill">General</span>`}
+      </div>
+    `;
+    item.addEventListener("click", ()=>{
+      state.selectedDocId = d.id;
+      state.huntOn = true;
+      $("hunt").checked = true;
+      syncHash();
+      render();
+    });
+    host.appendChild(item);
+  }
 }
 
 /* Selected doc box */
@@ -1777,10 +1944,10 @@ function renderDocList(docs, hostEl, emptyEl, countChipEl){
 
   for(const d of sorted){
     const item = document.createElement("div");
-    item.className = "docItem" + (state.selectedDocId===d.id ? " active" : "");
+    item.className = "docItem" + (state.selectedDocId===d.id ? " active" : "") + (isRecent48h(d) ? " hotGlow" : "");
     item.innerHTML = `
       <div class="row">
-        <div class="t">${sevPill(d.Severity)} ${escapeHtml(d.Title)}</div>
+        <div class="t">${sevPill(d.Severity)} ${escapeHtml(d.Title)} ${isRecent48h(d) ? `<span class="pill recentBadge">NEW ≤48h</span>` : ``}</div>
         <div class="ts">${fmtDate(d.Timestamp)}</div>
       </div>
       <div class="m">${escapeHtml(shortTitle(d.doc_summary || "", 140))}</div>
@@ -1836,7 +2003,7 @@ function renderPathStrip(selDoc){
   }
 
   const strip = document.createElement("div");
-  strip.className = "pathStrip hotPanel";
+  strip.className = `pathStrip hotPanel ${state.pathPinned ? "pinned" : ""}`.trim();
   strip.innerHTML = `
     <div class="row">
       <div class="title">
@@ -1847,6 +2014,7 @@ function renderPathStrip(selDoc){
         <span class="chip">age ${ageDaysFrom(selDoc.Timestamp)}d</span>
         <span class="chip">tech ${(selDoc.Techniques||[]).length}</span>
         <button class="btn secondary sm" id="openDocFromPath">Open Doc</button>
+        <button class="btn secondary sm" id="togglePin">${state.pathPinned ? "Unpin" : "Pin"} Attack Path</button>
         <button class="btn sm" id="togglePack">${state.packOn ? "Hide" : "Show"} Hunt Pack</button>
       </div>
     </div>
@@ -1868,6 +2036,20 @@ function renderPathStrip(selDoc){
     <div id="huntPackHost"></div>
   `;
   host.appendChild(strip);
+
+  if(state.pathPinned){
+    const topbar = document.querySelector(".topbar");
+    const topOffset = (topbar ? topbar.offsetHeight : 70) + 8;
+    const rect = host.getBoundingClientRect();
+    strip.style.top = `${topOffset}px`;
+    strip.style.left = `${rect.left}px`;
+    strip.style.width = `${rect.width}px`;
+
+    const spacer = document.createElement("div");
+    spacer.className = "pathStripSpacer";
+    spacer.style.height = `${strip.offsetHeight}px`;
+    host.insertBefore(spacer, strip);
+  }
 
   const stagesHost = strip.querySelector("#stagesHost");
   for(const stage of STAGE_ORDER){
@@ -1906,6 +2088,11 @@ function renderPathStrip(selDoc){
   });
 
   strip.querySelector("#openDocFromPath").addEventListener("click", ()=> openDocModal(selDoc));
+  strip.querySelector("#togglePin").addEventListener("click", ()=>{
+    state.pathPinned = !state.pathPinned;
+    syncHash();
+    render();
+  });
   strip.querySelector("#togglePack").addEventListener("click", ()=>{
     state.packOn = !state.packOn;
     syncHash();
@@ -2373,6 +2560,17 @@ $("switcherModal").addEventListener("keydown", (e)=>{
   if(e.key === "Enter"){ e.preventDefault(); items[switcherIdx].click(); }
 });
 
+/* Share */
+$("shareBtn").addEventListener("click", async ()=>{
+  try{
+    const shareUrl = `${location.origin}${location.pathname}${location.hash || ""}`;
+    await navigator.clipboard.writeText(shareUrl);
+    toast("Share link copied");
+  }catch{
+    toast("Unable to copy link");
+  }
+});
+
 /* Help/About */
 $("helpBtn").addEventListener("click", ()=> $("helpModal").showModal());
 $("aboutBtn").addEventListener("click", ()=> $("aboutModal").showModal());
@@ -2419,6 +2617,7 @@ $("clearAll").addEventListener("click", ()=>{
     actor:"ALL", tool:"ALL",
     selectedDocId:null, selectedTechId:null,
     huntOn:true, pathOn:false,
+    pathPinned:true,
     packOn:true,
     sideTab:"focus",
     autoCheck: $("autoCheck").checked,
@@ -2496,6 +2695,7 @@ function syncHash(){
   p.set("tool", state.tool);
   p.set("hunt", state.huntOn ? "1" : "0");
   p.set("path", state.pathOn ? "1" : "0");
+  p.set("pathpin", state.pathPinned ? "1" : "0");
   p.set("pack", state.packOn ? "1" : "0");
   if(state.selectedDocId) p.set("doc", state.selectedDocId);
   if(state.selectedTechId) p.set("tech", state.selectedTechId);
@@ -2511,6 +2711,7 @@ function loadHash(){
   state.tool = p.get("tool") || "ALL";
   state.huntOn = (p.get("hunt") || "1") === "1";
   state.pathOn = (p.get("path") || "0") === "1";
+  state.pathPinned = (p.get("pathpin") || "1") === "1";
   state.packOn = (p.get("pack") || "1") === "1";
   state.selectedDocId = p.get("doc");
   state.selectedTechId = p.get("tech");
@@ -2532,6 +2733,7 @@ function loadHash(){
   }
 }
 window.addEventListener("hashchange", ()=>{ loadHash(); render(); });
+window.addEventListener("resize", ()=>{ if(state.pathOn) render(); });
 
 /* Init */
 (async function init(){
