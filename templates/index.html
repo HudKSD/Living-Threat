@@ -114,6 +114,11 @@
       box-shadow: var(--shadow);
     }
     .toggle{ border-color: rgba(181,139,255,.18); background: rgba(16,10,28,.28); }
+    .searchCtl{
+      border-color: rgba(255, 90, 122, .56);
+      box-shadow: 0 0 0 1px rgba(255,90,122,.24), 0 0 18px rgba(255,214,97,.20);
+      animation: searchPulse 1.4s infinite;
+    }
 
     .ctl label, .rangeCtl label{
       font-family:var(--mono);
@@ -299,27 +304,13 @@
       margin-bottom:8px;
     }
     .timelineTop b{ font-size:12px; letter-spacing:.15px; }
-    .timelineBars{
-      display:grid;
-      grid-template-columns: repeat(var(--bins, 14), minmax(6px, 1fr));
-      gap:4px;
-      align-items:end;
-      height:56px;
-    }
-    .timelineBar{
-      border:1px solid rgba(0,245,255,.18);
-      background: linear-gradient(180deg, rgba(0,245,255,.42), rgba(119,255,176,.34));
-      border-radius: 6px 6px 4px 4px;
-      min-height: 3px;
-      cursor:pointer;
-      transition: filter .15s ease, border-color .2s ease;
-    }
-    .timelineBar:hover{ filter:brightness(1.15); border-color: rgba(0,245,255,.42); }
-    .timelineBar.hot{
-      border-color: rgba(255, 90, 122, .58);
-      background: linear-gradient(180deg, rgba(255,90,122,.48), rgba(255,204,102,.38));
-      box-shadow: 0 0 12px rgba(255,90,122,.26);
-    }
+    .timelineChart{ position:relative; height:64px; }
+    .timelineSvg{ width:100%; height:64px; display:block; }
+    .timelineGrid line{ stroke: rgba(255,255,255,.10); stroke-width:1; }
+    .timelineArea{ fill: rgba(0,245,255,.14); }
+    .timelineLine{ fill:none; stroke: rgba(0,245,255,.88); stroke-width:2.2; }
+    .timelineDot{ fill: rgba(119,255,176,.92); }
+    .timelineDot.hot{ fill: rgba(255,90,122,.95); filter: drop-shadow(0 0 5px rgba(255,90,122,.5)); }
     .timelineAxis{
       margin-top:6px;
       display:flex; justify-content:space-between; gap:10px;
@@ -1033,6 +1024,12 @@
       100%{ opacity:1; box-shadow: 0 0 0 1px rgba(255,90,122,.28), 0 0 8px rgba(255,80,116,.20); }
     }
 
+    @keyframes searchPulse{
+      0%{ box-shadow: 0 0 0 1px rgba(255,90,122,.24), 0 0 12px rgba(255,214,97,.14); }
+      50%{ box-shadow: 0 0 0 1px rgba(255,90,122,.55), 0 0 28px rgba(255,214,97,.30); }
+      100%{ box-shadow: 0 0 0 1px rgba(255,90,122,.24), 0 0 12px rgba(255,214,97,.14); }
+    }
+
     @keyframes pulse{
       0%{ transform:scale(1); opacity:1; }
       50%{ transform:scale(1.05); opacity:.72; }
@@ -1067,11 +1064,18 @@
         <div class="title"><span class="dot"></span>Living MITRE Repository <span class="chip" id="envChip">connecting…</span><span class="chip" title="Live status indicator"><span class="liveDot"></span> live</span></div>
         <div class="sub">
           A living threat repository where real-world incidents are continuously mapped to <b>ATT&CK tactics</b> and <b>techniques</b>, in a Navigator-style view.
-          Select a document to enter <b>Hunt Mode</b>. Toggle <b>Attack Path</b> to see phases and the hunt pack.
+          <b>Recommended flow:</b> 1) Filter first (search + time + severity + facets), 2) pick a document, 3) enter Hunt Mode, 4) open Attack Path to understand stage progression,
+          5) expand Hunt Pack for detections/remediation and pivots, 6) share the view with your SOC team for coordinated response.
+          This helps analysts move from noisy intel to asset-relevant, actionable decisions faster.
         </div>
       </div>
 
       <div class="bar">
+        <div class="ctl searchCtl" title="Search filters on doc_summary only">
+          <label>Search</label>
+          <input id="q" type="text" placeholder="doc_summary contains…" />
+        </div>
+
         <div class="rangeCtl">
           <label>Range</label>
           <input id="range" type="range" min="1" max="365" value="7" step="1" />
@@ -1093,11 +1097,6 @@
             <option value="Moderate">Moderate+</option>
             <option value="High">High+</option>
           </select>
-        </div>
-
-        <div class="ctl" title="Search filters on doc_summary only">
-          <label>Search</label>
-          <input id="q" type="text" placeholder="doc_summary contains…" />
         </div>
 
         <div class="toggle" title="Hunt Mode highlights techniques used by the selected document">
@@ -1136,7 +1135,7 @@
           <b>Event Timeline</b>
           <span class="chip" id="timelineMeta">—</span>
         </div>
-        <div class="timelineBars" id="timelineBars"></div>
+        <div class="timelineChart" id="timelineChart"></div>
         <div class="timelineAxis"><span id="timelineStart">—</span><span id="timelineEnd">—</span></div>
       </div>
       <div class="panelHd">
@@ -1172,6 +1171,12 @@
           <div class="filters">
             <div class="fctl"><label>Actor</label><select id="actorF" title="Filter by actor relevant to current dataset"></select></div>
             <div class="fctl"><label>Tool</label><select id="toolF" title="Filter by tools/malware present in current dataset"></select></div>
+            <div class="fctl"><label>Data Risk</label><select id="dataRiskF" title="Filter by data types at risk"></select></div>
+            <div class="fctl"><label>Country</label><select id="countryF" title="Filter by extracted country"></select></div>
+            <div class="fctl"><label>Breach Type</label><select id="breachTypeF" title="Filter by breach type"></select></div>
+            <div class="fctl"><label>Sector</label><select id="sectorF" title="Filter by sector"></select></div>
+            <div class="fctl"><label>Software</label><select id="softwareF" title="Filter by software"></select></div>
+            <div class="fctl"><label>Access Vector</label><select id="accessVectorF" title="Filter by access vectors"></select></div>
           </div>
         </div>
 
@@ -1396,6 +1401,12 @@ const state = {
   q: "",
   actor: "ALL",
   tool: "ALL",
+  dataRisk: "ALL",
+  country: "ALL",
+  breachType: "ALL",
+  sector: "ALL",
+  software: "ALL",
+  accessVector: "ALL",
 
   selectedDocId: null,
   selectedTechId: null,
@@ -1403,7 +1414,7 @@ const state = {
   huntOn: true,
   pathOn: false,
   pathPinned: true,
-  packOn: true,
+  packOn: false,
 
   sideTab: "focus",
 
@@ -1525,13 +1536,36 @@ function toolPass(doc){
   if(state.tool==="ALL") return true;
   return (doc.Tools||[]).includes(state.tool);
 }
+function docFacetVals(doc){
+  const victim = doc.Victim || {};
+  const ents = doc.Extracted_Entities || {};
+  return {
+    dataRisk: asArray(victim.Data_Types_At_Risk),
+    country: asArray(ents.Countries),
+    breachType: asArray(ents.Breach_Types),
+    sector: asArray(ents.Sectors),
+    software: asArray(ents.Software),
+    accessVector: asArray(victim.Access_Vectors),
+  };
+}
+function matchFacet(list, val){ return val==="ALL" ? true : asArray(list).includes(val); }
+function facetPass(doc){
+  const f = docFacetVals(doc);
+  return matchFacet(f.dataRisk, state.dataRisk)
+    && matchFacet(f.country, state.country)
+    && matchFacet(f.breachType, state.breachType)
+    && matchFacet(f.sector, state.sector)
+    && matchFacet(f.software, state.software)
+    && matchFacet(f.accessVector, state.accessVector);
+}
 function filteredDocs(){
   return DOCS
     .filter(rangePass)
     .filter(sevPass)
     .filter(summarySearchPass)
     .filter(actorPass)
-    .filter(toolPass);
+    .filter(toolPass)
+    .filter(facetPass);
 }
 
 function stageIndex(stage){
@@ -1574,11 +1608,10 @@ function sevPill(sev){
 let loaderTimer = null;
 let loaderPct = 0;
 const LOADER_GUIDE_PARAGRAPHS = [
-  "Welcome — this platform maps real incidents into actionable ATT&CK context.",
-  "Operational Priorities highlight the most urgent items first.",
-  "Attack Path shows stage-by-stage behavior, detections, and remediation.",
-  "Use Actor and Tool filters to focus on your environment.",
-  "Use Share to collaborate with your team on the same view."
+  "This platform continuously converts real-world threat reporting into ATT&CK-mapped evidence so security teams can move from news to action quickly.",
+  "Use cases: triage emerging campaigns, prioritize high-impact incidents by severity and recency, and brief SOC/IR stakeholders with a shared operational view.",
+  "Analyst workflow: filter by environment-relevant facets, select a document, validate the attack path, then expand Hunt Pack for detections, remediation, and pivot points.",
+  "Operational value: maintain awareness of the changing cyber landscape, reduce blind spots across actors/tools/sectors, and accelerate detection engineering updates."
 ];
 
 function showLoader(title="Loading", msg="Starting…"){
@@ -1903,32 +1936,43 @@ function buildHuntPack(doc){
 }
 
 function renderTimeline(docs){
-  const bars = $("timelineBars");
-  if(!bars) return;
+  const host = $("timelineChart");
+  if(!host) return;
 
   const binCount = state.allTime ? 21 : Math.max(7, Math.min(21, state.rangeDays));
   const dayMs = 24*60*60*1000;
   const end = new Date(Date.UTC(uiNow.getUTCFullYear(), uiNow.getUTCMonth(), uiNow.getUTCDate(), 23,59,59,999));
   const start = new Date(end.getTime() - (binCount-1)*dayMs);
+  const startDayMs = Date.UTC(start.getUTCFullYear(), start.getUTCMonth(), start.getUTCDate());
 
   const counts = Array(binCount).fill(0);
   for(const d of docs){
     const dt = parseDateSafe(d.Timestamp);
     if(!dt) continue;
-    const day = new Date(Date.UTC(dt.getUTCFullYear(), dt.getUTCMonth(), dt.getUTCDate()));
-    const idx = Math.floor((day.getTime() - new Date(Date.UTC(start.getUTCFullYear(), start.getUTCMonth(), start.getUTCDate())).getTime())/dayMs);
+    const dayMsTs = Date.UTC(dt.getUTCFullYear(), dt.getUTCMonth(), dt.getUTCDate());
+    const idx = Math.floor((dayMsTs - startDayMs)/dayMs);
     if(idx>=0 && idx<binCount) counts[idx] += 1;
   }
 
   const maxC = Math.max(1, ...counts);
-  bars.style.setProperty("--bins", String(binCount));
-  bars.innerHTML = counts.map((c,i)=>{
-    const h = Math.max(6, Math.round((c/maxC)*52));
-    const day = new Date(start.getTime() + i*dayMs);
-    const dateIso = `${day.getUTCFullYear()}-${String(day.getUTCMonth()+1).padStart(2,"0")}-${String(day.getUTCDate()).padStart(2,"0")}`;
-    const cls = c>=Math.max(2, Math.ceil(maxC*0.7)) ? "timelineBar hot" : "timelineBar";
-    return `<div class="${cls}" style="height:${h}px" title="${dateIso} • ${c} event${c===1?"":"s"}"></div>`;
-  }).join("");
+  const w = 620, h = 64, p = 8;
+  const xFor = (i)=> p + (i*(w-2*p))/Math.max(1, binCount-1);
+  const yFor = (c)=> h - p - ((c/maxC)*(h-2*p));
+  const points = counts.map((c,i)=>`${xFor(i)},${yFor(c)}`).join(" ");
+  const area = `${xFor(0)},${h-p} ${points} ${xFor(binCount-1)},${h-p}`;
+
+  const hotThreshold = Math.max(2, Math.ceil(maxC*0.7));
+  host.innerHTML = `
+    <svg class="timelineSvg" viewBox="0 0 ${w} ${h}" preserveAspectRatio="none" role="img" aria-label="Event timeline line chart">
+      <g class="timelineGrid">
+        <line x1="${p}" y1="${h-p}" x2="${w-p}" y2="${h-p}"></line>
+        <line x1="${p}" y1="${h/2}" x2="${w-p}" y2="${h/2}"></line>
+      </g>
+      <polygon class="timelineArea" points="${area}"></polygon>
+      <polyline class="timelineLine" points="${points}"></polyline>
+      ${counts.map((c,i)=>`<circle class="timelineDot ${c>=hotThreshold?"hot":""}" cx="${xFor(i)}" cy="${yFor(c)}" r="2.6"><title>${fmtDate(new Date(start.getTime()+i*dayMs).toISOString())} • ${c} event${c===1?"":"s"}</title></circle>`).join("")}
+    </svg>
+  `;
 
   $("timelineMeta").textContent = `${docs.length} events • ${binCount}d view`;
   $("timelineStart").textContent = fmtDate(start.toISOString());
@@ -1977,21 +2021,32 @@ function render(){
 function buildSideFilters(docs){
   const actors = uniq(docs.flatMap(d=>d.Threat_Actors||[])).sort();
   const tools  = uniq(docs.flatMap(d=>d.Tools||[])).sort();
+  const dataRisk = uniq(docs.flatMap(d=>asArray((d.Victim||{}).Data_Types_At_Risk))).sort();
+  const countries = uniq(docs.flatMap(d=>asArray((d.Extracted_Entities||{}).Countries))).sort();
+  const breachTypes = uniq(docs.flatMap(d=>asArray((d.Extracted_Entities||{}).Breach_Types))).sort();
+  const sectors = uniq(docs.flatMap(d=>asArray((d.Extracted_Entities||{}).Sectors))).sort();
+  const software = uniq(docs.flatMap(d=>asArray((d.Extracted_Entities||{}).Software))).sort();
+  const accessVectors = uniq(docs.flatMap(d=>asArray((d.Victim||{}).Access_Vectors))).sort();
 
-  const actorSel = $("actorF");
-  const toolSel  = $("toolF");
+  const map = [
+    ["actor", "actorF", actors],
+    ["tool", "toolF", tools],
+    ["dataRisk", "dataRiskF", dataRisk],
+    ["country", "countryF", countries],
+    ["breachType", "breachTypeF", breachTypes],
+    ["sector", "sectorF", sectors],
+    ["software", "softwareF", software],
+    ["accessVector", "accessVectorF", accessVectors],
+  ];
 
-  const prevA = state.actor;
-  const prevT = state.tool;
-
-  actorSel.innerHTML = `<option value="ALL">All</option>` + actors.map(a=>`<option value="${escapeHtml(a)}">${escapeHtml(a)}</option>`).join("");
-  toolSel.innerHTML  = `<option value="ALL">All</option>` + tools.map(t=>`<option value="${escapeHtml(t)}">${escapeHtml(t)}</option>`).join("");
-
-  actorSel.value = actors.includes(prevA) ? prevA : "ALL";
-  toolSel.value  = tools.includes(prevT) ? prevT : "ALL";
-
-  state.actor = actorSel.value;
-  state.tool  = toolSel.value;
+  for(const [stateKey, elId, vals] of map){
+    const sel = $(elId);
+    if(!sel) continue;
+    const prev = state[stateKey] || "ALL";
+    sel.innerHTML = `<option value="ALL">All</option>` + vals.map(v=>`<option value="${escapeHtml(v)}">${escapeHtml(v)}</option>`).join("");
+    sel.value = vals.includes(prev) ? prev : "ALL";
+    state[stateKey] = sel.value;
+  }
 }
 
 function renderAggBox(docs){
@@ -2108,6 +2163,7 @@ function renderSelectedDocBox(selDoc){
   $("sdOpen").addEventListener("click", ()=> openDocModal(selDoc));
   $("sdTogglePath").addEventListener("click", ()=>{
     state.pathOn = !state.pathOn;
+    if(state.pathOn) state.packOn = false;
     syncHash();
     render();
   });
@@ -2695,6 +2751,7 @@ function openDocModal(doc){
   $("togglePathFromModal").addEventListener("click", ()=>{
     state.selectedDocId = doc.id;
     state.pathOn = !state.pathOn;
+    if(state.pathOn) state.packOn = false;
     syncHash();
     render();
     $("docModal").close();
@@ -2829,6 +2886,12 @@ $("sev").addEventListener("change", ()=>{ state.sevMin = $("sev").value; syncHas
 $("q").addEventListener("input", ()=>{ state.q = $("q").value; syncHash(); render(); });
 $("actorF").addEventListener("change", ()=>{ state.actor = $("actorF").value; syncHash(); render(); });
 $("toolF").addEventListener("change", ()=>{ state.tool = $("toolF").value; syncHash(); render(); });
+$("dataRiskF").addEventListener("change", ()=>{ state.dataRisk = $("dataRiskF").value; syncHash(); render(); });
+$("countryF").addEventListener("change", ()=>{ state.country = $("countryF").value; syncHash(); render(); });
+$("breachTypeF").addEventListener("change", ()=>{ state.breachType = $("breachTypeF").value; syncHash(); render(); });
+$("sectorF").addEventListener("change", ()=>{ state.sector = $("sectorF").value; syncHash(); render(); });
+$("softwareF").addEventListener("change", ()=>{ state.software = $("softwareF").value; syncHash(); render(); });
+$("accessVectorF").addEventListener("change", ()=>{ state.accessVector = $("accessVectorF").value; syncHash(); render(); });
 
 $("hunt").addEventListener("change", ()=>{
   state.huntOn = $("hunt").checked;
@@ -2839,6 +2902,7 @@ $("hunt").addEventListener("change", ()=>{
 $("pathBtn").addEventListener("click", ()=>{
   if($("pathBtn").disabled) return;
   state.pathOn = !state.pathOn;
+  if(state.pathOn) state.packOn = false;
   syncHash(); render();
 });
 
@@ -2862,10 +2926,11 @@ $("clearAll").addEventListener("click", ()=>{
   Object.assign(state, {
     rangeDays:7, allTime:false, sevMin:"ALL", q:"",
     actor:"ALL", tool:"ALL",
+    dataRisk:"ALL", country:"ALL", breachType:"ALL", sector:"ALL", software:"ALL", accessVector:"ALL",
     selectedDocId:null, selectedTechId:null,
     huntOn:true, pathOn:false,
     pathPinned:true,
-    packOn:true,
+    packOn:false,
     sideTab:"focus",
     autoCheck: $("autoCheck").checked,
     newCount: 0,
@@ -2940,6 +3005,12 @@ function syncHash(){
   p.set("q", state.q || "");
   p.set("actor", state.actor);
   p.set("tool", state.tool);
+  p.set("dr", state.dataRisk);
+  p.set("cty", state.country);
+  p.set("bt", state.breachType);
+  p.set("sec", state.sector);
+  p.set("sw", state.software);
+  p.set("av", state.accessVector);
   p.set("hunt", state.huntOn ? "1" : "0");
   p.set("path", state.pathOn ? "1" : "0");
   p.set("pathpin", state.pathPinned ? "1" : "0");
@@ -2956,10 +3027,16 @@ function loadHash(){
   state.q = p.get("q") || "";
   state.actor = p.get("actor") || "ALL";
   state.tool = p.get("tool") || "ALL";
+  state.dataRisk = p.get("dr") || "ALL";
+  state.country = p.get("cty") || "ALL";
+  state.breachType = p.get("bt") || "ALL";
+  state.sector = p.get("sec") || "ALL";
+  state.software = p.get("sw") || "ALL";
+  state.accessVector = p.get("av") || "ALL";
   state.huntOn = (p.get("hunt") || "1") === "1";
   state.pathOn = (p.get("path") || "0") === "1";
   state.pathPinned = (p.get("pathpin") || "1") === "1";
-  state.packOn = (p.get("pack") || "1") === "1";
+  state.packOn = (p.get("pack") || "0") === "1";
   state.selectedDocId = p.get("doc");
   state.selectedTechId = p.get("tech");
   state.allTime = (p.get("all") || "0") === "1";
