@@ -5,6 +5,21 @@
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
   <meta name="theme-color" content="#06131a" />
   <meta name="description" content="A living threat repository where real-world incidents are continuously mapped to ATT&CK tactics and techniques, in a Navigator-style view." />
+  <link rel="canonical" href="https://YOUR-DOMAIN.com/your-page" />
+
+  <meta property="og:type" content="website" />
+  <meta property="og:url" content="https://YOUR-DOMAIN.com/your-page" />
+  <meta property="og:title" content="Living Threat Repository" />
+  <meta property="og:description" content="Asset-relevant threat intel mapped to ATT&CK with evidence." />
+
+  <meta property="og:image" content="https://repo.researchbus.com/api/public/dl/0-sI5gSY/RBTN/LOGO/LT.png" />
+  <meta property="og:image:secure_url" content="https://repo.researchbus.com/api/public/dl/0-sI5gSY/RBTN/LOGO/LT.png" />
+  <meta property="og:image:type" content="image/png" />
+  <meta property="og:image:width" content="1200" />
+  <meta property="og:image:height" content="630" />
+
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:image" content="https://repo.researchbus.com/api/public/dl/0-sI5gSY/RBTN/LOGO/LT.png" />
   <link rel="icon" href="https://news.rabitanoor.com/content/images/2024/10/1-2.png">
   <title>Living MITRE Repository • Navigator-style Threat Mapping</title>
 
@@ -843,6 +858,22 @@
       transition: width .18s ease;
     }
     .loaderBd{ padding:12px; }
+    .loaderUsagePanel{
+      border:1px solid rgba(255,255,255,.12);
+      background: rgba(0,0,0,.16);
+      border-radius: 12px;
+      padding:10px;
+      margin-bottom:10px;
+      max-height: 180px;
+      overflow:auto;
+    }
+    .loaderUsagePanel p{
+      margin:0 0 8px;
+      font-size:12px;
+      line-height:1.45;
+      color:rgba(214,247,255,.86);
+    }
+    .loaderUsagePanel p:last-child{ margin-bottom:0; }
     .loaderMsg{ margin-top:10px; font-size:12px; color:rgba(214,247,255,.78); line-height:1.35; }
 
     /* Mobile docs drawer */
@@ -983,9 +1014,9 @@
       <span class="chip" id="loaderPct">0%</span>
     </div>
     <div class="loaderBd">
+      <div class="loaderUsagePanel" id="loaderUsagePanel"></div>
       <div class="progressWrap"><div class="progressBar" id="loaderBar"></div></div>
       <div class="loaderMsg" id="loaderMsg">Starting…</div>
-      <div class="muted" id="loaderGuide" style="font-size:11px; margin-top:8px; min-height:16px;">Preparing your threat intelligence workspace…</div>
       <div class="muted" style="font-size:11px; margin-top:10px;">
         Tip: Press <b>Ctrl+K</b> to jump to a document.
       </div>
@@ -1498,9 +1529,7 @@ function sevPill(sev){
    ========================================================= */
 let loaderTimer = null;
 let loaderPct = 0;
-let loaderGuideTimer = null;
-let loaderGuideIdx = 0;
-const LOADER_GUIDE_LINES = [
+const LOADER_GUIDE_PARAGRAPHS = [
   "Welcome — this platform maps real incidents into actionable ATT&CK context.",
   "Operational Priorities highlight the most urgent items first.",
   "Attack Path shows stage-by-stage behavior, detections, and remediation.",
@@ -1527,17 +1556,12 @@ function setLoaderPct(p){
 }
 function setLoaderMsg(msg){ $("loaderMsg").textContent = msg; }
 function startLoaderGuide(){
-  stopLoaderGuide();
-  loaderGuideIdx = 0;
-  const el = $("loaderGuide");
-  if(el) el.textContent = LOADER_GUIDE_LINES[0];
-  loaderGuideTimer = setInterval(()=>{
-    loaderGuideIdx = (loaderGuideIdx + 1) % LOADER_GUIDE_LINES.length;
-    if(el) el.textContent = LOADER_GUIDE_LINES[loaderGuideIdx];
-  }, 1700);
+  const el = $("loaderUsagePanel");
+  if(!el) return;
+  el.innerHTML = LOADER_GUIDE_PARAGRAPHS.map(x=>`<p>${escapeHtml(x)}</p>`).join("");
 }
 function stopLoaderGuide(){
-  if(loaderGuideTimer){ clearInterval(loaderGuideTimer); loaderGuideTimer = null; }
+  // persistent usage panel intentionally remains static/readable while loader is visible
 }
 
 function startLoaderTick(target=35){
