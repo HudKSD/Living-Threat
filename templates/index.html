@@ -219,10 +219,11 @@
     }
     .beacon{ animation: pulse 1.2s infinite; }
     .recentBadge{
-      border-color: rgba(255, 90, 122, .55);
-      background: rgba(255,90,122,.14);
+      border-color: rgba(255, 90, 122, .72);
+      background: rgba(255,90,122,.24);
       color: #ffd5df;
-      animation: pulse 1.2s infinite;
+      animation: recentAlert 1s infinite;
+      box-shadow: 0 0 0 1px rgba(255,90,122,.30), 0 0 20px rgba(255, 80, 116, .35);
     }
 
     .main{
@@ -283,6 +284,36 @@
     @media (max-width:1060px){
       .matrixBody{ height:auto; min-height:unset; }
     }
+    .matrixNavMap{
+      position: sticky;
+      top: 0;
+      z-index: 6;
+      border:1px solid rgba(0,245,255,.16);
+      background: rgba(2,12,18,.78);
+      border-radius: 12px;
+      padding:8px;
+      margin-bottom:10px;
+      backdrop-filter: blur(8px);
+    }
+    .matrixNavMap .hd{
+      font-family:var(--mono);
+      font-size:10px;
+      color:rgba(214,247,255,.70);
+      margin-bottom:6px;
+    }
+    .matrixNavTrack{ display:flex; gap:6px; flex-wrap:wrap; }
+    .matrixNavDot{
+      border:1px solid rgba(0,245,255,.16);
+      border-radius:999px;
+      padding:3px 8px;
+      font-size:10px;
+      font-family:var(--mono);
+      background: rgba(0,245,255,.05);
+      color:rgba(214,247,255,.82);
+      cursor:pointer;
+    }
+    .matrixNavDot:hover{ border-color: rgba(0,245,255,.34); }
+    .matrixNavDot.hot{ background: rgba(255,90,122,.16); border-color: rgba(255,90,122,.42); color:#ffd8e1; }
 
     .sidePanel{ background: var(--panelB); border-color: rgba(181,139,255,.22); }
     .sidePanel .panelHd{
@@ -929,6 +960,12 @@
     }
     .toast.show{ opacity:1; }
 
+    @keyframes recentAlert{
+      0%{ opacity:1; box-shadow: 0 0 0 1px rgba(255,90,122,.28), 0 0 8px rgba(255,80,116,.20); }
+      50%{ opacity:.35; box-shadow: 0 0 0 1px rgba(255,90,122,.70), 0 0 26px rgba(255,80,116,.56); }
+      100%{ opacity:1; box-shadow: 0 0 0 1px rgba(255,90,122,.28), 0 0 8px rgba(255,80,116,.20); }
+    }
+
     @keyframes pulse{
       0%{ transform:scale(1); opacity:1; }
       50%{ transform:scale(1.05); opacity:.72; }
@@ -970,12 +1007,12 @@
       <div class="bar">
         <div class="rangeCtl">
           <label>Range</label>
-          <input id="range" type="range" min="1" max="365" value="90" step="1" />
-          <div class="v" id="rangeV">90d</div>
+          <input id="range" type="range" min="1" max="365" value="7" step="1" />
+          <div class="v" id="rangeV">7d</div>
           <div class="presets" id="presets">
-            <div class="pbtn" data-days="7">7d</div>
+            <div class="pbtn active" data-days="7">7d</div>
             <div class="pbtn" data-days="30">30d</div>
-            <div class="pbtn active" data-days="90">90d</div>
+            <div class="pbtn" data-days="90">90d</div>
             <div class="pbtn" data-days="180">180d</div>
             <div class="pbtn" data-days="365">365d</div>
             <div class="pbtn" data-days="ALL">All</div>
@@ -1033,6 +1070,10 @@
       </div>
 
       <div class="matrixBody">
+        <div class="matrixNavMap" id="matrixNavMap">
+          <div class="hd">Navigator Minimap • click tactic to jump</div>
+          <div class="matrixNavTrack" id="matrixNavTrack"></div>
+        </div>
         <div id="pathStripHost"></div>
         <div class="tacticGrid" id="matrix"></div>
         <div class="muted" id="emptyMatrix" style="display:none; padding:10px 2px;">
@@ -1274,7 +1315,7 @@ const STAGE_COL = {
 };
 
 const state = {
-  rangeDays: 90,
+  rangeDays: 7,
   allTime: false,
   sevMin: "ALL",
   q: "",
@@ -1715,6 +1756,15 @@ function firstActionHint(doc){
   const post = asArray(doc.Post_Incident_Recommendations)[0];
   if(post) return post;
   return "Review attack path runbook";
+}
+function tacticDomId(tac){
+  return `tac-${String(tac||"other").toLowerCase().replace(/[^a-z0-9]+/g,"-")}`;
+}
+function facetToneBySeverity(sev){
+  const n = normalizeSeverity(sev);
+  if(n === "Critical") return "pink";
+  if(n === "High") return "amber";
+  return "violet";
 }
 
 function buildExfilWatch(doc){
@@ -2382,6 +2432,7 @@ function renderMatrix(docs, techStats, selDoc){
 
     const col = document.createElement("div");
     col.className = "tacticCol";
+    col.id = tacticDomId(tac);
 
     // glow tactic column if it contains techniques for selected doc/path
     if(selDoc){
@@ -2436,7 +2487,7 @@ function renderMatrix(docs, techStats, selDoc){
         </div>
         <div class="name" title="${escapeHtml(t.name || t.tid)}">${escapeHtml(t.name || t.tid)}</div>
         <div style="margin-top:7px; display:flex; gap:6px; flex-wrap:wrap;">
-          ${topDocs.slice(0,2).map(d=>`<span class="pill violet" style="cursor:pointer; max-width:100%;" data-doc="${d.id}" title="${escapeHtml(d.Title)}\n${escapeHtml(firstActionHint(d))}">[${escapeHtml(normalizeSeverity(d.Severity))}][P${Number(d.priority_score||0)}][${ageBadgeFrom(d.Timestamp)}] ${escapeHtml(shortTitle(d.Title, 18))}</span>`).join("")}
+          ${topDocs.slice(0,2).map(d=>`<span class="pill ${facetToneBySeverity(d.Severity)}" style="cursor:pointer; max-width:100%;" data-doc="${d.id}" title="${escapeHtml(d.Title)}\n${escapeHtml(firstActionHint(d))}">[${escapeHtml(normalizeSeverity(d.Severity))}][P${Number(d.priority_score||0)}][${ageBadgeFrom(d.Timestamp)}] ${escapeHtml(shortTitle(d.Title, 18))}</span>`).join("")}
         </div>
         <div style="margin-top:6px; color:rgba(210,222,255,.82); font-size:11px; line-height:1.25;">${topDocs.slice(0,1).map(d=>escapeHtml(shortTitle(firstActionHint(d), 84))).join("") || ""}</div>
       `;
@@ -2461,6 +2512,21 @@ function renderMatrix(docs, techStats, selDoc){
     }
 
     host.appendChild(col);
+  }
+
+  const nav = $("matrixNavTrack");
+  if(nav){
+    nav.innerHTML = TACTIC_ORDER.map(tac=>{
+      const cnt = (byTactic[tac]||[]).length;
+      const cls = cnt ? "matrixNavDot hot" : "matrixNavDot";
+      return `<button class="${cls}" data-tac="${escapeHtml(tac)}">${escapeHtml(shortTitle(tac, 16))} (${cnt})</button>`;
+    }).join("");
+    nav.querySelectorAll("[data-tac]").forEach(btn=>{
+      btn.addEventListener("click", ()=>{
+        const el = $(tacticDomId(btn.getAttribute("data-tac")));
+        if(el) el.scrollIntoView({behavior:"smooth", block:"start"});
+      });
+    });
   }
 
   $("emptyMatrix").style.display = rendered ? "none" : "block";
@@ -2692,7 +2758,7 @@ $("autoCheck").addEventListener("change", ()=>{
 $("clearAll").addEventListener("click", ()=>{
   location.hash = "";
   Object.assign(state, {
-    rangeDays:90, allTime:false, sevMin:"ALL", q:"",
+    rangeDays:7, allTime:false, sevMin:"ALL", q:"",
     actor:"ALL", tool:"ALL",
     selectedDocId:null, selectedTechId:null,
     huntOn:true, pathOn:false,
@@ -2702,12 +2768,12 @@ $("clearAll").addEventListener("click", ()=>{
     autoCheck: $("autoCheck").checked,
     newCount: 0,
   });
-  $("range").value = "90";
-  $("rangeV").textContent = "90d";
+  $("range").value = "7";
+  $("rangeV").textContent = "7d";
   $("sev").value = "ALL";
   $("q").value = "";
   $("hunt").checked = true;
-  setPresetActive("90");
+  setPresetActive("7");
   setNewDocs(0);
   syncHash();
   render();
@@ -2795,7 +2861,7 @@ function loadHash(){
   state.selectedDocId = p.get("doc");
   state.selectedTechId = p.get("tech");
   state.allTime = (p.get("all") || "0") === "1";
-  const r = Number(p.get("r") || "90");
+  const r = Number(p.get("r") || "7");
   if(!state.allTime && !Number.isNaN(r)) state.rangeDays = r;
 
   $("sev").value = state.sevMin;
