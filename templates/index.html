@@ -1304,6 +1304,11 @@ function ageHoursFrom(iso){
   const delta = uiNow.getTime() - d.getTime();
   return Math.max(0, Math.floor(delta / (60*60*1000)));
 }
+function ageBadgeFrom(iso){
+  const hours = ageHoursFrom(iso);
+  if(hours >= 24) return `${Math.floor(hours/24)}d`;
+  return `${hours}h`;
+}
 function isRecent48h(doc){
   return ageHoursFrom(doc?.Timestamp) <= 48;
 }
@@ -1637,6 +1642,14 @@ function buildPostActions(doc){
     out.push(s);
   }
   return out;
+}
+
+function firstActionHint(doc){
+  const detection = asArray(doc.Detection_Rules_And_Indicators)[0];
+  if(detection) return detection;
+  const post = asArray(doc.Post_Incident_Recommendations)[0];
+  if(post) return post;
+  return "Review attack path runbook";
 }
 
 function buildExfilWatch(doc){
@@ -2358,8 +2371,9 @@ function renderMatrix(docs, techStats, selDoc){
         </div>
         <div class="name" title="${escapeHtml(t.name || t.tid)}">${escapeHtml(t.name || t.tid)}</div>
         <div style="margin-top:7px; display:flex; gap:6px; flex-wrap:wrap;">
-          ${topDocs.slice(0,3).map(d=>`<span class="pill violet" style="cursor:pointer;" data-doc="${d.id}" title="${escapeHtml(d.Title)}">${escapeHtml(shortTitle(d.Title, 18))}</span>`).join("")}
+          ${topDocs.slice(0,2).map(d=>`<span class="pill violet" style="cursor:pointer; max-width:100%;" data-doc="${d.id}" title="${escapeHtml(d.Title)}\n${escapeHtml(firstActionHint(d))}">[${escapeHtml(normalizeSeverity(d.Severity))}][P${Number(d.priority_score||0)}][${ageBadgeFrom(d.Timestamp)}] ${escapeHtml(shortTitle(d.Title, 18))}</span>`).join("")}
         </div>
+        <div style="margin-top:6px; color:rgba(210,222,255,.82); font-size:11px; line-height:1.25;">${topDocs.slice(0,1).map(d=>escapeHtml(shortTitle(firstActionHint(d), 84))).join("") || ""}</div>
       `;
 
       card.addEventListener("click", (e)=>{
