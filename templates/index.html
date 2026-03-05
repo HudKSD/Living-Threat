@@ -307,6 +307,11 @@
       margin-bottom:10px;
       overflow:hidden;
     }
+    .box.selDocPanel{ border-color: rgba(0,245,255,.28); background: linear-gradient(180deg, rgba(0,245,255,.09), rgba(0,0,0,.14)); }
+    .box.aggPanel{ border-color: rgba(119,255,176,.28); background: linear-gradient(180deg, rgba(119,255,176,.10), rgba(0,0,0,.14)); }
+    .box.prioPanel{ border-color: rgba(255,90,122,.30); background: linear-gradient(180deg, rgba(255,90,122,.12), rgba(0,0,0,.14)); }
+    .box.focusPanel{ border-color: rgba(181,139,255,.30); background: linear-gradient(180deg, rgba(181,139,255,.11), rgba(0,0,0,.14)); }
+    .box.docsPanel{ border-color: rgba(255,204,102,.30); background: linear-gradient(180deg, rgba(255,204,102,.11), rgba(0,0,0,.14)); }
     .box h3{
       margin:0 0 8px;
       font-size:12.5px; letter-spacing:.2px;
@@ -674,6 +679,51 @@
       box-shadow: 0 0 18px rgba(255,90,122,.25);
     }
 
+    .miniMap{
+      position: fixed;
+      right: 14px;
+      bottom: 16px;
+      z-index: 40;
+      width: 160px;
+      border-radius: 14px;
+      border:1px solid rgba(0,245,255,.20);
+      background: rgba(2,8,14,.86);
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(8px);
+      padding:8px;
+    }
+    .miniMapHd{
+      font-family:var(--mono);
+      font-size:10px;
+      color:rgba(214,247,255,.72);
+      margin-bottom:6px;
+      display:flex; justify-content:space-between; align-items:center;
+    }
+    .miniTrack{ display:flex; flex-direction:column; gap:4px; }
+    .miniRow{
+      border-radius:8px;
+      border:1px solid rgba(255,255,255,.12);
+      background: rgba(255,255,255,.05);
+      min-height:16px;
+      padding:2px 6px;
+      cursor:pointer;
+      font-size:10px;
+      color:rgba(214,247,255,.78);
+      display:flex; align-items:center; justify-content:space-between;
+      transition: border-color .2s ease, box-shadow .2s ease;
+    }
+    .miniRow:hover{ border-color: rgba(0,245,255,.35); }
+    .miniRow.active{
+      border-color: rgba(0,245,255,.55);
+      box-shadow: 0 0 0 1px rgba(0,245,255,.22), 0 0 16px rgba(0,245,255,.16);
+    }
+    .miniRow[data-tone="matrix"]{ background: rgba(0,245,255,.10); }
+    .miniRow[data-tone="side"]{ background: rgba(181,139,255,.12); }
+    .miniRow[data-tone="priority"]{ background: rgba(255,90,122,.14); }
+    .miniRow[data-tone="docs"]{ background: rgba(255,204,102,.14); }
+    .miniRow small{ opacity:.72; }
+    @media (max-width:1060px){ .miniMap{ display:none; } }
+
     /* dialogs */
     dialog{
       border:none;
@@ -997,10 +1047,10 @@
         <div class="meta"><span class="chip" id="focusChip">Technique: none</span></div>
       </div>
 
-      <div class="sideBody">
-        <div class="box" id="selDocBox" style="display:none;"></div>
+      <div class="sideBody" id="sideBody">
+        <div class="box selDocPanel" id="selDocBox" style="display:none;"></div>
 
-        <div class="box" id="aggBox">
+        <div class="box aggPanel" id="aggBox">
           <h3>Aggregations <span class="chip" id="aggChip">—</span></h3>
           <div class="kv" id="aggKv"></div>
           <div class="filters">
@@ -1011,7 +1061,7 @@
 
 
 
-        <div class="box" id="prioBox">
+        <div class="box prioPanel" id="prioBox">
           <h3>Operational Priorities <span class="chip" id="prioChip">—</span></h3>
           <div class="docList" id="prioList"></div>
           <div class="muted" id="prioEmpty" style="display:none; margin-top:8px;">No priorities for current filters.</div>
@@ -1022,14 +1072,14 @@
         </div>
 
         <div class="tabPane active" id="tabFocus">
-          <div class="box" id="focusBox">
+          <div class="box focusPanel" id="focusBox">
             <h3>Technique Focus <span class="chip" id="focusCount">—</span></h3>
             <div class="kv" id="focusKv"></div>
           </div>
         </div>
 
         <div class="tabPane desktopOnly" id="tabDocs">
-          <div class="box">
+          <div class="box docsPanel" id="docsBox">
             <h3>Documents <span class="chip" id="docCount">—</span></h3>
             <div class="docList" id="docList"></div>
             <div class="muted" id="emptyDocs" style="display:none; margin-top:8px;">No documents match the current filters.</div>
@@ -1038,6 +1088,21 @@
       </div>
     </aside>
   </main>
+
+  <nav class="miniMap" id="miniMap" aria-label="Page minimap">
+    <div class="miniMapHd">
+      <span>MINIMAP</span>
+      <small>Overview</small>
+    </div>
+    <div class="miniTrack" id="miniTrack">
+      <button class="miniRow" data-target="matrixPanel" data-tone="matrix">Navigator <small>left</small></button>
+      <button class="miniRow" data-target="pathStripHost" data-tone="matrix">Attack Path <small>top</small></button>
+      <button class="miniRow" data-target="aggBox" data-tone="side">Aggregations <small>side</small></button>
+      <button class="miniRow" data-target="prioBox" data-tone="priority">Priorities <small>side</small></button>
+      <button class="miniRow" data-target="focusBox" data-tone="side">Focus <small>side</small></button>
+      <button class="miniRow" data-target="docsBox" data-tone="docs">Documents <small>side</small></button>
+    </div>
+  </nav>
 </div>
 
 <!-- DOC MODAL -->
@@ -1309,8 +1374,8 @@ function ageBadgeFrom(iso){
   if(hours >= 24) return `${Math.floor(hours/24)}d`;
   return `${hours}h`;
 }
-function isRecent48h(doc){
-  return ageHoursFrom(doc?.Timestamp) <= 48;
+function isRecent24h(doc){
+  return ageHoursFrom(doc?.Timestamp) <= 24;
 }
 
 function sevPass(doc){
@@ -1822,12 +1887,12 @@ function renderOperationalPriorities(docs){
 
   for(const d of ranked){
     const item = document.createElement("div");
-    item.className = "docItem" + (state.selectedDocId===d.id ? " active" : "") + (isRecent48h(d) ? " hotGlow" : "");
+    item.className = "docItem" + (state.selectedDocId===d.id ? " active" : "") + (isRecent24h(d) ? " hotGlow" : "");
     const tags = Array.isArray(d.operational_tags) ? d.operational_tags : [];
     const next = (d.Detection_Rules_And_Indicators||[])[0] || (d.Post_Incident_Recommendations||[])[0] || "Review attack path runbook";
     item.innerHTML = `
       <div class="row">
-        <div class="t">${sevPill(d.Severity)} ${escapeHtml(shortTitle(d.Title, 56))} ${isRecent48h(d) ? `<span class="pill recentBadge">NEW ≤48h</span>` : ``}</div>
+        <div class="t">${sevPill(d.Severity)} ${escapeHtml(shortTitle(d.Title, 56))} ${isRecent24h(d) ? `<span class="pill recentBadge">NEW ≤24h</span>` : ``}</div>
         <div class="ts">P${Number(d.priority_score||0)} • R${Number(d.relevance_score||0)}</div>
       </div>
       <div class="m">${escapeHtml(shortTitle(next, 130))}</div>
@@ -1957,10 +2022,10 @@ function renderDocList(docs, hostEl, emptyEl, countChipEl){
 
   for(const d of sorted){
     const item = document.createElement("div");
-    item.className = "docItem" + (state.selectedDocId===d.id ? " active" : "") + (isRecent48h(d) ? " hotGlow" : "");
+    item.className = "docItem" + (state.selectedDocId===d.id ? " active" : "") + (isRecent24h(d) ? " hotGlow" : "");
     item.innerHTML = `
       <div class="row">
-        <div class="t">${sevPill(d.Severity)} ${escapeHtml(d.Title)} ${isRecent48h(d) ? `<span class="pill recentBadge">NEW ≤48h</span>` : ``}</div>
+        <div class="t">${sevPill(d.Severity)} ${escapeHtml(d.Title)} ${isRecent24h(d) ? `<span class="pill recentBadge">NEW ≤24h</span>` : ``}</div>
         <div class="ts">${fmtDate(d.Timestamp)}</div>
       </div>
       <div class="m">${escapeHtml(shortTitle(d.doc_summary || "", 140))}</div>
@@ -2748,6 +2813,46 @@ function loadHash(){
 }
 window.addEventListener("hashchange", ()=>{ loadHash(); render(); });
 window.addEventListener("resize", ()=>{ if(state.pathOn) render(); });
+
+/* Minimap */
+function scrollMiniTarget(targetId){
+  const el = $(targetId);
+  if(!el) return;
+  const sideTargets = new Set(["aggBox","prioBox","focusBox","docsBox"]);
+  if(sideTargets.has(targetId)){
+    $("sideBody").scrollTo({ top: Math.max(0, el.offsetTop - 12), behavior: "smooth" });
+    return;
+  }
+  if(targetId === "pathStripHost"){
+    $("matrixPanel").querySelector(".matrixBody").scrollTo({ top: 0, behavior: "smooth" });
+    return;
+  }
+  el.scrollIntoView({ behavior:"smooth", block:"start" });
+}
+
+function setMiniActiveByScroll(){
+  const rows = Array.from(document.querySelectorAll("#miniTrack .miniRow"));
+  rows.forEach(r=>r.classList.remove("active"));
+  const sideBody = $("sideBody");
+  const scrollTop = sideBody.scrollTop;
+  const ordered = ["aggBox","prioBox","focusBox","docsBox"];
+  let activeId = "matrixPanel";
+  for(const id of ordered){
+    const el = $(id);
+    if(!el || el.offsetParent === null) continue;
+    if(scrollTop >= (el.offsetTop - 30)) activeId = id;
+  }
+  const row = rows.find(r=>r.getAttribute("data-target")===activeId) || rows[0];
+  if(row) row.classList.add("active");
+}
+
+$("miniTrack").addEventListener("click", (e)=>{
+  const btn = e.target.closest(".miniRow");
+  if(!btn) return;
+  scrollMiniTarget(btn.getAttribute("data-target"));
+});
+$("sideBody").addEventListener("scroll", setMiniActiveByScroll, {passive:true});
+setMiniActiveByScroll();
 
 /* Init */
 (async function init(){
