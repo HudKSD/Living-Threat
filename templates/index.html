@@ -5,10 +5,10 @@
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
   <meta name="theme-color" content="#06131a" />
   <meta name="description" content="A living threat repository where real-world incidents are continuously mapped to ATT&CK tactics and techniques, in a Navigator-style view." />
-  <link rel="canonical" href="https://YOUR-DOMAIN.com/your-page" />
+  <link rel="canonical" href="https://living-threat.rabitanoor.com" />
 
   <meta property="og:type" content="website" />
-  <meta property="og:url" content="https://YOUR-DOMAIN.com/your-page" />
+  <meta property="og:url" content="https://living-threat.rabitanoor.com" />
   <meta property="og:title" content="Living Threat Repository" />
   <meta property="og:description" content="Asset-relevant threat intel mapped to ATT&CK with evidence." />
 
@@ -294,38 +294,6 @@
     .matrixPanel .panelHd{
       background: linear-gradient(180deg, rgba(0,245,255,.06), rgba(0,0,0,.0));
     }
-    .timelineWrap{
-      border-bottom:1px solid rgba(0,245,255,.12);
-      background: linear-gradient(180deg, rgba(0,245,255,.04), rgba(0,0,0,.04));
-      padding:10px 12px 8px;
-    }
-    .timelineTop{
-      display:flex; align-items:center; justify-content:space-between; gap:10px;
-      margin-bottom:8px;
-    }
-    .timelineTop b{ font-size:12px; letter-spacing:.15px; }
-    .insightGrid{ display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:8px; }
-    .insightCard{
-      border:1px solid rgba(255,255,255,.10);
-      background: rgba(0,0,0,.14);
-      border-radius: 10px;
-      padding:8px;
-      min-height:96px;
-    }
-    .insightTitle{ font-family:var(--mono); font-size:10px; color:rgba(214,247,255,.75); margin-bottom:4px; }
-    .timelineChart{ position:relative; height:64px; }
-    .timelineSvg{ width:100%; height:64px; display:block; }
-    .timelineGrid line{ stroke: rgba(255,255,255,.10); stroke-width:1; }
-    .timelineArea{ fill: rgba(0,245,255,.14); }
-    .timelineLine{ fill:none; stroke: rgba(0,245,255,.88); stroke-width:2.2; }
-    .timelineDot{ fill: rgba(119,255,176,.92); }
-    .timelineDot.hot{ fill: rgba(255,90,122,.95); filter: drop-shadow(0 0 5px rgba(255,90,122,.5)); }
-    .timelineAxis{ margin-top:4px; display:flex; justify-content:space-between; gap:10px; font-family:var(--mono); font-size:10px; color:rgba(214,247,255,.62); }
-    .miniBars{ display:flex; align-items:flex-end; gap:5px; height:64px; }
-    .miniBars .b{ flex:1; border-radius:6px 6px 3px 3px; min-height:6px; border:1px solid rgba(255,255,255,.12); }
-    .miniLegend{ margin-top:4px; font-family:var(--mono); font-size:10px; color:rgba(214,247,255,.68); display:flex; gap:8px; flex-wrap:wrap; }
-    .stack{ display:flex; width:100%; height:16px; border-radius:999px; overflow:hidden; border:1px solid rgba(255,255,255,.10); }
-    .stack > span{ height:100%; }
 
     .matrixBody{
       height: calc(100vh - 84px - 14px - 14px);
@@ -1142,31 +1110,6 @@
 
   <main class="main">
     <section class="panel matrixPanel" id="matrixPanel">
-      <div class="timelineWrap" id="timelineWrap">
-        <div class="timelineTop">
-          <b>Event Timeline</b>
-          <span class="chip" id="timelineMeta">—</span>
-        </div>
-        <div class="insightGrid">
-          <div class="insightCard">
-            <div class="insightTitle">Events over time</div>
-            <div class="timelineChart" id="timelineChart"></div>
-            <div class="timelineAxis"><span id="timelineStart">—</span><span id="timelineEnd">—</span></div>
-          </div>
-          <div class="insightCard">
-            <div class="insightTitle">Severity mix</div>
-            <div id="sevMixChart"></div>
-          </div>
-          <div class="insightCard">
-            <div class="insightTitle">Top tactics (current filter)</div>
-            <div id="tacticChart"></div>
-          </div>
-          <div class="insightCard">
-            <div class="insightTitle">Recency buckets</div>
-            <div id="recencyChart"></div>
-          </div>
-        </div>
-      </div>
       <div class="panelHd">
         <div class="h">Navigator <span class="chip" id="matrixMeta">—</span></div>
         <div class="meta" id="selMeta">Loading…</div>
@@ -1964,77 +1907,6 @@ function buildHuntPack(doc){
   return { checks, post, exfil, pivots, coverage, phases };
 }
 
-function renderTimeline(docs){
-  const timelineHost = $("timelineChart");
-  if(!timelineHost) return;
-
-  const binCount = state.allTime ? 21 : Math.max(7, Math.min(21, state.rangeDays));
-  const dayMs = 24*60*60*1000;
-  const end = new Date(Date.UTC(uiNow.getUTCFullYear(), uiNow.getUTCMonth(), uiNow.getUTCDate(), 23,59,59,999));
-  const start = new Date(end.getTime() - (binCount-1)*dayMs);
-  const startDayMs = Date.UTC(start.getUTCFullYear(), start.getUTCMonth(), start.getUTCDate());
-
-  const counts = Array(binCount).fill(0);
-  for(const d of docs){
-    const dt = parseDateSafe(d.Timestamp);
-    if(!dt) continue;
-    const dayMsTs = Date.UTC(dt.getUTCFullYear(), dt.getUTCMonth(), dt.getUTCDate());
-    const idx = Math.floor((dayMsTs - startDayMs)/dayMs);
-    if(idx>=0 && idx<binCount) counts[idx] += 1;
-  }
-
-  const maxC = Math.max(1, ...counts);
-  const w = 620, h = 64, p = 8;
-  const xFor = (i)=> p + (i*(w-2*p))/Math.max(1, binCount-1);
-  const yFor = (c)=> h - p - ((c/maxC)*(h-2*p));
-  const points = counts.map((c,i)=>`${xFor(i)},${yFor(c)}`).join(" ");
-  const area = `${xFor(0)},${h-p} ${points} ${xFor(binCount-1)},${h-p}`;
-  const hotThreshold = Math.max(2, Math.ceil(maxC*0.7));
-  timelineHost.innerHTML = `
-    <svg class="timelineSvg" viewBox="0 0 ${w} ${h}" preserveAspectRatio="none" role="img" aria-label="Event timeline line chart">
-      <g class="timelineGrid"><line x1="${p}" y1="${h-p}" x2="${w-p}" y2="${h-p}"></line><line x1="${p}" y1="${h/2}" x2="${w-p}" y2="${h/2}"></line></g>
-      <polygon class="timelineArea" points="${area}"></polygon>
-      <polyline class="timelineLine" points="${points}"></polyline>
-      ${counts.map((c,i)=>`<circle class="timelineDot ${c>=hotThreshold?"hot":""}" cx="${xFor(i)}" cy="${yFor(c)}" r="2.6"><title>${fmtDate(new Date(start.getTime()+i*dayMs).toISOString())} • ${c} event${c===1?"":"s"}</title></circle>`).join("")}
-    </svg>`;
-  $("timelineStart").textContent = fmtDate(start.toISOString());
-  $("timelineEnd").textContent = fmtDate(end.toISOString());
-
-  const sevMap = {Critical:0, High:0, Moderate:0, Low:0};
-  for(const d of docs){ sevMap[normalizeSeverity(d.Severity)] = (sevMap[normalizeSeverity(d.Severity)]||0)+1; }
-  const total = Math.max(1, docs.length);
-  const sevCfg = [["Critical","rgba(255,90,122,.78)"],["High","rgba(255,204,102,.78)"],["Moderate","rgba(84,166,255,.78)"],["Low","rgba(119,255,176,.72)"]];
-  $("sevMixChart").innerHTML = `<div class="stack">${sevCfg.map(([k,c])=>`<span style="width:${(100*sevMap[k]/total).toFixed(1)}%; background:${c}" title="${k}: ${sevMap[k]}"></span>`).join("")}</div><div class="miniLegend">${sevCfg.map(([k])=>`${k}: ${sevMap[k]}`).join(" • ")}</div>`;
-
-  const tactCounts = {};
-  for(const d of docs){
-    const seen = new Set();
-    for(const tid of (d.Techniques||[])){
-      const t = TECH[tid]?.tactic || "Other";
-      if(seen.has(t)) continue;
-      seen.add(t);
-      tactCounts[t] = (tactCounts[t]||0)+1;
-    }
-  }
-  const topTac = Object.entries(tactCounts).sort((a,b)=>b[1]-a[1]).slice(0,5);
-  const tacMax = Math.max(1, ...topTac.map(x=>x[1]), 1);
-  $("tacticChart").innerHTML = `<div class="miniBars">${topTac.map(([k,v])=>`<div class="b" style="height:${Math.max(8,Math.round((v/tacMax)*60))}px; background:rgba(181,139,255,.62)" title="${k}: ${v}"></div>`).join("")}</div><div class="miniLegend">${topTac.map(([k,v])=>`${shortTitle(k,12)} ${v}`).join(" • ") || "No tactic data"}</div>`;
-
-  const rec = {"≤24h":0,"2-7d":0,"8-30d":0,">30d":0};
-  for(const d of docs){
-    const h = ageHoursFrom(d.Timestamp);
-    if(h<=24) rec["≤24h"] += 1;
-    else if(h<=24*7) rec["2-7d"] += 1;
-    else if(h<=24*30) rec["8-30d"] += 1;
-    else rec[">30d"] += 1;
-  }
-  const recItems = Object.entries(rec);
-  const recMax = Math.max(1, ...recItems.map(x=>x[1]));
-  $("recencyChart").innerHTML = `<div class="miniBars">${recItems.map(([k,v],i)=>`<div class="b" style="height:${Math.max(8,Math.round((v/recMax)*60))}px; background:${["rgba(255,90,122,.72)","rgba(255,204,102,.72)","rgba(84,166,255,.72)","rgba(119,255,176,.70)"][i]}" title="${k}: ${v}"></div>`).join("")}</div><div class="miniLegend">${recItems.map(([k,v])=>`${k} ${v}`).join(" • ")}</div>`;
-
-  $("timelineMeta").textContent = `${docs.length} events • multi-view`;
-}
-
 /* =========================================================
    RENDER
    ========================================================= */
@@ -2064,7 +1936,6 @@ function render(){
   renderOperationalPriorities(docs);
   renderTechniqueFocus(docs, techStats);
   renderPathStrip(selDocNow);
-  renderTimeline(docs);
   renderMatrix(docs, techStats, selDocNow);
 
   renderDocList(docs, $("docList"), $("emptyDocs"), $("docCount"));
