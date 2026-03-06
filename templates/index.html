@@ -249,7 +249,7 @@
     .main{
       padding:12px clamp(14px, 2vw, 28px) 14px;
       display:grid;
-      grid-template-columns: 1fr 390px;
+      grid-template-columns: 360px 1fr 360px;
       gap:12px;
       min-height:0;
     }
@@ -322,6 +322,29 @@
       margin-bottom:6px;
     }
     .matrixNavTrack{ display:flex; gap:6px; flex-wrap:wrap; }
+    .matrixPriority{
+      margin-top:8px;
+      border-top:1px solid rgba(0,245,255,.12);
+      padding-top:8px;
+    }
+    .matrixPriority .hd{
+      font-family:var(--mono);
+      font-size:10px;
+      color:rgba(214,247,255,.74);
+      margin-bottom:6px;
+    }
+    .matrixPriorityTrack{ display:flex; gap:6px; flex-wrap:wrap; }
+    .prioTechBtn{
+      border:1px solid rgba(255,204,102,.28);
+      border-radius:999px;
+      padding:4px 8px;
+      background: rgba(255,204,102,.10);
+      color:rgba(255,239,199,.95);
+      font-size:10.5px;
+      font-family:var(--mono);
+      cursor:pointer;
+    }
+    .prioTechBtn:hover{ border-color: rgba(255,204,102,.50); }
     .matrixNavDot{
       border:1px solid rgba(0,245,255,.16);
       border-radius:999px;
@@ -345,6 +368,20 @@
       min-height: 420px;
       overflow:auto;
       padding:12px;
+    }
+    .rightSidePanel{ background: rgba(28,20,8,.56); border-color: rgba(255,204,102,.30); }
+    .rightSidePanel .panelHd{
+      border-bottom-color: rgba(255,204,102,.22);
+      background: linear-gradient(180deg, rgba(255,204,102,.10), rgba(0,0,0,.0));
+    }
+    .rightSideBody{
+      height: calc(100vh - 84px - 14px - 14px);
+      min-height: 420px;
+      overflow:auto;
+      padding:12px;
+    }
+    @media (max-width:1060px){
+      .rightSideBody{ height:auto; min-height:unset; }
     }
     @media (max-width:1060px){
       .sideBody{ height:auto; min-height:unset; }
@@ -497,6 +534,10 @@
       padding-left: 7px;
     }
     .techCard.dim{ filter: saturate(.65) opacity(.60); }
+    .techCard.recommended{
+      border-color: rgba(255,204,102,.52);
+      box-shadow: 0 0 0 1px rgba(255,204,102,.24), 0 0 20px rgba(255,204,102,.18);
+    }
 
     .row1{ display:flex; justify-content:space-between; align-items:center; gap:8px; margin-bottom:6px; min-width:0; }
     .tid{
@@ -511,6 +552,46 @@
     }
     .score{ font-family:var(--mono); font-size:11px; color:rgba(214,247,255,.70); white-space:nowrap; }
     .name{ font-size:12.6px; font-weight:900; line-height:1.2; overflow:hidden; text-overflow:ellipsis; }
+    .cardDocBtn{
+      margin-left:auto;
+      width:22px;
+      height:22px;
+      border-radius:8px;
+      border:1px solid rgba(255,255,255,.16);
+      background: rgba(0,0,0,.20);
+      color:rgba(214,247,255,.90);
+      display:grid;
+      place-items:center;
+      cursor:pointer;
+      font-size:12px;
+      line-height:1;
+    }
+    .cardDocBtn:hover{ border-color: rgba(0,245,255,.36); }
+    .cardDocMenu{
+      margin-top:7px;
+      border:1px solid rgba(0,245,255,.18);
+      border-radius:12px;
+      background: rgba(2,12,18,.85);
+      padding:6px;
+      display:flex;
+      flex-direction:column;
+      gap:5px;
+      max-height:180px;
+      overflow:auto;
+    }
+    .cardDocItem{
+      width:100%;
+      text-align:left;
+      border:1px solid rgba(255,255,255,.10);
+      border-radius:8px;
+      background: rgba(255,255,255,.05);
+      color:rgba(214,247,255,.88);
+      font-size:11px;
+      line-height:1.25;
+      padding:6px 7px;
+      cursor:pointer;
+    }
+    .cardDocItem:hover{ border-color: rgba(0,245,255,.34); }
 
     .pill{
       font-family:var(--mono);
@@ -742,6 +823,12 @@
       box-shadow: var(--shadow);
       backdrop-filter: blur(8px);
       padding:8px;
+    }
+    .miniMap.secondary{
+      right: auto;
+      left: 14px;
+      border-color: rgba(255,204,102,.32);
+      background: rgba(16,12,4,.88);
     }
     .miniMapHd{
       font-family:var(--mono);
@@ -1109,6 +1196,27 @@
   </header>
 
   <main class="main">
+    <aside class="panel rightSidePanel" id="sidePanelRight">
+      <div class="panelHd">
+        <div class="h">Operations Sidebar <span class="chip" id="sideMetaRight">â€”</span></div>
+        <div class="meta"><span class="chip">Priorities + Documents</span></div>
+      </div>
+
+      <div class="rightSideBody" id="sideBodyRight">
+        <div class="box prioPanel" id="prioBox">
+          <h3>Operational Priorities <span class="chip" id="prioChip">â€”</span></h3>
+          <div class="docList" id="prioList"></div>
+          <div class="muted" id="prioEmpty" style="display:none; margin-top:8px;">No priorities for current filters.</div>
+        </div>
+
+        <div class="box docsPanel" id="docsBox">
+          <h3>Documents <span class="chip" id="docCount">â€”</span></h3>
+          <div class="docList" id="docList"></div>
+          <div class="muted" id="emptyDocs" style="display:none; margin-top:8px;">No documents match the current filters.</div>
+        </div>
+      </div>
+    </aside>
+
     <section class="panel matrixPanel" id="matrixPanel">
       <div class="panelHd">
         <div class="h">Navigator <span class="chip" id="matrixMeta">â€”</span></div>
@@ -1119,6 +1227,10 @@
         <div class="matrixNavMap" id="matrixNavMap">
           <div class="hd">Navigator Minimap â€¢ click tactic to jump</div>
           <div class="matrixNavTrack" id="matrixNavTrack"></div>
+          <div class="matrixPriority" id="matrixPriority">
+            <div class="hd">Start Here â€¢ prioritized techniques from current dataset</div>
+            <div class="matrixPriorityTrack" id="matrixPriorityTrack"></div>
+          </div>
         </div>
         <div id="pathStripHost"></div>
         <div class="tacticGrid" id="matrix"></div>
@@ -1152,31 +1264,9 @@
           </div>
         </div>
 
-
-
-        <div class="box prioPanel" id="prioBox">
-          <h3>Operational Priorities <span class="chip" id="prioChip">â€”</span></h3>
-          <div class="docList" id="prioList"></div>
-          <div class="muted" id="prioEmpty" style="display:none; margin-top:8px;">No priorities for current filters.</div>
-        </div>
-        <div class="tabsRow desktopOnly">
-          <button class="tabBtn active" id="tabBtnFocus" data-tab="focus">Focus</button>
-          <button class="tabBtn" id="tabBtnDocs" data-tab="docs">Documents</button>
-        </div>
-
-        <div class="tabPane active" id="tabFocus">
-          <div class="box focusPanel" id="focusBox">
-            <h3>Technique Focus <span class="chip" id="focusCount">â€”</span></h3>
-            <div class="kv" id="focusKv"></div>
-          </div>
-        </div>
-
-        <div class="tabPane desktopOnly" id="tabDocs">
-          <div class="box docsPanel" id="docsBox">
-            <h3>Documents <span class="chip" id="docCount">â€”</span></h3>
-            <div class="docList" id="docList"></div>
-            <div class="muted" id="emptyDocs" style="display:none; margin-top:8px;">No documents match the current filters.</div>
-          </div>
+        <div class="box focusPanel" id="focusBox">
+          <h3>Technique Focus <span class="chip" id="focusCount">â€”</span></h3>
+          <div class="kv" id="focusKv"></div>
         </div>
       </div>
     </aside>
@@ -1191,9 +1281,19 @@
       <button class="miniRow" data-target="matrixPanel" data-tone="matrix">Navigator <small>left</small></button>
       <button class="miniRow" data-target="pathStripHost" data-tone="matrix">Attack Path <small>top</small></button>
       <button class="miniRow" data-target="aggBox" data-tone="side">Aggregations <small>side</small></button>
-      <button class="miniRow" data-target="prioBox" data-tone="priority">Priorities <small>side</small></button>
       <button class="miniRow" data-target="focusBox" data-tone="side">Focus <small>side</small></button>
-      <button class="miniRow" data-target="docsBox" data-tone="docs">Documents <small>side</small></button>
+    </div>
+  </nav>
+
+  <nav class="miniMap secondary" id="miniMapRight" aria-label="Operations minimap">
+    <div class="miniMapHd">
+      <span>MINIMAP</span>
+      <small>Operations</small>
+    </div>
+    <div class="miniTrack" id="miniTrackRight">
+      <button class="miniRow" data-target="matrixPanel" data-tone="matrix">Navigator <small>center</small></button>
+      <button class="miniRow" data-target="prioBox" data-tone="priority">Priorities <small>right</small></button>
+      <button class="miniRow" data-target="docsBox" data-tone="docs">Documents <small>right</small></button>
     </div>
   </nav>
 </div>
@@ -1365,6 +1465,8 @@ const STAGE_COL = {
   "Reconnaissance":"#54a6ff","Weaponization":"#b58bff","Delivery":"#00f5ff","Exploitation":"#ffcc66",
   "Installation":"#77ffb0","Command and Control":"#ff5a7a","Actions on Objectives":"#ff7a59"
 };
+
+const MAX_DOCUMENT_PANEL_ITEMS = 20;
 
 const state = {
   rangeDays: 7,
@@ -1551,6 +1653,46 @@ function stageOfTechInDoc(doc, tid){
   return null;
 }
 
+function techniqueMetaForCard(docs, tid){
+  for(const d of (docs||[])){
+    for(const a of (d.Analyses||[])){
+      const techniques = asArray(a.Techniques || []);
+      if(!techniques.includes(tid)) continue;
+      for(const t of asArray(a.Technique_Details || [])){
+        if(!t || typeof t !== "object") continue;
+        const techniqueId = String(t.technique_id || "").trim() || tid;
+        const techniqueName = String(t.technique_name || "").trim();
+        const techniqueDescription = String(t.technique_description || "").trim();
+        if(techniqueId || techniqueName || techniqueDescription){
+          return {
+            technique_id: techniqueId || "â€”",
+            technique_name: techniqueName || (TECH[tid]?.name || "â€”"),
+            technique_description: techniqueDescription || "â€”"
+          };
+        }
+      }
+      return {
+        technique_id: tid || "â€”",
+        technique_name: (TECH[tid]?.name || "â€”"),
+        technique_description: (TECH[tid]?.description || TECH[tid]?.technique_description || "â€”")
+      };
+    }
+  }
+  return {
+    technique_id: tid || "â€”",
+    technique_name: (TECH[tid]?.name || "â€”"),
+    technique_description: (TECH[tid]?.description || TECH[tid]?.technique_description || "â€”")
+  };
+}
+
+function toggleDocSelection(docId){
+  const wasSelected = (state.selectedDocId===docId);
+  state.selectedDocId = wasSelected ? null : docId;
+  if(!state.selectedDocId) state.pathOn = false;
+  syncHash();
+  render();
+}
+
 function pickTopN(mapObj, n=5){
   return Object.entries(mapObj).sort((a,b)=>b[1]-a[1]).slice(0,n);
 }
@@ -1568,6 +1710,46 @@ function heatBg(score, max){
   const b = Math.round(255*(1-t) + 176*t);
   return `rgba(${r},${g},${b},${0.10 + 0.18*t})`;
 }
+
+function rankedTechniquesForGuidance(techStats){
+  const ranked = Object.entries(techStats).map(([tid, s])=>{
+    const topDoc = (s.docs||[]).slice().sort((a,b)=>docRankScore(b)-docRankScore(a))[0] || null;
+    const topDocScore = topDoc ? docRankScore(topDoc) : 0;
+    const score = (Number(s.weight||0) * 4) + (Number(s.count||0) * 2) + topDocScore;
+    const meta = TECH[tid] || {};
+    return {
+      tid,
+      score,
+      tactic: meta.tactic || "Other",
+      name: meta.name || tid,
+      count: Number(s.count||0),
+      weight: Number(s.weight||0)
+    };
+  });
+  return ranked.sort((a,b)=>b.score-a.score);
+}
+
+function renderPriorityGuide(techStats){
+  const host = $("matrixPriorityTrack");
+  if(!host) return [];
+  const ranked = rankedTechniquesForGuidance(techStats).slice(0,10);
+  host.innerHTML = ranked.length
+    ? ranked.map((r, i)=>`<button class="prioTechBtn" type="button" data-prio-tech="${escapeHtml(r.tid)}" title="${escapeHtml(r.name)}">#${i+1} ${escapeHtml(r.tid)} (${r.count})</button>`).join("")
+    : `<span class="muted" style="font-size:11px;">No technique guidance for current filters.</span>`;
+
+  host.querySelectorAll("[data-prio-tech]").forEach(btn=>{
+    btn.addEventListener("click", ()=>{
+      const tid = btn.getAttribute("data-prio-tech");
+      state.selectedTechId = tid;
+      syncHash();
+      render();
+      const target = document.querySelector(`.techCard[data-tech-id="${CSS.escape(tid)}"]`);
+      if(target) target.scrollIntoView({behavior:"smooth", block:"center"});
+    });
+  });
+  return ranked;
+}
+
 function sevPill(sev){
   const n = normalizeSeverity(sev);
   const cls = (n==="High"||n==="Critical") ? "pink" : (n==="Moderate" ? "amber" : "green");
@@ -1915,6 +2097,7 @@ function render(){
   const techStats = buildStats(docs);
 
   $("sideMeta").textContent = `${docs.length} docs`;
+  $("sideMetaRight").textContent = `${docs.length} docs`;
   const uniqueTech = uniq(docs.flatMap(d=>d.Techniques||[])).length;
   $("matrixMeta").textContent = `${docs.length} docs â€¢ ${uniqueTech} techniques`;
 
@@ -2147,7 +2330,8 @@ function renderTechniqueFocus(docs, techStats){
 function renderDocList(docs, hostEl, emptyEl, countChipEl){
   hostEl.innerHTML = "";
   emptyEl.style.display = docs.length ? "none" : "block";
-  countChipEl.textContent = `${docs.length}`;
+  const shownCount = Math.min(docs.length, MAX_DOCUMENT_PANEL_ITEMS);
+  countChipEl.textContent = `${shownCount}/${docs.length}`;
 
   const sorted = docs.slice().sort((a,b)=>{
     const da = parseDateSafe(a.Timestamp)?.getTime() || 0;
@@ -2155,7 +2339,7 @@ function renderDocList(docs, hostEl, emptyEl, countChipEl){
     return db - da;
   });
 
-  for(const d of sorted){
+  for(const d of sorted.slice(0, MAX_DOCUMENT_PANEL_ITEMS)){
     const item = document.createElement("div");
     item.className = "docItem" + (state.selectedDocId===d.id ? " active" : "") + (isRecent24h(d) ? " hotGlow" : "");
     item.innerHTML = `
@@ -2489,6 +2673,8 @@ function renderHuntPackHTML(doc, pack){
 function renderMatrix(docs, techStats, selDoc){
   const host = $("matrix");
   host.innerHTML = "";
+  const guidance = renderPriorityGuide(techStats);
+  const recommendedIds = new Set(guidance.slice(0,3).map(x=>x.tid));
 
   const byTactic = {};
   for(const tid of Object.keys(techStats)){
@@ -2496,7 +2682,12 @@ function renderMatrix(docs, techStats, selDoc){
     const tac = meta.tactic || "Other";
     byTactic[tac] = byTactic[tac] || [];
     const s = techStats[tid];
-    byTactic[tac].push({tid, name: meta.name, tactic: tac, ...s});
+    byTactic[tac].push({
+      tid,
+      name: meta.name,
+      tactic: tac,
+      ...s
+    });
   }
 
   const maxW = Math.max(0, ...Object.values(techStats).map(s=>s.weight));
@@ -2546,11 +2737,12 @@ function renderMatrix(docs, techStats, selDoc){
     }
 
     for(const t of list){
-      const topDocs = (t.docs||[]).slice().sort((a,b)=>docRankScore(b)-docRankScore(a)).slice(0,5);
-
+      const topDocs = (t.docs||[]).slice().sort((a,b)=>docRankScore(b)-docRankScore(a)).slice(0,10);
       const card = document.createElement("div");
       card.className = "techCard";
+      card.setAttribute("data-tech-id", t.tid);
       if(state.selectedTechId===t.tid) card.classList.add("active");
+      if(recommendedIds.has(t.tid)) card.classList.add("recommended");
       card.style.background = heatBg(t.weight, maxW);
 
       const isDocHit = !!(selDoc && state.huntOn && (selDoc.Techniques||[]).includes(t.tid));
@@ -2565,31 +2757,44 @@ function renderMatrix(docs, techStats, selDoc){
       if(selDoc && state.huntOn && !isDocHit) card.classList.add("dim");
       if(selDoc && state.pathOn && !isPathHit) card.classList.add("dim");
 
+      const techMeta = techniqueMetaForCard(t.docs, t.tid);
+
       card.innerHTML = `
         <div class="row1">
-          <span class="tid">${t.tid}</span>
+          <span class="tid">${escapeHtml(techMeta.technique_id)}</span>
           <span class="score">w:${t.weight} â€¢ n:${t.count}</span>
+          <button class="cardDocBtn" type="button" title="Show top documents" data-doc-toggle>📄</button>
         </div>
-        <div class="name" title="${escapeHtml(t.name || t.tid)}">${escapeHtml(t.name || t.tid)}</div>
-        <div style="margin-top:7px; display:flex; gap:6px; flex-wrap:wrap;">
-          ${topDocs.slice(0,2).map(d=>`<span class="pill ${facetToneBySeverity(d.Severity)}" style="cursor:pointer; max-width:100%;" data-doc="${d.id}" title="${escapeHtml(d.Title)}\n${escapeHtml(firstActionHint(d))}">[${escapeHtml(normalizeSeverity(d.Severity))}][P${Number(d.priority_score||0)}][${ageBadgeFrom(d.Timestamp)}] ${escapeHtml(shortTitle(d.Title, 18))}</span>`).join("")}
+        <div style="font-weight:900; font-size:12px; line-height:1.25; margin-bottom:4px;">${escapeHtml(techMeta.technique_name)}</div>
+        <div style="font-size:11px; line-height:1.25; color:rgba(210,222,255,.86);">${escapeHtml(shortTitle(techMeta.technique_description, 160))}</div>
+        <div class="cardDocMenu" data-doc-menu style="display:none;">
+          ${topDocs.length
+            ? topDocs.map(d=>`<button class="cardDocItem" type="button" data-doc-id="${escapeHtml(d.id)}" title="${escapeHtml(d.Title)}">${escapeHtml(shortTitle(d.Title, 80))}</button>`).join("")
+            : `<div class="muted" style="font-size:11px; padding:4px;">No related documents.</div>`}
         </div>
-        <div style="margin-top:6px; color:rgba(210,222,255,.82); font-size:11px; line-height:1.25;">${topDocs.slice(0,1).map(d=>escapeHtml(shortTitle(firstActionHint(d), 84))).join("") || ""}</div>
       `;
 
       card.addEventListener("click", (e)=>{
-        const btn = e.target.closest("[data-doc]");
-        if(btn) return;
+        if(e.target.closest("[data-doc-toggle]") || e.target.closest("[data-doc-id]")) return;
         state.selectedTechId = (state.selectedTechId===t.tid) ? null : t.tid;
         syncHash();
         render();
       });
 
-      card.querySelectorAll("[data-doc]").forEach(el=>{
-        el.addEventListener("click", (e)=>{
+      const menu = card.querySelector("[data-doc-menu]");
+      const toggleBtn = card.querySelector("[data-doc-toggle]");
+      if(toggleBtn && menu){
+        toggleBtn.addEventListener("click", (e)=>{
           e.stopPropagation();
-          const doc = DOCS.find(x=>x.id===el.getAttribute("data-doc"));
-          openDocModal(doc);
+          const isOpen = menu.style.display !== "none";
+          menu.style.display = isOpen ? "none" : "flex";
+        });
+      }
+
+      card.querySelectorAll("[data-doc-id]").forEach(btn=>{
+        btn.addEventListener("click", (e)=>{
+          e.stopPropagation();
+          toggleDocSelection(btn.getAttribute("data-doc-id"));
         });
       });
 
@@ -2690,10 +2895,7 @@ $("closeModal").addEventListener("click", ()=> $("docModal").close());
 
 /* Tabs */
 function syncSidebarTabs(){
-  $("tabBtnFocus").classList.toggle("active", state.sideTab==="focus");
-  $("tabBtnDocs").classList.toggle("active", state.sideTab==="docs");
-  $("tabFocus").classList.toggle("active", state.sideTab==="focus");
-  $("tabDocs").classList.toggle("active", state.sideTab==="docs");
+  // Tabs were removed from desktop sidebars; keep as a no-op for compatibility.
 }
 document.querySelectorAll("[data-tab]").forEach(btn=>{
   btn.addEventListener("click", ()=>{
@@ -2990,9 +3192,14 @@ window.addEventListener("resize", ()=>{ if(state.pathOn) render(); });
 function scrollMiniTarget(targetId){
   const el = $(targetId);
   if(!el) return;
-  const sideTargets = new Set(["aggBox","prioBox","focusBox","docsBox"]);
-  if(sideTargets.has(targetId)){
+  const leftSideTargets = new Set(["aggBox","focusBox"]);
+  const rightSideTargets = new Set(["prioBox","docsBox"]);
+  if(leftSideTargets.has(targetId)){
     $("sideBody").scrollTo({ top: Math.max(0, el.offsetTop - 12), behavior: "smooth" });
+    return;
+  }
+  if(rightSideTargets.has(targetId)){
+    $("sideBodyRight").scrollTo({ top: Math.max(0, el.offsetTop - 12), behavior: "smooth" });
     return;
   }
   if(targetId === "pathStripHost"){
@@ -3003,19 +3210,25 @@ function scrollMiniTarget(targetId){
 }
 
 function setMiniActiveByScroll(){
-  const rows = Array.from(document.querySelectorAll("#miniTrack .miniRow"));
-  rows.forEach(r=>r.classList.remove("active"));
-  const sideBody = $("sideBody");
-  const scrollTop = sideBody.scrollTop;
-  const ordered = ["aggBox","prioBox","focusBox","docsBox"];
-  let activeId = "matrixPanel";
-  for(const id of ordered){
-    const el = $(id);
-    if(!el || el.offsetParent === null) continue;
-    if(scrollTop >= (el.offsetTop - 30)) activeId = id;
-  }
-  const row = rows.find(r=>r.getAttribute("data-target")===activeId) || rows[0];
-  if(row) row.classList.add("active");
+  const setActive = (trackId, scrollContainerId, orderedIds)=>{
+    const rows = Array.from(document.querySelectorAll(`#${trackId} .miniRow`));
+    rows.forEach(r=>r.classList.remove("active"));
+    const scroller = $(scrollContainerId);
+    let activeId = "matrixPanel";
+    if(scroller){
+      const scrollTop = scroller.scrollTop;
+      for(const id of orderedIds){
+        const el = $(id);
+        if(!el || el.offsetParent === null) continue;
+        if(scrollTop >= (el.offsetTop - 30)) activeId = id;
+      }
+    }
+    const row = rows.find(r=>r.getAttribute("data-target")===activeId) || rows[0];
+    if(row) row.classList.add("active");
+  };
+
+  setActive("miniTrack", "sideBody", ["aggBox","focusBox"]);
+  setActive("miniTrackRight", "sideBodyRight", ["prioBox","docsBox"]);
 }
 
 $("miniTrack").addEventListener("click", (e)=>{
@@ -3023,7 +3236,13 @@ $("miniTrack").addEventListener("click", (e)=>{
   if(!btn) return;
   scrollMiniTarget(btn.getAttribute("data-target"));
 });
+$("miniTrackRight").addEventListener("click", (e)=>{
+  const btn = e.target.closest(".miniRow");
+  if(!btn) return;
+  scrollMiniTarget(btn.getAttribute("data-target"));
+});
 $("sideBody").addEventListener("scroll", setMiniActiveByScroll, {passive:true});
+$("sideBodyRight").addEventListener("scroll", setMiniActiveByScroll, {passive:true});
 setMiniActiveByScroll();
 
 /* Init */
