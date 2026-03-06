@@ -322,29 +322,6 @@
       margin-bottom:6px;
     }
     .matrixNavTrack{ display:flex; gap:6px; flex-wrap:wrap; }
-    .matrixPriority{
-      margin-top:8px;
-      border-top:1px solid rgba(0,245,255,.12);
-      padding-top:8px;
-    }
-    .matrixPriority .hd{
-      font-family:var(--mono);
-      font-size:10px;
-      color:rgba(214,247,255,.74);
-      margin-bottom:6px;
-    }
-    .matrixPriorityTrack{ display:flex; gap:6px; flex-wrap:wrap; }
-    .prioTechBtn{
-      border:1px solid rgba(255,204,102,.28);
-      border-radius:999px;
-      padding:4px 8px;
-      background: rgba(255,204,102,.10);
-      color:rgba(255,239,199,.95);
-      font-size:10.5px;
-      font-family:var(--mono);
-      cursor:pointer;
-    }
-    .prioTechBtn:hover{ border-color: rgba(255,204,102,.50); }
     .matrixNavDot{
       border:1px solid rgba(0,245,255,.16);
       border-radius:999px;
@@ -534,9 +511,8 @@
       padding-left: 7px;
     }
     .techCard.dim{ filter: saturate(.65) opacity(.60); }
-    .techCard.recommended{
-      border-color: rgba(255,204,102,.52);
-      box-shadow: 0 0 0 1px rgba(255,204,102,.24), 0 0 20px rgba(255,204,102,.18);
+    .techCard.prioritized{
+      transition: transform .06s ease, border-color .2s ease, filter .2s ease, box-shadow .25s ease, background .25s ease;
     }
 
     .row1{ display:flex; justify-content:space-between; align-items:center; gap:8px; margin-bottom:6px; min-width:0; }
@@ -1227,10 +1203,6 @@
         <div class="matrixNavMap" id="matrixNavMap">
           <div class="hd">Navigator Minimap â€¢ click tactic to jump</div>
           <div class="matrixNavTrack" id="matrixNavTrack"></div>
-          <div class="matrixPriority" id="matrixPriority">
-            <div class="hd">Start Here â€¢ prioritized techniques from current dataset</div>
-            <div class="matrixPriorityTrack" id="matrixPriorityTrack"></div>
-          </div>
         </div>
         <div id="pathStripHost"></div>
         <div class="tacticGrid" id="matrix"></div>
@@ -1727,27 +1699,6 @@ function rankedTechniquesForGuidance(techStats){
     };
   });
   return ranked.sort((a,b)=>b.score-a.score);
-}
-
-function renderPriorityGuide(techStats){
-  const host = $("matrixPriorityTrack");
-  if(!host) return [];
-  const ranked = rankedTechniquesForGuidance(techStats).slice(0,10);
-  host.innerHTML = ranked.length
-    ? ranked.map((r, i)=>`<button class="prioTechBtn" type="button" data-prio-tech="${escapeHtml(r.tid)}" title="${escapeHtml(r.name)}">#${i+1} ${escapeHtml(r.tid)} (${r.count})</button>`).join("")
-    : `<span class="muted" style="font-size:11px;">No technique guidance for current filters.</span>`;
-
-  host.querySelectorAll("[data-prio-tech]").forEach(btn=>{
-    btn.addEventListener("click", ()=>{
-      const tid = btn.getAttribute("data-prio-tech");
-      state.selectedTechId = tid;
-      syncHash();
-      render();
-      const target = document.querySelector(`.techCard[data-tech-id="${CSS.escape(tid)}"]`);
-      if(target) target.scrollIntoView({behavior:"smooth", block:"center"});
-    });
-  });
-  return ranked;
 }
 
 function sevPill(sev){
@@ -2673,8 +2624,9 @@ function renderHuntPackHTML(doc, pack){
 function renderMatrix(docs, techStats, selDoc){
   const host = $("matrix");
   host.innerHTML = "";
-  const guidance = renderPriorityGuide(techStats);
-  const recommendedIds = new Set(guidance.slice(0,3).map(x=>x.tid));
+  const guidance = rankedTechniquesForGuidance(techStats);
+  const maxPriorityScore = guidance.length ? guidance[0].score : 0;
+  const priorityByTid = new Map(guidance.map((g, idx)=>[g.tid, {score:g.score, rank: idx + 1}]));
 
   const byTactic = {};
   for(const tid of Object.keys(techStats)){
@@ -2742,8 +2694,27 @@ function renderMatrix(docs, techStats, selDoc){
       card.className = "techCard";
       card.setAttribute("data-tech-id", t.tid);
       if(state.selectedTechId===t.tid) card.classList.add("active");
-      if(recommendedIds.has(t.tid)) card.classList.add("recommended");
       card.style.background = heatBg(t.weight, maxW);
+
+      const prio = priorityByTid.get(t.tid);
+      if(prio && maxPriorityScore>0){
+        const strength = Math.max(0, Math.min(1, prio.score / maxPriorityScore));
+        if(strength > 0.06){
+          card.classList.add("prioritized");
+          const hotA = 0.08 + (strength * 0.20);
+          const glowA = 0.12 + (strength * 0.42);
+          const insetA = 0.08 + (strength * 0.30);
+          card.style.background = `
+            radial-gradient(140% 90% at 0% 0%, rgba(255,204,102,${hotA.toFixed(3)}), transparent 64%),
+            linear-gradient(180deg, rgba(255,122,89,${(hotA*0.65).toFixed(3)}), rgba(7,26,34,.40))
+          `;
+          card.style.borderColor = `rgba(255, 188, 90, ${(0.25 + strength*0.55).toFixed(3)})`;
+          card.style.boxShadow = `
+            inset 0 0 0 1px rgba(255, 221, 145, ${insetA.toFixed(3)}),
+            0 0 ${Math.round(16 + strength*26)}px rgba(255, 188, 90, ${glowA.toFixed(3)})
+          `;
+        }
+      }
 
       const isDocHit = !!(selDoc && state.huntOn && (selDoc.Techniques||[]).includes(t.tid));
       if(isDocHit) card.classList.add("docHit");
