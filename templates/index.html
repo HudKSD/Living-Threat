@@ -249,7 +249,7 @@
     .main{
       padding:12px clamp(14px, 2vw, 28px) 14px;
       display:grid;
-      grid-template-columns: 1fr 390px;
+      grid-template-columns: 360px 1fr 360px;
       gap:12px;
       min-height:0;
     }
@@ -345,6 +345,20 @@
       min-height: 420px;
       overflow:auto;
       padding:12px;
+    }
+    .rightSidePanel{ background: rgba(28,20,8,.56); border-color: rgba(255,204,102,.30); }
+    .rightSidePanel .panelHd{
+      border-bottom-color: rgba(255,204,102,.22);
+      background: linear-gradient(180deg, rgba(255,204,102,.10), rgba(0,0,0,.0));
+    }
+    .rightSideBody{
+      height: calc(100vh - 84px - 14px - 14px);
+      min-height: 420px;
+      overflow:auto;
+      padding:12px;
+    }
+    @media (max-width:1060px){
+      .rightSideBody{ height:auto; min-height:unset; }
     }
     @media (max-width:1060px){
       .sideBody{ height:auto; min-height:unset; }
@@ -743,6 +757,12 @@
       backdrop-filter: blur(8px);
       padding:8px;
     }
+    .miniMap.secondary{
+      right: auto;
+      left: 14px;
+      border-color: rgba(255,204,102,.32);
+      background: rgba(16,12,4,.88);
+    }
     .miniMapHd{
       font-family:var(--mono);
       font-size:10px;
@@ -1109,25 +1129,6 @@
   </header>
 
   <main class="main">
-    <section class="panel matrixPanel" id="matrixPanel">
-      <div class="panelHd">
-        <div class="h">Navigator <span class="chip" id="matrixMeta">â€”</span></div>
-        <div class="meta" id="selMeta">Loadingâ€¦</div>
-      </div>
-
-      <div class="matrixBody">
-        <div class="matrixNavMap" id="matrixNavMap">
-          <div class="hd">Navigator Minimap â€¢ click tactic to jump</div>
-          <div class="matrixNavTrack" id="matrixNavTrack"></div>
-        </div>
-        <div id="pathStripHost"></div>
-        <div class="tacticGrid" id="matrix"></div>
-        <div class="muted" id="emptyMatrix" style="display:none; padding:10px 2px;">
-          No techniques match the current filters.
-        </div>
-      </div>
-    </section>
-
     <aside class="panel sidePanel" id="sidePanel">
       <div class="panelHd">
         <div class="h">Evidence Sidebar <span class="chip" id="sideMeta">â€”</span></div>
@@ -1152,31 +1153,49 @@
           </div>
         </div>
 
+        <div class="box focusPanel" id="focusBox">
+          <h3>Technique Focus <span class="chip" id="focusCount">â€”</span></h3>
+          <div class="kv" id="focusKv"></div>
+        </div>
+      </div>
+    </aside>
 
+    <section class="panel matrixPanel" id="matrixPanel">
+      <div class="panelHd">
+        <div class="h">Navigator <span class="chip" id="matrixMeta">â€”</span></div>
+        <div class="meta" id="selMeta">Loadingâ€¦</div>
+      </div>
 
+      <div class="matrixBody">
+        <div class="matrixNavMap" id="matrixNavMap">
+          <div class="hd">Navigator Minimap â€¢ click tactic to jump</div>
+          <div class="matrixNavTrack" id="matrixNavTrack"></div>
+        </div>
+        <div id="pathStripHost"></div>
+        <div class="tacticGrid" id="matrix"></div>
+        <div class="muted" id="emptyMatrix" style="display:none; padding:10px 2px;">
+          No techniques match the current filters.
+        </div>
+      </div>
+    </section>
+
+    <aside class="panel rightSidePanel" id="sidePanelRight">
+      <div class="panelHd">
+        <div class="h">Operations Sidebar <span class="chip" id="sideMetaRight">â€”</span></div>
+        <div class="meta"><span class="chip">Priorities + Documents</span></div>
+      </div>
+
+      <div class="rightSideBody" id="sideBodyRight">
         <div class="box prioPanel" id="prioBox">
           <h3>Operational Priorities <span class="chip" id="prioChip">â€”</span></h3>
           <div class="docList" id="prioList"></div>
           <div class="muted" id="prioEmpty" style="display:none; margin-top:8px;">No priorities for current filters.</div>
         </div>
-        <div class="tabsRow desktopOnly">
-          <button class="tabBtn active" id="tabBtnFocus" data-tab="focus">Focus</button>
-          <button class="tabBtn" id="tabBtnDocs" data-tab="docs">Documents</button>
-        </div>
 
-        <div class="tabPane active" id="tabFocus">
-          <div class="box focusPanel" id="focusBox">
-            <h3>Technique Focus <span class="chip" id="focusCount">â€”</span></h3>
-            <div class="kv" id="focusKv"></div>
-          </div>
-        </div>
-
-        <div class="tabPane desktopOnly" id="tabDocs">
-          <div class="box docsPanel" id="docsBox">
-            <h3>Documents <span class="chip" id="docCount">â€”</span></h3>
-            <div class="docList" id="docList"></div>
-            <div class="muted" id="emptyDocs" style="display:none; margin-top:8px;">No documents match the current filters.</div>
-          </div>
+        <div class="box docsPanel" id="docsBox">
+          <h3>Documents <span class="chip" id="docCount">â€”</span></h3>
+          <div class="docList" id="docList"></div>
+          <div class="muted" id="emptyDocs" style="display:none; margin-top:8px;">No documents match the current filters.</div>
         </div>
       </div>
     </aside>
@@ -1191,9 +1210,19 @@
       <button class="miniRow" data-target="matrixPanel" data-tone="matrix">Navigator <small>left</small></button>
       <button class="miniRow" data-target="pathStripHost" data-tone="matrix">Attack Path <small>top</small></button>
       <button class="miniRow" data-target="aggBox" data-tone="side">Aggregations <small>side</small></button>
-      <button class="miniRow" data-target="prioBox" data-tone="priority">Priorities <small>side</small></button>
       <button class="miniRow" data-target="focusBox" data-tone="side">Focus <small>side</small></button>
-      <button class="miniRow" data-target="docsBox" data-tone="docs">Documents <small>side</small></button>
+    </div>
+  </nav>
+
+  <nav class="miniMap secondary" id="miniMapRight" aria-label="Operations minimap">
+    <div class="miniMapHd">
+      <span>MINIMAP</span>
+      <small>Operations</small>
+    </div>
+    <div class="miniTrack" id="miniTrackRight">
+      <button class="miniRow" data-target="matrixPanel" data-tone="matrix">Navigator <small>center</small></button>
+      <button class="miniRow" data-target="prioBox" data-tone="priority">Priorities <small>right</small></button>
+      <button class="miniRow" data-target="docsBox" data-tone="docs">Documents <small>right</small></button>
     </div>
   </nav>
 </div>
@@ -1365,6 +1394,8 @@ const STAGE_COL = {
   "Reconnaissance":"#54a6ff","Weaponization":"#b58bff","Delivery":"#00f5ff","Exploitation":"#ffcc66",
   "Installation":"#77ffb0","Command and Control":"#ff5a7a","Actions on Objectives":"#ff7a59"
 };
+
+const MAX_DOCUMENT_PANEL_ITEMS = 20;
 
 const state = {
   rangeDays: 7,
@@ -1915,6 +1946,7 @@ function render(){
   const techStats = buildStats(docs);
 
   $("sideMeta").textContent = `${docs.length} docs`;
+  $("sideMetaRight").textContent = `${docs.length} docs`;
   const uniqueTech = uniq(docs.flatMap(d=>d.Techniques||[])).length;
   $("matrixMeta").textContent = `${docs.length} docs â€¢ ${uniqueTech} techniques`;
 
@@ -2147,7 +2179,8 @@ function renderTechniqueFocus(docs, techStats){
 function renderDocList(docs, hostEl, emptyEl, countChipEl){
   hostEl.innerHTML = "";
   emptyEl.style.display = docs.length ? "none" : "block";
-  countChipEl.textContent = `${docs.length}`;
+  const shownCount = Math.min(docs.length, MAX_DOCUMENT_PANEL_ITEMS);
+  countChipEl.textContent = `${shownCount}/${docs.length}`;
 
   const sorted = docs.slice().sort((a,b)=>{
     const da = parseDateSafe(a.Timestamp)?.getTime() || 0;
@@ -2155,7 +2188,7 @@ function renderDocList(docs, hostEl, emptyEl, countChipEl){
     return db - da;
   });
 
-  for(const d of sorted){
+  for(const d of sorted.slice(0, MAX_DOCUMENT_PANEL_ITEMS)){
     const item = document.createElement("div");
     item.className = "docItem" + (state.selectedDocId===d.id ? " active" : "") + (isRecent24h(d) ? " hotGlow" : "");
     item.innerHTML = `
@@ -2690,10 +2723,7 @@ $("closeModal").addEventListener("click", ()=> $("docModal").close());
 
 /* Tabs */
 function syncSidebarTabs(){
-  $("tabBtnFocus").classList.toggle("active", state.sideTab==="focus");
-  $("tabBtnDocs").classList.toggle("active", state.sideTab==="docs");
-  $("tabFocus").classList.toggle("active", state.sideTab==="focus");
-  $("tabDocs").classList.toggle("active", state.sideTab==="docs");
+  // Tabs were removed from desktop sidebars; keep as a no-op for compatibility.
 }
 document.querySelectorAll("[data-tab]").forEach(btn=>{
   btn.addEventListener("click", ()=>{
@@ -2990,9 +3020,14 @@ window.addEventListener("resize", ()=>{ if(state.pathOn) render(); });
 function scrollMiniTarget(targetId){
   const el = $(targetId);
   if(!el) return;
-  const sideTargets = new Set(["aggBox","prioBox","focusBox","docsBox"]);
-  if(sideTargets.has(targetId)){
+  const leftSideTargets = new Set(["aggBox","focusBox"]);
+  const rightSideTargets = new Set(["prioBox","docsBox"]);
+  if(leftSideTargets.has(targetId)){
     $("sideBody").scrollTo({ top: Math.max(0, el.offsetTop - 12), behavior: "smooth" });
+    return;
+  }
+  if(rightSideTargets.has(targetId)){
+    $("sideBodyRight").scrollTo({ top: Math.max(0, el.offsetTop - 12), behavior: "smooth" });
     return;
   }
   if(targetId === "pathStripHost"){
@@ -3003,19 +3038,25 @@ function scrollMiniTarget(targetId){
 }
 
 function setMiniActiveByScroll(){
-  const rows = Array.from(document.querySelectorAll("#miniTrack .miniRow"));
-  rows.forEach(r=>r.classList.remove("active"));
-  const sideBody = $("sideBody");
-  const scrollTop = sideBody.scrollTop;
-  const ordered = ["aggBox","prioBox","focusBox","docsBox"];
-  let activeId = "matrixPanel";
-  for(const id of ordered){
-    const el = $(id);
-    if(!el || el.offsetParent === null) continue;
-    if(scrollTop >= (el.offsetTop - 30)) activeId = id;
-  }
-  const row = rows.find(r=>r.getAttribute("data-target")===activeId) || rows[0];
-  if(row) row.classList.add("active");
+  const setActive = (trackId, scrollContainerId, orderedIds)=>{
+    const rows = Array.from(document.querySelectorAll(`#${trackId} .miniRow`));
+    rows.forEach(r=>r.classList.remove("active"));
+    const scroller = $(scrollContainerId);
+    let activeId = "matrixPanel";
+    if(scroller){
+      const scrollTop = scroller.scrollTop;
+      for(const id of orderedIds){
+        const el = $(id);
+        if(!el || el.offsetParent === null) continue;
+        if(scrollTop >= (el.offsetTop - 30)) activeId = id;
+      }
+    }
+    const row = rows.find(r=>r.getAttribute("data-target")===activeId) || rows[0];
+    if(row) row.classList.add("active");
+  };
+
+  setActive("miniTrack", "sideBody", ["aggBox","focusBox"]);
+  setActive("miniTrackRight", "sideBodyRight", ["prioBox","docsBox"]);
 }
 
 $("miniTrack").addEventListener("click", (e)=>{
@@ -3023,7 +3064,13 @@ $("miniTrack").addEventListener("click", (e)=>{
   if(!btn) return;
   scrollMiniTarget(btn.getAttribute("data-target"));
 });
+$("miniTrackRight").addEventListener("click", (e)=>{
+  const btn = e.target.closest(".miniRow");
+  if(!btn) return;
+  scrollMiniTarget(btn.getAttribute("data-target"));
+});
 $("sideBody").addEventListener("scroll", setMiniActiveByScroll, {passive:true});
+$("sideBodyRight").addEventListener("scroll", setMiniActiveByScroll, {passive:true});
 setMiniActiveByScroll();
 
 /* Init */
