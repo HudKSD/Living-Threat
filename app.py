@@ -509,6 +509,27 @@ def normalize_doc(hit: Dict[str, Any]) -> Tuple[Dict[str, Any], Dict[str, str]]:
             det = _normalize_analysis_text(a.get("Detection"))
             rem = _normalize_analysis_text(a.get("Remediation"))
 
+            tactics_raw = a.get("Tactics") or []
+            tactics_out: List[Dict[str, str]] = []
+            if isinstance(tactics_raw, list):
+                for t in tactics_raw:
+                    if not isinstance(t, dict):
+                        continue
+                    tid = _norm(t.get("tactic_id") or t.get("id") or t.get("tactic"))
+                    tnm = _norm(t.get("tactic_name") or t.get("name"))
+                    tdesc = _normalize_analysis_text(
+                        t.get("tactic_description") or t.get("description")
+                    )
+                    if not any([tid, tnm, tdesc]):
+                        continue
+                    tactics_out.append(
+                        {
+                            "tactic_id": tid,
+                            "tactic_name": tnm,
+                            "tactic_description": tdesc,
+                        }
+                    )
+
             techs_raw = a.get("Techniques") or []
             techs: List[str] = []
             if isinstance(techs_raw, list):
@@ -531,6 +552,7 @@ def normalize_doc(hit: Dict[str, Any]) -> Tuple[Dict[str, Any], Dict[str, str]]:
                     "Description": desc,
                     "Detection": det,
                     "Remediation": rem,
+                    "Tactics": tactics_out,
                     "Techniques": list(dict.fromkeys(techs)),
                 }
             )
