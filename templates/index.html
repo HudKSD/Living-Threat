@@ -1129,6 +1129,46 @@
   </header>
 
   <main class="main">
+    <aside class="panel rightSidePanel" id="sidePanelRight">
+      <div class="panelHd">
+        <div class="h">Operations Sidebar <span class="chip" id="sideMetaRight">â€”</span></div>
+        <div class="meta"><span class="chip">Priorities + Documents</span></div>
+      </div>
+
+      <div class="rightSideBody" id="sideBodyRight">
+        <div class="box prioPanel" id="prioBox">
+          <h3>Operational Priorities <span class="chip" id="prioChip">â€”</span></h3>
+          <div class="docList" id="prioList"></div>
+          <div class="muted" id="prioEmpty" style="display:none; margin-top:8px;">No priorities for current filters.</div>
+        </div>
+
+        <div class="box docsPanel" id="docsBox">
+          <h3>Documents <span class="chip" id="docCount">â€”</span></h3>
+          <div class="docList" id="docList"></div>
+          <div class="muted" id="emptyDocs" style="display:none; margin-top:8px;">No documents match the current filters.</div>
+        </div>
+      </div>
+    </aside>
+
+    <section class="panel matrixPanel" id="matrixPanel">
+      <div class="panelHd">
+        <div class="h">Navigator <span class="chip" id="matrixMeta">â€”</span></div>
+        <div class="meta" id="selMeta">Loadingâ€¦</div>
+      </div>
+
+      <div class="matrixBody">
+        <div class="matrixNavMap" id="matrixNavMap">
+          <div class="hd">Navigator Minimap â€¢ click tactic to jump</div>
+          <div class="matrixNavTrack" id="matrixNavTrack"></div>
+        </div>
+        <div id="pathStripHost"></div>
+        <div class="tacticGrid" id="matrix"></div>
+        <div class="muted" id="emptyMatrix" style="display:none; padding:10px 2px;">
+          No techniques match the current filters.
+        </div>
+      </div>
+    </section>
+
     <aside class="panel sidePanel" id="sidePanel">
       <div class="panelHd">
         <div class="h">Evidence Sidebar <span class="chip" id="sideMeta">â€”</span></div>
@@ -1156,46 +1196,6 @@
         <div class="box focusPanel" id="focusBox">
           <h3>Technique Focus <span class="chip" id="focusCount">â€”</span></h3>
           <div class="kv" id="focusKv"></div>
-        </div>
-      </div>
-    </aside>
-
-    <section class="panel matrixPanel" id="matrixPanel">
-      <div class="panelHd">
-        <div class="h">Navigator <span class="chip" id="matrixMeta">â€”</span></div>
-        <div class="meta" id="selMeta">Loadingâ€¦</div>
-      </div>
-
-      <div class="matrixBody">
-        <div class="matrixNavMap" id="matrixNavMap">
-          <div class="hd">Navigator Minimap â€¢ click tactic to jump</div>
-          <div class="matrixNavTrack" id="matrixNavTrack"></div>
-        </div>
-        <div id="pathStripHost"></div>
-        <div class="tacticGrid" id="matrix"></div>
-        <div class="muted" id="emptyMatrix" style="display:none; padding:10px 2px;">
-          No techniques match the current filters.
-        </div>
-      </div>
-    </section>
-
-    <aside class="panel rightSidePanel" id="sidePanelRight">
-      <div class="panelHd">
-        <div class="h">Operations Sidebar <span class="chip" id="sideMetaRight">â€”</span></div>
-        <div class="meta"><span class="chip">Priorities + Documents</span></div>
-      </div>
-
-      <div class="rightSideBody" id="sideBodyRight">
-        <div class="box prioPanel" id="prioBox">
-          <h3>Operational Priorities <span class="chip" id="prioChip">â€”</span></h3>
-          <div class="docList" id="prioList"></div>
-          <div class="muted" id="prioEmpty" style="display:none; margin-top:8px;">No priorities for current filters.</div>
-        </div>
-
-        <div class="box docsPanel" id="docsBox">
-          <h3>Documents <span class="chip" id="docCount">â€”</span></h3>
-          <div class="docList" id="docList"></div>
-          <div class="muted" id="emptyDocs" style="display:none; margin-top:8px;">No documents match the current filters.</div>
         </div>
       </div>
     </aside>
@@ -2529,7 +2529,13 @@ function renderMatrix(docs, techStats, selDoc){
     const tac = meta.tactic || "Other";
     byTactic[tac] = byTactic[tac] || [];
     const s = techStats[tid];
-    byTactic[tac].push({tid, name: meta.name, tactic: tac, ...s});
+    byTactic[tac].push({
+      tid,
+      name: meta.name,
+      tactic: tac,
+      description: meta.description || meta.technique_description || "",
+      ...s
+    });
   }
 
   const maxW = Math.max(0, ...Object.values(techStats).map(s=>s.weight));
@@ -2579,8 +2585,6 @@ function renderMatrix(docs, techStats, selDoc){
     }
 
     for(const t of list){
-      const topDocs = (t.docs||[]).slice().sort((a,b)=>docRankScore(b)-docRankScore(a)).slice(0,5);
-
       const card = document.createElement("div");
       card.className = "techCard";
       if(state.selectedTechId===t.tid) card.classList.add("active");
@@ -2598,32 +2602,20 @@ function renderMatrix(docs, techStats, selDoc){
       if(selDoc && state.huntOn && !isDocHit) card.classList.add("dim");
       if(selDoc && state.pathOn && !isPathHit) card.classList.add("dim");
 
+      const techniqueDescription = t.description || t.technique_description || "No technique description available.";
+
       card.innerHTML = `
         <div class="row1">
           <span class="tid">${t.tid}</span>
           <span class="score">w:${t.weight} â€¢ n:${t.count}</span>
         </div>
-        <div class="name" title="${escapeHtml(t.name || t.tid)}">${escapeHtml(t.name || t.tid)}</div>
-        <div style="margin-top:7px; display:flex; gap:6px; flex-wrap:wrap;">
-          ${topDocs.slice(0,2).map(d=>`<span class="pill ${facetToneBySeverity(d.Severity)}" style="cursor:pointer; max-width:100%;" data-doc="${d.id}" title="${escapeHtml(d.Title)}\n${escapeHtml(firstActionHint(d))}">[${escapeHtml(normalizeSeverity(d.Severity))}][P${Number(d.priority_score||0)}][${ageBadgeFrom(d.Timestamp)}] ${escapeHtml(shortTitle(d.Title, 18))}</span>`).join("")}
-        </div>
-        <div style="margin-top:6px; color:rgba(210,222,255,.82); font-size:11px; line-height:1.25;">${topDocs.slice(0,1).map(d=>escapeHtml(shortTitle(firstActionHint(d), 84))).join("") || ""}</div>
+        <div style="margin-top:6px; color:rgba(210,222,255,.90); font-size:11.5px; line-height:1.35;">${escapeHtml(techniqueDescription)}</div>
       `;
 
-      card.addEventListener("click", (e)=>{
-        const btn = e.target.closest("[data-doc]");
-        if(btn) return;
+      card.addEventListener("click", ()=>{
         state.selectedTechId = (state.selectedTechId===t.tid) ? null : t.tid;
         syncHash();
         render();
-      });
-
-      card.querySelectorAll("[data-doc]").forEach(el=>{
-        el.addEventListener("click", (e)=>{
-          e.stopPropagation();
-          const doc = DOCS.find(x=>x.id===el.getAttribute("data-doc"));
-          openDocModal(doc);
-        });
       });
 
       techList.appendChild(card);
