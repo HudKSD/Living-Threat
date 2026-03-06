@@ -511,8 +511,13 @@
       padding-left: 7px;
     }
     .techCard.dim{ filter: saturate(.65) opacity(.60); }
-    .techCard.prioritized{
-      transition: transform .06s ease, border-color .2s ease, filter .2s ease, box-shadow .25s ease, background .25s ease;
+    .techCard.recommended{
+      border-color: rgba(255,204,102,.78);
+      box-shadow:
+        0 0 0 1px rgba(255,204,102,.45),
+        0 0 30px rgba(255,204,102,.38),
+        0 0 56px rgba(255,122,89,.24);
+      background: linear-gradient(180deg, rgba(255,204,102,.16), rgba(255,122,89,.10), rgba(7,26,34,.40));
     }
 
     .row1{ display:flex; justify-content:space-between; align-items:center; gap:8px; margin-bottom:6px; min-width:0; }
@@ -2625,8 +2630,7 @@ function renderMatrix(docs, techStats, selDoc){
   const host = $("matrix");
   host.innerHTML = "";
   const guidance = rankedTechniquesForGuidance(techStats);
-  const maxPriorityScore = guidance.length ? guidance[0].score : 0;
-  const priorityByTid = new Map(guidance.map((g, idx)=>[g.tid, {score:g.score, rank: idx + 1}]));
+  const recommendedIds = new Set(guidance.slice(0,3).map(g=>g.tid));
 
   const byTactic = {};
   for(const tid of Object.keys(techStats)){
@@ -2694,27 +2698,8 @@ function renderMatrix(docs, techStats, selDoc){
       card.className = "techCard";
       card.setAttribute("data-tech-id", t.tid);
       if(state.selectedTechId===t.tid) card.classList.add("active");
+      if(recommendedIds.has(t.tid)) card.classList.add("recommended");
       card.style.background = heatBg(t.weight, maxW);
-
-      const prio = priorityByTid.get(t.tid);
-      if(prio && maxPriorityScore>0){
-        const strength = Math.max(0, Math.min(1, prio.score / maxPriorityScore));
-        if(strength > 0.06){
-          card.classList.add("prioritized");
-          const hotA = 0.08 + (strength * 0.20);
-          const glowA = 0.12 + (strength * 0.42);
-          const insetA = 0.08 + (strength * 0.30);
-          card.style.background = `
-            radial-gradient(140% 90% at 0% 0%, rgba(255,204,102,${hotA.toFixed(3)}), transparent 64%),
-            linear-gradient(180deg, rgba(255,122,89,${(hotA*0.65).toFixed(3)}), rgba(7,26,34,.40))
-          `;
-          card.style.borderColor = `rgba(255, 188, 90, ${(0.25 + strength*0.55).toFixed(3)})`;
-          card.style.boxShadow = `
-            inset 0 0 0 1px rgba(255, 221, 145, ${insetA.toFixed(3)}),
-            0 0 ${Math.round(16 + strength*26)}px rgba(255, 188, 90, ${glowA.toFixed(3)})
-          `;
-        }
-      }
 
       const isDocHit = !!(selDoc && state.huntOn && (selDoc.Techniques||[]).includes(t.tid));
       if(isDocHit) card.classList.add("docHit");
