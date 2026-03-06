@@ -1111,19 +1111,54 @@
   <main class="main">
     <section class="panel matrixPanel" id="matrixPanel">
       <div class="panelHd">
-        <div class="h">Navigator <span class="chip" id="matrixMeta">—</span></div>
-        <div class="meta" id="selMeta">Loading…</div>
+        <div class="h">Operations Workspace <span class="chip" id="matrixMeta">—</span></div>
+        <div class="meta" id="selMeta">No doc selected</div>
       </div>
 
       <div class="matrixBody">
-        <div class="matrixNavMap" id="matrixNavMap">
-          <div class="hd">Navigator Minimap • click tactic to jump</div>
-          <div class="matrixNavTrack" id="matrixNavTrack"></div>
-        </div>
         <div id="pathStripHost"></div>
-        <div class="tacticGrid" id="matrix"></div>
-        <div class="muted" id="emptyMatrix" style="display:none; padding:10px 2px;">
-          No techniques match the current filters.
+
+        <div class="tabsRow" style="display:grid; grid-template-columns:repeat(5,minmax(0,1fr)); margin-top:2px;">
+          <button class="tabBtn active" data-tab="action">Action Board</button>
+          <button class="tabBtn" data-tab="exposure">Exposure</button>
+          <button class="tabBtn" data-tab="funnel">Triage Funnel</button>
+          <button class="tabBtn" data-tab="coverage">Coverage Gap</button>
+          <button class="tabBtn" data-tab="storyline">Storyline</button>
+        </div>
+
+        <div class="tabPane active" id="tabAction">
+          <div class="box focusPanel" id="actionBox">
+            <h3>SOC Action Board <span class="chip" id="actionCount">—</span></h3>
+            <div id="actionBoard"></div>
+          </div>
+        </div>
+
+        <div class="tabPane" id="tabExposure">
+          <div class="box aggPanel" id="exposureBox">
+            <h3>Exposure Relevance Workspace <span class="chip" id="exposureCount">—</span></h3>
+            <div id="exposureBoard"></div>
+          </div>
+        </div>
+
+        <div class="tabPane" id="tabFunnel">
+          <div class="box prioPanel" id="funnelBox">
+            <h3>Guided Triage → Hunt Pack <span class="chip" id="funnelCount">—</span></h3>
+            <div id="funnelBoard"></div>
+          </div>
+        </div>
+
+        <div class="tabPane" id="tabCoverage">
+          <div class="box docsPanel" id="coverageBox">
+            <h3>Coverage-Gap Board <span class="chip" id="coverageCount">—</span></h3>
+            <div id="coverageBoard"></div>
+          </div>
+        </div>
+
+        <div class="tabPane" id="tabStoryline">
+          <div class="box selDocPanel" id="storylineBox">
+            <h3>Storyline Mode <span class="chip" id="storylineCount">—</span></h3>
+            <div id="storylineBoard"></div>
+          </div>
         </div>
       </div>
     </section>
@@ -1159,48 +1194,6 @@
           <div class="docList" id="prioList"></div>
           <div class="muted" id="prioEmpty" style="display:none; margin-top:8px;">No priorities for current filters.</div>
         </div>
-        <div class="tabsRow desktopOnly" style="display:grid !important; grid-template-columns:repeat(5,minmax(0,1fr));">
-          <button class="tabBtn active" data-tab="action">Action Board</button>
-          <button class="tabBtn" data-tab="exposure">Exposure</button>
-          <button class="tabBtn" data-tab="funnel">Triage Funnel</button>
-          <button class="tabBtn" data-tab="coverage">Coverage Gap</button>
-          <button class="tabBtn" data-tab="storyline">Storyline</button>
-        </div>
-
-        <div class="tabPane active" id="tabAction">
-          <div class="box focusPanel" id="actionBox">
-            <h3>SOC Action Board <span class="chip" id="actionCount">—</span></h3>
-            <div id="actionBoard"></div>
-          </div>
-        </div>
-
-        <div class="tabPane desktopOnly" id="tabExposure">
-          <div class="box aggPanel" id="exposureBox">
-            <h3>Exposure Relevance Workspace <span class="chip" id="exposureCount">—</span></h3>
-            <div id="exposureBoard"></div>
-          </div>
-        </div>
-
-        <div class="tabPane desktopOnly" id="tabFunnel">
-          <div class="box prioPanel" id="funnelBox">
-            <h3>Guided Triage → Hunt Pack <span class="chip" id="funnelCount">—</span></h3>
-            <div id="funnelBoard"></div>
-          </div>
-        </div>
-
-        <div class="tabPane desktopOnly" id="tabCoverage">
-          <div class="box docsPanel" id="coverageBox">
-            <h3>Coverage-Gap Board <span class="chip" id="coverageCount">—</span></h3>
-            <div id="coverageBoard"></div>
-          </div>
-        </div>
-
-        <div class="tabPane desktopOnly" id="tabStoryline">
-          <div class="box selDocPanel" id="storylineBox">
-            <h3>Storyline Mode <span class="chip" id="storylineCount">—</span></h3>
-            <div id="storylineBoard"></div>
-          </div>
-        </div>
       </div>
     </aside>
   </main>
@@ -1211,8 +1204,8 @@
       <small>Overview</small>
     </div>
     <div class="miniTrack" id="miniTrack">
-      <button class="miniRow" data-target="matrixPanel" data-tone="matrix">Navigator <small>left</small></button>
-      <button class="miniRow" data-target="pathStripHost" data-tone="matrix">Attack Path <small>top</small></button>
+      <button class="miniRow" data-target="matrixPanel" data-tone="matrix">Workspace <small>left</small></button>
+      <button class="miniRow" data-target="pathStripHost" data-tone="matrix">Hunt Path <small>top</small></button>
       <button class="miniRow" data-target="aggBox" data-tone="side">Aggregations <small>side</small></button>
       <button class="miniRow" data-target="prioBox" data-tone="priority">Priorities <small>side</small></button>
       <button class="miniRow" data-target="actionBox" data-tone="side">Action <small>side</small></button>
@@ -1251,14 +1244,14 @@
       <h2 class="modalTitle">Core features</h2>
       <div class="grid2">
         <div class="blockquote">
-          <b class="muted">Navigator view</b><br/>
-          Techniques are grouped by tactic. Clicking a technique opens its evidence context.
-          Selecting a document enables Hunt Mode and Attack Path highlighting.
+          <b class="muted">Workflow views (1–5)</b><br/>
+          Action Board, Exposure, Triage Funnel, Coverage Gap, and Storyline are designed for SOC execution and prioritization.
+          Selecting a document enables Hunt Mode and Attack Path guidance.
         </div>
         <div class="blockquote">
           <b class="muted">Filters</b><br/>
           Range (7/30/90/180/365/All), Minimum severity, doc_summary search, and Actor/Tool pivots.
-          Filters affect the documents list and the matrix.
+          Filters affect all workflow views and priorities.
         </div>
         <div class="blockquote">
           <b class="muted">Attack Path + Hunt Pack</b><br/>
@@ -1963,7 +1956,6 @@ function render(){
   renderCoverageGapBoard(docs);
   renderStorylineMode(selDocNow);
   renderPathStrip(selDocNow);
-  renderMatrix(docs, techStats, selDocNow);
 
   renderDocList(docs, $("docListDrawer"), $("emptyDocsDrawer"), $("docCountDrawer"));
 
@@ -2701,22 +2693,6 @@ function renderMatrix(docs, techStats, selDoc){
     host.appendChild(col);
   }
 
-  const nav = $("matrixNavTrack");
-  if(nav){
-    nav.innerHTML = TACTIC_ORDER.map(tac=>{
-      const cnt = (byTactic[tac]||[]).length;
-      const cls = cnt ? "matrixNavDot hot" : "matrixNavDot";
-      return `<button class="${cls}" data-tac="${escapeHtml(tac)}">${escapeHtml(shortTitle(tac, 16))} (${cnt})</button>`;
-    }).join("");
-    nav.querySelectorAll("[data-tac]").forEach(btn=>{
-      btn.addEventListener("click", ()=>{
-        const el = $(tacticDomId(btn.getAttribute("data-tac")));
-        if(el) el.scrollIntoView({behavior:"smooth", block:"start"});
-      });
-    });
-  }
-
-  $("emptyMatrix").style.display = rendered ? "none" : "block";
 }
 
 /* Doc modal */
@@ -3091,7 +3067,7 @@ window.addEventListener("resize", ()=>{ if(state.pathOn) render(); });
 function scrollMiniTarget(targetId){
   const el = $(targetId);
   if(!el) return;
-  const sideTargets = new Set(["aggBox","prioBox","actionBox","coverageBox"]);
+  const sideTargets = new Set(["aggBox","prioBox"]);
   if(sideTargets.has(targetId)){
     $("sideBody").scrollTo({ top: Math.max(0, el.offsetTop - 12), behavior: "smooth" });
     return;
@@ -3108,7 +3084,7 @@ function setMiniActiveByScroll(){
   rows.forEach(r=>r.classList.remove("active"));
   const sideBody = $("sideBody");
   const scrollTop = sideBody.scrollTop;
-  const ordered = ["aggBox","prioBox","actionBox","coverageBox"];
+  const ordered = ["aggBox","prioBox"];
   let activeId = "matrixPanel";
   for(const id of ordered){
     const el = $(id);
