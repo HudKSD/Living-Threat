@@ -514,7 +514,12 @@
     .techCard.recommended{
       border-color: rgba(0,245,255,.14);
       box-shadow: none;
-      background: linear-gradient(180deg, rgba(255, 132, 132, .22), rgba(255, 132, 132, .10), rgba(7,26,34,.40));
+      background: linear-gradient(
+        180deg,
+        rgba(255, 132, 132, var(--prioTop, .22)),
+        rgba(255, 132, 132, var(--prioMid, .10)),
+        rgba(7,26,34,.40)
+      );
     }
 
     .row1{ display:flex; justify-content:space-between; align-items:center; gap:8px; margin-bottom:6px; min-width:0; }
@@ -2628,6 +2633,7 @@ function renderMatrix(docs, techStats, selDoc){
   host.innerHTML = "";
   const guidance = rankedTechniquesForGuidance(techStats);
   const recommendedIds = new Set(guidance.slice(0,3).map(g=>g.tid));
+  const recommendedRank = new Map(guidance.slice(0,3).map((g, idx)=>[g.tid, idx + 1]));
 
   const byTactic = {};
   for(const tid of Object.keys(techStats)){
@@ -2695,8 +2701,16 @@ function renderMatrix(docs, techStats, selDoc){
       card.className = "techCard";
       card.setAttribute("data-tech-id", t.tid);
       if(state.selectedTechId===t.tid) card.classList.add("active");
-      if(recommendedIds.has(t.tid)) card.classList.add("recommended");
       card.style.background = heatBg(t.weight, maxW);
+      if(recommendedIds.has(t.tid)){
+        card.classList.add("recommended");
+        const rank = recommendedRank.get(t.tid) || 3;
+        // Rank 1 = strongest reddish tint, rank 3 = lightest tint.
+        const strength = rank===1 ? 1 : rank===2 ? 0.72 : 0.48;
+        card.style.setProperty("--prioTop", (0.15 + strength * 0.22).toFixed(3));
+        card.style.setProperty("--prioMid", (0.08 + strength * 0.12).toFixed(3));
+        card.style.background = `linear-gradient(180deg, rgba(255, 132, 132, ${0.15 + strength * 0.22}), rgba(255, 132, 132, ${0.08 + strength * 0.12}), rgba(7,26,34,.40))`;
+      }
 
       const isDocHit = !!(selDoc && state.huntOn && (selDoc.Techniques||[]).includes(t.tid));
       if(isDocHit) card.classList.add("docHit");
