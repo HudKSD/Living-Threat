@@ -525,6 +525,46 @@
     }
     .score{ font-family:var(--mono); font-size:11px; color:rgba(214,247,255,.70); white-space:nowrap; }
     .name{ font-size:12.6px; font-weight:900; line-height:1.2; overflow:hidden; text-overflow:ellipsis; }
+    .cardDocBtn{
+      margin-left:auto;
+      width:22px;
+      height:22px;
+      border-radius:8px;
+      border:1px solid rgba(255,255,255,.16);
+      background: rgba(0,0,0,.20);
+      color:rgba(214,247,255,.90);
+      display:grid;
+      place-items:center;
+      cursor:pointer;
+      font-size:12px;
+      line-height:1;
+    }
+    .cardDocBtn:hover{ border-color: rgba(0,245,255,.36); }
+    .cardDocMenu{
+      margin-top:7px;
+      border:1px solid rgba(0,245,255,.18);
+      border-radius:12px;
+      background: rgba(2,12,18,.85);
+      padding:6px;
+      display:flex;
+      flex-direction:column;
+      gap:5px;
+      max-height:180px;
+      overflow:auto;
+    }
+    .cardDocItem{
+      width:100%;
+      text-align:left;
+      border:1px solid rgba(255,255,255,.10);
+      border-radius:8px;
+      background: rgba(255,255,255,.05);
+      color:rgba(214,247,255,.88);
+      font-size:11px;
+      line-height:1.25;
+      padding:6px 7px;
+      cursor:pointer;
+    }
+    .cardDocItem:hover{ border-color: rgba(0,245,255,.34); }
 
     .pill{
       font-family:var(--mono);
@@ -1614,6 +1654,14 @@ function techniqueMetaForCard(docs, tid){
   };
 }
 
+function toggleDocSelection(docId){
+  const wasSelected = (state.selectedDocId===docId);
+  state.selectedDocId = wasSelected ? null : docId;
+  if(!state.selectedDocId) state.pathOn = false;
+  syncHash();
+  render();
+}
+
 function pickTopN(mapObj, n=5){
   return Object.entries(mapObj).sort((a,b)=>b[1]-a[1]).slice(0,n);
 }
@@ -2616,6 +2664,7 @@ function renderMatrix(docs, techStats, selDoc){
     }
 
     for(const t of list){
+      const topDocs = (t.docs||[]).slice().sort((a,b)=>docRankScore(b)-docRankScore(a)).slice(0,10);
       const card = document.createElement("div");
       card.className = "techCard";
       if(state.selectedTechId===t.tid) card.classList.add("active");
@@ -2639,15 +2688,39 @@ function renderMatrix(docs, techStats, selDoc){
         <div class="row1">
           <span class="tid">${escapeHtml(techMeta.technique_id)}</span>
           <span class="score">w:${t.weight} â€¢ n:${t.count}</span>
+          <button class="cardDocBtn" type="button" title="Show top documents" data-doc-toggle>📄</button>
         </div>
         <div style="font-weight:900; font-size:12px; line-height:1.25; margin-bottom:4px;">${escapeHtml(techMeta.technique_name)}</div>
         <div style="font-size:11px; line-height:1.25; color:rgba(210,222,255,.86);">${escapeHtml(shortTitle(techMeta.technique_description, 160))}</div>
+        <div class="cardDocMenu" data-doc-menu style="display:none;">
+          ${topDocs.length
+            ? topDocs.map(d=>`<button class="cardDocItem" type="button" data-doc-id="${escapeHtml(d.id)}" title="${escapeHtml(d.Title)}">${escapeHtml(shortTitle(d.Title, 80))}</button>`).join("")
+            : `<div class="muted" style="font-size:11px; padding:4px;">No related documents.</div>`}
+        </div>
       `;
 
-      card.addEventListener("click", ()=>{
+      card.addEventListener("click", (e)=>{
+        if(e.target.closest("[data-doc-toggle]") || e.target.closest("[data-doc-id]")) return;
         state.selectedTechId = (state.selectedTechId===t.tid) ? null : t.tid;
         syncHash();
         render();
+      });
+
+      const menu = card.querySelector("[data-doc-menu]");
+      const toggleBtn = card.querySelector("[data-doc-toggle]");
+      if(toggleBtn && menu){
+        toggleBtn.addEventListener("click", (e)=>{
+          e.stopPropagation();
+          const isOpen = menu.style.display !== "none";
+          menu.style.display = isOpen ? "none" : "flex";
+        });
+      }
+
+      card.querySelectorAll("[data-doc-id]").forEach(btn=>{
+        btn.addEventListener("click", (e)=>{
+          e.stopPropagation();
+          toggleDocSelection(btn.getAttribute("data-doc-id"));
+        });
       });
 
       techList.appendChild(card);
