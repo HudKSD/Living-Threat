@@ -2209,7 +2209,7 @@ function renderTechniqueFocus(docs, techStats){
 
 function renderExecutiveWorkspace(docs, selDoc){
   if(typeof Plotly === 'undefined') return;
-  const d = selDoc || docs[0];
+  const d = selDoc || docs[0] || DOCS[0];
   if(!d) return;
   const analyses = asArray(d.Analyses);
   const ents = d.Extracted_Entities || {};
@@ -2232,7 +2232,7 @@ function renderExecutiveWorkspace(docs, selDoc){
     `Incident: ${asArray(ents.Breach_Types)[0] || 'Threat Intel'}`,
     `Severity: ${severity}`,
     `Sector: ${asArray(ents.Sectors)[0] || 'Unknown'}`,
-    `Motivation: ${asArray(victim.Data_At_Risk)[0] || 'Unknown'}`,
+    `Motivation: ${asArray(victim.Data_Types_At_Risk)[0] || 'Unknown'}`,
     `Geography: ${asArray(ents.Countries)[0] || 'Global'}`,
     `Source: ${(d.link||'—').replace(/^https?:\/\//,'').split('/')[0] || 'Documented'}`,
   ];
@@ -2240,7 +2240,7 @@ function renderExecutiveWorkspace(docs, selDoc){
 
   $("execMeta").innerHTML = [
     ['Primary Timestamp', fmtDate(d.Timestamp)],
-    ['Processed', d.processed_at ? fmtDate(d.processed_at) : '—'],
+    ['Processed', d.enrichment?.processed_at ? fmtDate(d.enrichment.processed_at) : '—'],
     ['Sequence', String(d.sequence ?? '—')],
     ['Confidence Scope', `${docs.length} docs loaded`],
   ].map(([k,v])=>`<div class="execMetaCard"><div class="k">${escapeHtml(k)}</div><div class="v">${escapeHtml(v)}</div></div>`).join('');
@@ -2252,21 +2252,34 @@ function renderExecutiveWorkspace(docs, selDoc){
   const dt = dates.map((_,i)=>Math.min(95, 30+i*6));
   const resp = dates.map((_,i)=>Math.min(92, 22+i*6));
 
-  Plotly.newPlot('trendChart', [{x:dates,y:rt,type:'scatter',mode:'lines+markers',name:'Risk Index',line:{color:'#ff6c8f',width:3},fill:'tozeroy',fillcolor:'rgba(255,108,143,.14)'},{x:dates,y:dt,type:'scatter',mode:'lines+markers',name:'Detection Visibility',line:{color:'#00eaff',width:2.4}},{x:dates,y:resp,type:'scatter',mode:'lines+markers',name:'Response Readiness',line:{color:'#6cffba',width:2.4}}], {...commonLayout, margin:{l:52,r:20,t:20,b:42}}, {responsive:true,displayModeBar:false});
-  Plotly.newPlot('radarChart', [{type:'scatterpolar', r:[Math.min(100,riskScore+6),88,74,76,68,90,Math.min(100,riskScore+6)], theta:['Business Impact','Supply-Chain Exposure','Detection Complexity','Geographic Reach','Asset Reach','Response Urgency','Business Impact'], fill:'toself', line:{color:'#a78bfa',width:3}, fillcolor:'rgba(167,139,250,.22)'}], {paper_bgcolor:paperBg,plot_bgcolor:paperBg,font:{color:fontColor},margin:{l:40,r:40,t:24,b:24},polar:{radialaxis:{visible:true,range:[0,100],gridcolor:grid,tickfont:{color:muted}},angularaxis:{gridcolor:grid,tickfont:{color:muted}}},showlegend:false}, {responsive:true,displayModeBar:false});
+  const safePlot = (id, data, layout) => {
+    const el = $(id);
+    if(!el) return;
+    Plotly.newPlot(id, data, layout, {responsive:true,displayModeBar:false});
+  };
+
+  safePlot('trendChart', [{x:dates,y:rt,type:'scatter',mode:'lines+markers',name:'Risk Index',line:{color:'#ff6c8f',width:3},fill:'tozeroy',fillcolor:'rgba(255,108,143,.14)'},{x:dates,y:dt,type:'scatter',mode:'lines+markers',name:'Detection Visibility',line:{color:'#00eaff',width:2.4}},{x:dates,y:resp,type:'scatter',mode:'lines+markers',name:'Response Readiness',line:{color:'#6cffba',width:2.4}}], {...commonLayout, margin:{l:52,r:20,t:20,b:42}});
+  safePlot('radarChart', [{type:'scatterpolar', r:[Math.min(100,riskScore+6),88,74,76,68,90,Math.min(100,riskScore+6)], theta:['Business Impact','Supply-Chain Exposure','Detection Complexity','Geographic Reach','Asset Reach','Response Urgency','Business Impact'], fill:'toself', line:{color:'#a78bfa',width:3}, fillcolor:'rgba(167,139,250,.22)'}], {paper_bgcolor:paperBg,plot_bgcolor:paperBg,font:{color:fontColor},margin:{l:40,r:40,t:24,b:24},polar:{radialaxis:{visible:true,range:[0,100],gridcolor:grid,tickfont:{color:muted}},angularaxis:{gridcolor:grid,tickfont:{color:muted}}},showlegend:false});
   const countries = asArray(ents.Countries); const mapLoc = countries.includes('United States') ? ['USA'] : [];
-  Plotly.newPlot('mapChart', [{type:'choropleth',locations:mapLoc,z:mapLoc.map(()=>1),colorscale:[[0,'#123546'],[1,'#00eaff']],showscale:false,marker:{line:{color:'rgba(255,255,255,.12)',width:0.7}}}], {paper_bgcolor:paperBg,plot_bgcolor:paperBg,font:{color:fontColor},margin:{l:0,r:0,t:10,b:0},geo:{scope:'world',projection:{type:'natural earth'},showframe:false,showcoastlines:true,coastlinecolor:'rgba(255,255,255,.18)',bgcolor:'rgba(0,0,0,0)',showland:true,landcolor:'#0b2431',showcountries:true,countrycolor:'rgba(255,255,255,.12)'}}, {responsive:true,displayModeBar:false});
+  safePlot('mapChart', [{type:'choropleth',locations:mapLoc,z:mapLoc.map(()=>1),colorscale:[[0,'#123546'],[1,'#00eaff']],showscale:false,marker:{line:{color:'rgba(255,255,255,.12)',width:0.7}}}], {paper_bgcolor:paperBg,plot_bgcolor:paperBg,font:{color:fontColor},margin:{l:0,r:0,t:10,b:0},geo:{scope:'world',projection:{type:'natural earth'},showframe:false,showcoastlines:true,coastlinecolor:'rgba(255,255,255,.18)',bgcolor:'rgba(0,0,0,0)',showland:true,landcolor:'#0b2431',showcountries:true,countrycolor:'rgba(255,255,255,.12)'}});
   const stageRows = analyses.length ? analyses : [{Stage:'Unknown'}];
-  Plotly.newPlot('heatmapChart', [{type:'heatmap',x:['Business Impact','Detectability','Executive Priority','Containment Pressure'],y:stageRows.map(a=>a.Stage||'Unknown'),z:stageRows.map((_,i)=>[7+i%4,5+i%5,8+i%3,7+i%4]),colorscale:[[0,'#103245'],[.45,'#00eaff'],[.7,'#ffc86b'],[1,'#ff6c8f']],showscale:false}], {...commonLayout, margin:{l:120,r:20,t:20,b:48}}, {responsive:true,displayModeBar:false});
-  Plotly.newPlot('sankeyChart', [{type:'sankey',arrangement:'snap',node:{pad:16,thickness:14,label:['Threat Actor','Objective','Entry Vector','Tools','Assets','Business Impact'],color:['#00eaff','#6cffba','#ffc86b','#a78bfa','#54a9ff','#ff6c8f']},link:{source:[0,1,2,2,3,3],target:[1,2,3,4,4,5],value:[10,9,6,7,6,8],color:['rgba(0,234,255,.22)','rgba(108,255,186,.22)','rgba(255,200,107,.22)','rgba(84,169,255,.22)','rgba(167,139,250,.22)','rgba(255,108,143,.26)']}}], {paper_bgcolor:paperBg,plot_bgcolor:paperBg,font:{color:fontColor,size:11},margin:{l:12,r:12,t:8,b:8}}, {responsive:true,displayModeBar:false});
-  Plotly.newPlot('sunburstChart', [{type:'sunburst',labels:['Incident','Adversary','Capability','Infrastructure','Victim','Unknown actor',...(d.Tools||[]).slice(0,3),...asArray(victim.Assets).slice(0,3)],parents:['','Incident','Incident','Incident','Incident','Adversary','Capability','Capability','Capability','Victim','Victim','Victim'],values:[0,22,28,16,24,10,8,8,7,8,8,6],branchvalues:'total'}], {paper_bgcolor:paperBg,plot_bgcolor:paperBg,margin:{l:8,r:8,t:8,b:8},font:{color:fontColor}}, {responsive:true,displayModeBar:false});
+  safePlot('heatmapChart', [{type:'heatmap',x:['Business Impact','Detectability','Executive Priority','Containment Pressure'],y:stageRows.map(a=>a.Stage||'Unknown'),z:stageRows.map((_,i)=>[7+i%4,5+i%5,8+i%3,7+i%4]),colorscale:[[0,'#103245'],[.45,'#00eaff'],[.7,'#ffc86b'],[1,'#ff6c8f']],showscale:false}], {...commonLayout, margin:{l:120,r:20,t:20,b:48}});
+  safePlot('sankeyChart', [{type:'sankey',arrangement:'snap',node:{pad:16,thickness:14,label:['Threat Actor','Objective','Entry Vector','Tools','Assets','Business Impact'],color:['#00eaff','#6cffba','#ffc86b','#a78bfa','#54a9ff','#ff6c8f']},link:{source:[0,1,2,2,3,3],target:[1,2,3,4,4,5],value:[10,9,6,7,6,8],color:['rgba(0,234,255,.22)','rgba(108,255,186,.22)','rgba(255,200,107,.22)','rgba(84,169,255,.22)','rgba(167,139,250,.22)','rgba(255,108,143,.26)']}}], {paper_bgcolor:paperBg,plot_bgcolor:paperBg,font:{color:fontColor,size:11},margin:{l:12,r:12,t:8,b:8}});
+  const sbLabels = ['Incident','Adversary','Capability','Infrastructure','Victim'];
+  const sbParents = ['','','Incident','Incident','Incident'];
+  const sbValues = [0,22,28,16,24];
+  const actor = asArray(d.Threat_Actors)[0] || 'Unknown actor';
+  sbLabels.push(actor); sbParents.push('Adversary'); sbValues.push(10);
+  asArray(d.Tools).slice(0,3).forEach(t=>{ sbLabels.push(t); sbParents.push('Capability'); sbValues.push(8); });
+  asArray(victim.Assets).slice(0,3).forEach(a=>{ sbLabels.push(a); sbParents.push('Victim'); sbValues.push(7); });
+  safePlot('sunburstChart', [{type:'sunburst',labels:sbLabels,parents:sbParents,values:sbValues,branchvalues:'total'}], {paper_bgcolor:paperBg,plot_bgcolor:paperBg,margin:{l:8,r:8,t:8,b:8},font:{color:fontColor}});
   const recs = asArray(d.Post_Incident_Recommendations).slice(0,5);
-  Plotly.newPlot('actionBarChart', [{type:'bar',orientation:'h',x:recs.map((_,i)=>95-(i*5)),y:recs.map(x=>shortTitle(x,42)),marker:{color:['#ff6c8f','#ffc86b','#00eaff','#6cffba','#54a9ff']}}], {...commonLayout, margin:{l:180,r:20,t:20,b:40}}, {responsive:true,displayModeBar:false});
-  Plotly.newPlot('pieChart', [{type:'pie',labels:['Remote Access','Credential/Data Theft','Execution/Loader'],values:[38,37,25],hole:.5,marker:{colors:['#ff6c8f','#00eaff','#6cffba']}}], {paper_bgcolor:paperBg,plot_bgcolor:paperBg,margin:{l:8,r:8,t:10,b:10},font:{color:fontColor},showlegend:false}, {responsive:true,displayModeBar:false});
+  safePlot('actionBarChart', [{type:'bar',orientation:'h',x:(recs.length?recs:['No recommendation']).map((_,i)=>95-(i*5)),y:(recs.length?recs:['No recommendation']).map(x=>shortTitle(x,42)),marker:{color:['#ff6c8f','#ffc86b','#00eaff','#6cffba','#54a9ff']}}], {...commonLayout, margin:{l:180,r:20,t:20,b:40}});
+  safePlot('pieChart', [{type:'pie',labels:['Remote Access','Credential/Data Theft','Execution/Loader'],values:[38,37,25],hole:.5,marker:{colors:['#ff6c8f','#00eaff','#6cffba']}}], {paper_bgcolor:paperBg,plot_bgcolor:paperBg,margin:{l:8,r:8,t:10,b:10},font:{color:fontColor},showlegend:false});
   const stages = stageRows.map(a=>a.Stage||'Stage');
-  Plotly.newPlot('timelineChart', [{type:'bar',orientation:'h',y:stages,x:stages.map((_,i)=>(1+i*0.2)*24*60*60*1000),base:stages.map((_,i)=>new Date(Date.now()-(stages.length-i)*86400000).toISOString().slice(0,10))}], {...commonLayout, margin:{l:170,r:20,t:20,b:46}, xaxis:{...commonLayout.xaxis, type:'date'}}, {responsive:true,displayModeBar:false});
+  safePlot('timelineChart', [{type:'bar',orientation:'h',y:stages,x:stages.map((_,i)=>(1+i*0.2)*24*60*60*1000),base:stages.map((_,i)=>new Date(Date.now()-(stages.length-i)*86400000).toISOString().slice(0,10))}], {...commonLayout, margin:{l:170,r:20,t:20,b:46}, xaxis:{...commonLayout.xaxis, type:'date'}});
   const techIds = analyses.map(a=>a.Techniques?.[0]).filter(Boolean);
-  Plotly.newPlot('techniqueBarChart', [{type:'bar',x:techIds.length?techIds:['No technique'],y:techIds.length?techIds.map((_,i)=>70+(i*5)): [50],marker:{color:'#54a9ff'}}], {...commonLayout, margin:{l:40,r:20,t:20,b:90}}, {responsive:true,displayModeBar:false});
+  safePlot('techniqueBarChart', [{type:'bar',x:techIds.length?techIds:['No technique'],y:techIds.length?techIds.map((_,i)=>70+(i*5)): [50],marker:{color:'#54a9ff'}}], {...commonLayout, margin:{l:40,r:20,t:20,b:90}});
 
   const rows = [
     ['Incident Type', asArray(ents.Breach_Types)[0] || 'Threat incident under review', 'Trust and integrity risk', 'Confirm containment and comms cadence', 'High'],
