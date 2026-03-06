@@ -697,9 +697,9 @@ def api_bootstrap():
             return jsonify(_bootstrap_cache)
 
     sort = [
-        {"sequence": {"order": "desc", "unmapped_type": "long"}},
-        {"enrichment.processed_at": {"order": "desc", "unmapped_type": "date"}},
         {"Timestamp": {"order": "desc", "unmapped_type": "date"}},
+        {"enrichment.processed_at": {"order": "desc", "unmapped_type": "date"}},
+        {"sequence": {"order": "desc", "unmapped_type": "long"}},
     ]
 
     try:
@@ -724,7 +724,8 @@ def api_bootstrap():
             if k not in name_hints and v:
                 name_hints[k] = v
 
-    latest_ts = docs[0].get("Timestamp") if docs else None
+    latest_dt = max((_parse_iso_dt(d.get("Timestamp")) for d in docs if d.get("Timestamp")), default=None)
+    latest_ts = _iso(latest_dt) if latest_dt else (docs[0].get("Timestamp") if docs else None)
     seqs = [d.get("sequence") for d in docs if isinstance(d.get("sequence"), int)]
     latest_seq = max(seqs) if seqs else None
     anchor_ts = latest_plausible_timestamp(docs)

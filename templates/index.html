@@ -1118,12 +1118,13 @@
       <div class="matrixBody">
         <div id="pathStripHost"></div>
 
-        <div class="tabsRow" style="display:grid; grid-template-columns:repeat(5,minmax(0,1fr)); margin-top:2px;">
+        <div class="tabsRow" style="display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); margin-top:2px;">
           <button class="tabBtn active" data-tab="action">Action Board</button>
           <button class="tabBtn" data-tab="exposure">Exposure</button>
           <button class="tabBtn" data-tab="funnel">Triage Funnel</button>
           <button class="tabBtn" data-tab="coverage">Coverage Gap</button>
           <button class="tabBtn" data-tab="storyline">Storyline</button>
+          <button class="tabBtn" data-tab="recent">Recent Intel</button>
         </div>
 
         <div class="tabPane active" id="tabAction">
@@ -1158,6 +1159,13 @@
           <div class="box selDocPanel" id="storylineBox">
             <h3>Storyline Mode <span class="chip" id="storylineCount">—</span></h3>
             <div id="storylineBoard"></div>
+          </div>
+        </div>
+
+        <div class="tabPane" id="tabRecent">
+          <div class="box docsPanel" id="recentBox">
+            <h3>Recent Intelligence <span class="chip" id="recentCount">—</span></h3>
+            <div id="recentBoard"></div>
           </div>
         </div>
       </div>
@@ -1938,7 +1946,8 @@ function render(){
 
   $("sideMeta").textContent = `${docs.length} docs`;
   const uniqueTech = uniq(docs.flatMap(d=>d.Techniques||[])).length;
-  $("matrixMeta").textContent = `${docs.length} docs • ${uniqueTech} techniques`;
+  const recent24 = docs.filter(d=>isRecent24h(d)).length;
+  $("matrixMeta").textContent = `${docs.length} docs • ${uniqueTech} techniques • ${recent24} recent`;
 
   const selDoc = state.selectedDocId ? DOCS.find(d=>d.id===state.selectedDocId) : null;
   if(selDoc && !docs.some(d=>d.id===selDoc.id)){
@@ -1961,6 +1970,7 @@ function render(){
   renderTriageFunnel(docs, selDocNow);
   renderCoverageGapBoard(docs);
   renderStorylineMode(selDocNow);
+  renderRecentIntel(docs);
   renderPathStrip(selDocNow);
 
   renderDocList(docs, $("docList"), $("emptyDocs"), $("docCount"));
@@ -2243,6 +2253,29 @@ function renderStorylineMode(selDoc){
   $("storylineCount").textContent = `${phases.length} stages`;
   host.innerHTML = phases.map(a=>`<div class="hpCard" style="margin-bottom:8px;"><h4>${escapeHtml(a.Stage||'Unknown')} <span class="chip">${(a.Techniques||[]).length} tech</span></h4><div class="muted" style="font-size:12px;">${escapeHtml(shortTitle(a.Description||'No stage description', 180))}</div><div style="margin-top:6px; font-size:12px;">Detect: ${escapeHtml(shortTitle((asArray(a.Detection).join(' • ')||'—'),120))}</div><div style="margin-top:4px; font-size:12px;">Respond: ${escapeHtml(shortTitle((asArray(a.Remediation).join(' • ')||'—'),120))}</div></div>`).join('');
 }
+function renderRecentIntel(docs){
+  const host = $("recentBoard");
+  if(!host) return;
+  const all = DOCS.slice().sort((a,b)=>(parseDateSafe(b.Timestamp)?.getTime()||0)-(parseDateSafe(a.Timestamp)?.getTime()||0));
+  const rec24 = all.filter(d=>isRecent24h(d));
+  const rec7 = all.filter(d=>ageDaysFrom(d.Timestamp)<=7);
+  $("recentCount").textContent = `24h:${rec24.length} • 7d:${rec7.length}`;
+  const rows = all.slice(0,12);
+  host.innerHTML = rows.map(d=>{
+    const ents = d.Extracted_Entities || {};
+    const sector = asArray(ents.Sectors)[0] || "—";
+    const country = asArray(ents.Countries)[0] || "—";
+    const breach = asArray(ents.Breach_Types)[0] || "—";
+    return `<div class="docItem ${isRecent24h(d)?'hotGlow':''}" style="margin-bottom:6px;" data-open="${d.id}">
+      <div class="row"><div class="t">${sevPill(d.Severity)} ${escapeHtml(shortTitle(d.Title,64))} ${isRecent24h(d)?'<span class="pill recentBadge">NEW ≤24h</span>':''}</div><div class="ts">${fmtDate(d.Timestamp)}</div></div>
+      <div class="m">${escapeHtml(shortTitle(d.doc_summary||'',110))}</div>
+      <div style="margin-top:6px; display:flex; gap:6px; flex-wrap:wrap;"><span class="pill violet">${escapeHtml(shortTitle(sector,20))}</span><span class="pill amber">${escapeHtml(shortTitle(country,20))}</span><span class="pill pink">${escapeHtml(shortTitle(breach,24))}</span></div>
+    </div>`;
+  }).join('') || '<div class="muted">No documents loaded.</div>';
+  host.querySelectorAll('[data-open]').forEach(el=>el.addEventListener('click',()=>openDocModal(DOCS.find(x=>x.id===el.getAttribute('data-open')))));
+}
+
+
 
 /* Documents lists */
 function renderDocList(docs, hostEl, emptyEl, countChipEl){
@@ -2256,7 +2289,7 @@ function renderDocList(docs, hostEl, emptyEl, countChipEl){
     return db - da;
   });
 
-  for(const d of sorted.slice(0,40)){
+  for(const d of sorted.slice(0,80)){
     const item = document.createElement("div");
     item.className = "docItem" + (state.selectedDocId===d.id ? " active" : "") + (isRecent24h(d) ? " hotGlow" : "");
     item.innerHTML = `
@@ -2270,6 +2303,9 @@ function renderDocList(docs, hostEl, emptyEl, countChipEl){
         <span class="pill violet">Actors: ${(d.Threat_Actors||[]).length}</span>
         <span class="pill amber">Tools: ${(d.Tools||[]).length}</span>
         <span class="pill pink">CVEs: ${(d.CVEs||[]).length}</span>
+        <span class="pill violet">Sector: ${escapeHtml(shortTitle(asArray((d.Extracted_Entities||{}).Sectors)[0]||"—",18))}</span>
+        <span class="pill amber">Country: ${escapeHtml(shortTitle(asArray((d.Extracted_Entities||{}).Countries)[0]||"—",18))}</span>
+        <span class="pill pink">Breach: ${escapeHtml(shortTitle(asArray((d.Extracted_Entities||{}).Breach_Types)[0]||"—",22))}</span>
       </div>
     `;
     item.addEventListener("click", ()=>{
@@ -2776,7 +2812,7 @@ $("closeModal").addEventListener("click", ()=> $("docModal").close());
 /* Tabs */
 function syncSidebarTabs(){
   document.querySelectorAll('[data-tab]').forEach(btn=>btn.classList.toggle('active', btn.getAttribute('data-tab')===state.sideTab));
-  const map = {action:'tabAction', exposure:'tabExposure', funnel:'tabFunnel', coverage:'tabCoverage', storyline:'tabStoryline'};
+  const map = {action:'tabAction', exposure:'tabExposure', funnel:'tabFunnel', coverage:'tabCoverage', storyline:'tabStoryline', recent:'tabRecent'};
   Object.entries(map).forEach(([k,id])=>$(id).classList.toggle('active', state.sideTab===k));
 }
 document.querySelectorAll("[data-tab]").forEach(btn=>{
