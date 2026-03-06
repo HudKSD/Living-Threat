@@ -247,6 +247,9 @@
       box-shadow: 0 0 0 1px rgba(255,90,122,.30), 0 0 20px rgba(255, 80, 116, .35);
     }
 
+    /* Dashboard-only mode: hide non-dashboard workflow affordances */
+    #pathStripHost, #selDocBox, #prioBox, #docsBox, #docsBtn, #pathBtn, .toggle[title*="Hunt Mode"] { display:none !important; }
+
     .main{
       padding:12px clamp(14px, 2vw, 28px) 14px;
       display:grid;
@@ -1207,8 +1210,8 @@
 
     <aside class="panel sidePanel" id="sidePanel">
       <div class="panelHd">
-        <div class="h">Evidence Sidebar <span class="chip" id="sideMeta">—</span></div>
-        <div class="meta"><span class="chip" id="focusChip">Technique: none</span></div>
+        <div class="h">Filters <span class="chip" id="sideMeta">—</span></div>
+        <div class="meta"><span class="chip" id="focusChip">Dashboard mode</span></div>
       </div>
 
       <div class="sideBody" id="sideBody">
@@ -1253,11 +1256,8 @@
     </div>
     <div class="miniTrack" id="miniTrack">
       <button class="miniRow" data-target="matrixPanel" data-tone="matrix">Workspace <small>left</small></button>
-      <button class="miniRow" data-target="pathStripHost" data-tone="matrix">Hunt Path <small>top</small></button>
       <button class="miniRow" data-target="aggBox" data-tone="side">Aggregations <small>side</small></button>
-      <button class="miniRow" data-target="prioBox" data-tone="priority">Priorities <small>side</small></button>
-      <button class="miniRow" data-target="actionBox" data-tone="side">Action <small>side</small></button>
-      <button class="miniRow" data-target="coverageBox" data-tone="docs">Coverage <small>side</small></button>
+      <button class="miniRow" data-target="matrixPanel" data-tone="matrix">Dashboard <small>left</small></button>
     </div>
   </nav>
 </div>
@@ -1284,7 +1284,7 @@
       <h2 class="modalTitle">What this platform does</h2>
       <div class="blockquote">
         A living threat repository: real-world incidents and write-ups are continuously mapped to ATT&CK tactics and techniques.
-        The UI is designed for analyst flow — report → techniques → hunt/detect → pivots.
+        The UI is now dashboard-first for executive reporting and decision support.
       </div>
 
       <div class="hr"></div>
@@ -1303,8 +1303,8 @@
         </div>
         <div class="blockquote">
           <b class="muted">Attack Path + Hunt Pack</b><br/>
-          Shows kill-chain phases and highlights phases that actually contain techniques.
-          Hunt Pack includes runbook, checks, pivots, coverage/gaps, exfil watch, and integrity.
+          Retired from primary workflow in dashboard mode.
+          The app now focuses on executive dashboard charts and filter-driven slicing.
         </div>
         <div class="blockquote">
           <b class="muted">Fast navigation</b><br/>
@@ -1324,10 +1324,10 @@
 
       <h2 class="modalTitle">How to use this efficiently</h2>
       <div class="blockquote">
-        1) Start with <b>Operational Priorities</b> to identify top items quickly.<br/>
-        2) Select a document and open <b>Attack Path</b> to see stage-by-stage guidance.<br/>
-        3) Use <b>Actor</b>/<b>Tool</b> filters and <b>Search</b> to narrow to your environment.<br/>
-        4) Use <b>Share</b> to copy your exact filtered state for team collaboration.
+        1) Start with the executive KPIs and trend charts for a rapid situational picture.<br/>
+        2) Use sidebar filters (Actor/Tool/Country/Breach/Sector/Software/Access Vector) to tailor the dashboard.<br/>
+        3) Validate impact and response posture via heatmap, sankey, sunburst, and watchlist table.<br/>
+        4) Use <b>Share</b> to copy your exact filtered dashboard state for team collaboration.
       </div>
 
       <div class="hr"></div>
@@ -1990,20 +1990,12 @@ function render(){
   }
 
   const selDocNow = state.selectedDocId ? DOCS.find(d=>d.id===state.selectedDocId) : null;
-
-  $("pathBtn").disabled = !selDocNow;
-  $("pathBtn").textContent = state.pathOn ? "Hide Attack Path" : "Attack Path";
-  $("selMeta").textContent = selDocNow ? `Doc: ${selDocNow.Title} (${fmtDate(selDocNow.Timestamp)})` : "No doc selected";
+  const dashboardDoc = selDocNow || docs[0] || DOCS[0] || null;
+  $("selMeta").textContent = dashboardDoc ? `Dashboard source: ${dashboardDoc.Title} (${fmtDate(dashboardDoc.Timestamp)})` : "No doc selected";
 
   buildSideFilters(docs);
-  renderSelectedDocBox(selDocNow);
   renderAggBox(docs);
-  renderOperationalPriorities(docs);
-  renderExecutiveWorkspace(docs, selDocNow);
-  renderPathStrip(selDocNow);
-
-  renderDocList(docs, $("docList"), $("emptyDocs"), $("docCount"));
-  renderDocList(docs, $("docListDrawer"), $("emptyDocsDrawer"), $("docCountDrawer"));
+  renderExecutiveWorkspace(docs, dashboardDoc);
 
   syncSidebarTabs();
 }
