@@ -1582,6 +1582,38 @@ function stageOfTechInDoc(doc, tid){
   return null;
 }
 
+function techniqueMetaForCard(docs, tid){
+  for(const d of (docs||[])){
+    for(const a of (d.Analyses||[])){
+      const techniques = asArray(a.Techniques || []);
+      if(!techniques.includes(tid)) continue;
+      for(const t of asArray(a.Technique_Details || [])){
+        if(!t || typeof t !== "object") continue;
+        const techniqueId = String(t.technique_id || "").trim() || tid;
+        const techniqueName = String(t.technique_name || "").trim();
+        const techniqueDescription = String(t.technique_description || "").trim();
+        if(techniqueId || techniqueName || techniqueDescription){
+          return {
+            technique_id: techniqueId || "â€”",
+            technique_name: techniqueName || (TECH[tid]?.name || "â€”"),
+            technique_description: techniqueDescription || "â€”"
+          };
+        }
+      }
+      return {
+        technique_id: tid || "â€”",
+        technique_name: (TECH[tid]?.name || "â€”"),
+        technique_description: (TECH[tid]?.description || TECH[tid]?.technique_description || "â€”")
+      };
+    }
+  }
+  return {
+    technique_id: tid || "â€”",
+    technique_name: (TECH[tid]?.name || "â€”"),
+    technique_description: (TECH[tid]?.description || TECH[tid]?.technique_description || "â€”")
+  };
+}
+
 function pickTopN(mapObj, n=5){
   return Object.entries(mapObj).sort((a,b)=>b[1]-a[1]).slice(0,n);
 }
@@ -2601,11 +2633,15 @@ function renderMatrix(docs, techStats, selDoc){
       if(selDoc && state.huntOn && !isDocHit) card.classList.add("dim");
       if(selDoc && state.pathOn && !isPathHit) card.classList.add("dim");
 
+      const techMeta = techniqueMetaForCard(t.docs, t.tid);
+
       card.innerHTML = `
         <div class="row1">
-          <span class="tid">${escapeHtml(t.tid)}</span>
+          <span class="tid">${escapeHtml(techMeta.technique_id)}</span>
           <span class="score">w:${t.weight} â€¢ n:${t.count}</span>
         </div>
+        <div style="font-weight:900; font-size:12px; line-height:1.25; margin-bottom:4px;">${escapeHtml(techMeta.technique_name)}</div>
+        <div style="font-size:11px; line-height:1.25; color:rgba(210,222,255,.86);">${escapeHtml(shortTitle(techMeta.technique_description, 160))}</div>
       `;
 
       card.addEventListener("click", ()=>{
