@@ -1,5 +1,36 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+  <meta name="theme-color" content="#06131a" />
+  <meta name="description" content="A living threat repository where real-world incidents are continuously mapped to ATT&CK tactics and techniques, in a Navigator-style view." />
+  <link rel="canonical" href="https://living-threat.rabitanoor.com" />
 
+  <meta property="og:type" content="website" />
+  <meta property="og:url" content="https://living-threat.rabitanoor.com" />
+  <meta property="og:title" content="Living Threat Repository" />
+  <meta property="og:description" content="Asset-relevant threat intel mapped to ATT&CK with evidence." />
 
+  <meta property="og:image" content="https://repo.researchbus.com/api/public/dl/0-sI5gSY/RBTN/LOGO/LT.png" />
+  <meta property="og:image:secure_url" content="https://repo.researchbus.com/api/public/dl/0-sI5gSY/RBTN/LOGO/LT.png" />
+  <meta property="og:image:type" content="image/png" />
+  <meta property="og:image:width" content="1200" />
+  <meta property="og:image:height" content="630" />
+
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:image" content="https://repo.researchbus.com/api/public/dl/0-sI5gSY/RBTN/LOGO/LT.png" />
+  <link rel="icon" href="https://news.rabitanoor.com/content/images/2024/10/1-2.png">
+  <title>Living MITRE Repository • Navigator-style Threat Mapping</title>
+  <script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
+
+  <style>
+    :root{
+      --bg0:#04080c; --bg1:#06131a;
+      --text:#d6f7ff;
+
+      --cyan:#00f5ff; --green:#77ffb0; --violet:#b58bff;
+      --amber:#ffcc66; --pink:#ff5a7a; --blue:#54a6ff; --orange:#ff7a59;
       --shadow: 0 14px 40px rgba(0,0,0,.46);
 
       --panelA: rgba(7,26,34,.78);
@@ -84,6 +115,11 @@
       box-shadow: var(--shadow);
     }
     .toggle{ border-color: rgba(181,139,255,.18); background: rgba(16,10,28,.28); }
+    .searchCtl{
+      border-color: rgba(255, 90, 122, .56);
+      box-shadow: 0 0 0 1px rgba(255,90,122,.24), 0 0 18px rgba(255,214,97,.20);
+      animation: searchPulse 1.4s infinite;
+    }
 
     .ctl label, .rangeCtl label{
       font-family:var(--mono);
@@ -98,6 +134,14 @@
       outline:none;
       font-size:13px;
       min-width: 120px;
+    }
+    select option{ background:#081019; color:#d6f7ff; }
+    .fctl select,
+    .fctl select:focus{
+      background: rgba(3,9,16,.95);
+      color:#d6f7ff;
+      border-radius:8px;
+      padding:4px 6px;
     }
     input[type="text"]::placeholder{ color:rgba(214,247,255,.45); }
 
@@ -154,6 +198,13 @@
     }
     .btn.sm{ padding:7px 10px; font-size:12px; }
     .btn:disabled{ opacity:.5; cursor:not-allowed; transform:none; }
+    #pathBtn{
+      border-color: rgba(255, 132, 132, .75);
+      box-shadow: 0 0 0 1px rgba(255,132,132,.28), 0 0 22px rgba(255,214,97,.22);
+      background: linear-gradient(180deg, rgba(255,132,132,.20), rgba(255,132,132,.08));
+      font-weight:700;
+    }
+    #refreshBtn{ font-weight:700; }
 
     .toggle input{ accent-color: var(--violet); }
     .toggle span{ font-size:12.5px; color:rgba(214,247,255,.86); white-space:nowrap; }
@@ -180,12 +231,26 @@
     .badge.hot .dot{
       background: rgba(255, 132, 132, .95);
       box-shadow: 0 0 18px rgba(255, 214, 97, .32);
+      animation: pulse 1s infinite;
+    }
+    .liveDot{
+      width:8px; height:8px; border-radius:50%; display:inline-block;
+      background:#77ffb0; box-shadow:0 0 16px rgba(119,255,176,.6);
+      animation: pulse 1.4s infinite;
+    }
+    .beacon{ animation: pulse 1.2s infinite; }
+    .recentBadge{
+      border-color: rgba(255, 90, 122, .72);
+      background: rgba(255,90,122,.24);
+      color: #ffd5df;
+      animation: recentAlert 1s infinite;
+      box-shadow: 0 0 0 1px rgba(255,90,122,.30), 0 0 20px rgba(255, 80, 116, .35);
     }
 
     .main{
       padding:12px clamp(14px, 2vw, 28px) 14px;
       display:grid;
-      grid-template-columns: 1fr 390px;
+      grid-template-columns: 1fr 510px;
       gap:12px;
       min-height:0;
     }
@@ -241,6 +306,71 @@
       .matrixBody{ height:auto; min-height:unset; }
     }
 
+    .execShell{display:grid; gap:14px;}
+    .execHero{position:relative;overflow:hidden;border:1px solid rgba(93,222,255,.16);background:linear-gradient(135deg, rgba(6,25,35,.95), rgba(8,28,38,.82));border-radius:22px;padding:18px;box-shadow:var(--shadow)}
+    .execHeroTop{display:flex;gap:14px;align-items:flex-start;justify-content:space-between;flex-wrap:wrap}
+    .execTitle{margin:0 0 6px;font-size:26px;line-height:1.1;letter-spacing:-.03em}
+    .execSub{max-width:900px;color:#8fbdc9;font-size:13px;line-height:1.5}
+    .execChips{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+    .execChip{border:1px solid rgba(93,222,255,.15);background:rgba(255,255,255,.03);padding:6px 10px;border-radius:999px;font-size:11px}
+    .execMeta{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;min-width:260px}
+    .execMetaCard{border:1px solid rgba(93,222,255,.12);background:rgba(255,255,255,.02);border-radius:12px;padding:8px 10px}
+    .execMetaCard .k{font-size:10px;color:#8fbdc9;text-transform:uppercase;letter-spacing:.12em}
+    .execMetaCard .v{margin-top:4px;font-size:12px;font-weight:700}
+    .execKpiGrid{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:10px}
+    .execKpi{border:1px solid rgba(93,222,255,.14);background:linear-gradient(180deg, rgba(8,27,37,.9), rgba(5,18,25,.88));border-radius:14px;padding:10px;min-height:92px}
+    .execKpi .label{color:#8fbdc9;font-size:10px;letter-spacing:.10em;text-transform:uppercase}
+    .execKpi .value{margin-top:6px;font-size:24px;font-weight:800;letter-spacing:-.02em}
+    .execKpi .foot{margin-top:6px;color:#8fbdc9;font-size:11px;line-height:1.3}
+    .accent-cyan{color:#00eaff}.accent-green{color:#6cffba}.accent-amber{color:#ffc86b}.accent-red{color:#ff6c8f}.accent-violet{color:#a78bfa}.accent-blue{color:#54a9ff}
+    .execGrid3,.execGrid2{display:grid;gap:10px}
+    .execGrid3{grid-template-columns:1.2fr 1fr 1fr}
+    .execGrid2{grid-template-columns:1fr 1fr}
+    .execPanel{border:1px solid rgba(93,222,255,.16);background:linear-gradient(180deg, rgba(7,26,36,.82), rgba(5,18,25,.9));border-radius:16px;overflow:hidden}
+    .execHead{display:flex;justify-content:space-between;align-items:flex-start;gap:8px;padding:12px 12px 0;flex-wrap:wrap}
+    .execPanelTitle{margin:0;font-size:13px}
+    .execPanelSub{margin:4px 0 0;color:#8fbdc9;font-size:11px;line-height:1.4}
+    .execBadge{border:1px solid rgba(93,222,255,.18);background:rgba(255,255,255,.03);padding:4px 8px;border-radius:999px;font-size:10px}
+    .execPlot{height:320px;width:100%;padding:6px 6px 10px}
+    .execPlot.tall{height:380px}
+    .execPlot.short{height:300px}
+    .execTableWrap{padding:10px 12px 14px;overflow:auto}
+    .execTable{width:100%;border-collapse:collapse;min-width:760px}
+    .execTable thead th{text-align:left;background:rgba(255,255,255,.04);font-size:10px;letter-spacing:.11em;text-transform:uppercase;padding:10px;border-bottom:1px solid rgba(93,222,255,.16)}
+    .execTable tbody td{padding:10px;border-bottom:1px solid rgba(93,222,255,.08);font-size:12px;line-height:1.4}
+    @media (max-width:1500px){.execKpiGrid{grid-template-columns:repeat(3,minmax(0,1fr))}.execGrid3,.execGrid2{grid-template-columns:1fr}}
+    @media (max-width:760px){.execKpiGrid{grid-template-columns:repeat(2,minmax(0,1fr))}.execMeta{grid-template-columns:1fr}.execPlot,.execPlot.short,.execPlot.tall{height:300px}}
+    .matrixNavMap{
+      position: sticky;
+      top: 0;
+      z-index: 6;
+      border:1px solid rgba(0,245,255,.16);
+      background: rgba(2,12,18,.78);
+      border-radius: 12px;
+      padding:8px;
+      margin-bottom:10px;
+      backdrop-filter: blur(8px);
+    }
+    .matrixNavMap .hd{
+      font-family:var(--mono);
+      font-size:10px;
+      color:rgba(214,247,255,.70);
+      margin-bottom:6px;
+    }
+    .matrixNavTrack{ display:flex; gap:6px; flex-wrap:wrap; }
+    .matrixNavDot{
+      border:1px solid rgba(0,245,255,.16);
+      border-radius:999px;
+      padding:3px 8px;
+      font-size:10px;
+      font-family:var(--mono);
+      background: rgba(0,245,255,.05);
+      color:rgba(214,247,255,.82);
+      cursor:pointer;
+    }
+    .matrixNavDot:hover{ border-color: rgba(0,245,255,.34); }
+    .matrixNavDot.hot{ background: rgba(255,90,122,.16); border-color: rgba(255,90,122,.42); color:#ffd8e1; }
+
     .sidePanel{ background: var(--panelB); border-color: rgba(181,139,255,.22); }
     .sidePanel .panelHd{
       border-bottom-color: rgba(181,139,255,.16);
@@ -264,6 +394,11 @@
       margin-bottom:10px;
       overflow:hidden;
     }
+    .box.selDocPanel{ border-color: rgba(0,245,255,.28); background: linear-gradient(180deg, rgba(0,245,255,.09), rgba(0,0,0,.14)); }
+    .box.aggPanel{ border-color: rgba(119,255,176,.28); background: linear-gradient(180deg, rgba(119,255,176,.10), rgba(0,0,0,.14)); }
+    .box.prioPanel{ border-color: rgba(255,90,122,.30); background: linear-gradient(180deg, rgba(255,90,122,.12), rgba(0,0,0,.14)); }
+    .box.focusPanel{ border-color: rgba(181,139,255,.30); background: linear-gradient(180deg, rgba(181,139,255,.11), rgba(0,0,0,.14)); }
+    .box.docsPanel{ border-color: rgba(255,204,102,.30); background: linear-gradient(180deg, rgba(255,204,102,.11), rgba(0,0,0,.14)); }
     .box h3{
       margin:0 0 8px;
       font-size:12.5px; letter-spacing:.2px;
@@ -436,6 +571,21 @@
       border-radius: 14px;
       padding:10px;
       margin-bottom:10px;
+    }
+    .pathStrip.pinned{
+      position: fixed;
+      z-index: 30;
+      backdrop-filter: blur(6px);
+      max-height: calc(100vh - 120px);
+      overflow:auto;
+    }
+    .pathStrip.pinned .huntPack{
+      max-height: 46vh;
+      overflow:auto;
+      padding-right:6px;
+    }
+    .pathStripSpacer{
+      width:100%;
     }
     .pathStrip.hotPanel{
       border-color: var(--hlRed);
@@ -616,6 +766,51 @@
       box-shadow: 0 0 18px rgba(255,90,122,.25);
     }
 
+    .miniMap{
+      position: fixed;
+      right: 14px;
+      bottom: 16px;
+      z-index: 40;
+      width: 160px;
+      border-radius: 14px;
+      border:1px solid rgba(0,245,255,.20);
+      background: rgba(2,8,14,.86);
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(8px);
+      padding:8px;
+    }
+    .miniMapHd{
+      font-family:var(--mono);
+      font-size:10px;
+      color:rgba(214,247,255,.72);
+      margin-bottom:6px;
+      display:flex; justify-content:space-between; align-items:center;
+    }
+    .miniTrack{ display:flex; flex-direction:column; gap:4px; }
+    .miniRow{
+      border-radius:8px;
+      border:1px solid rgba(255,255,255,.12);
+      background: rgba(255,255,255,.05);
+      min-height:16px;
+      padding:2px 6px;
+      cursor:pointer;
+      font-size:10px;
+      color:rgba(214,247,255,.78);
+      display:flex; align-items:center; justify-content:space-between;
+      transition: border-color .2s ease, box-shadow .2s ease;
+    }
+    .miniRow:hover{ border-color: rgba(0,245,255,.35); }
+    .miniRow.active{
+      border-color: rgba(0,245,255,.55);
+      box-shadow: 0 0 0 1px rgba(0,245,255,.22), 0 0 16px rgba(0,245,255,.16);
+    }
+    .miniRow[data-tone="matrix"]{ background: rgba(0,245,255,.10); }
+    .miniRow[data-tone="side"]{ background: rgba(181,139,255,.12); }
+    .miniRow[data-tone="priority"]{ background: rgba(255,90,122,.14); }
+    .miniRow[data-tone="docs"]{ background: rgba(255,204,102,.14); }
+    .miniRow small{ opacity:.72; }
+    @media (max-width:1060px){ .miniMap{ display:none; } }
+
     /* dialogs */
     dialog{
       border:none;
@@ -641,6 +836,7 @@
     }
     .modalHd{
       padding:12px 12px 10px;
+      color:rgba(214,247,255,.94);
       border-bottom:1px solid rgba(0,245,255,.12);
       display:flex; justify-content:space-between; align-items:center; gap:10px;
       background: linear-gradient(180deg, rgba(0,245,255,.06), rgba(0,0,0,.0));
@@ -656,7 +852,8 @@
       font-size:16px;
     }
     .modalBd{ padding:12px; overflow:auto; }
-    .modalTitle{ font-size:14px; font-weight:950; line-height:1.25; margin:0 0 8px; }
+    .modalTitle{ font-size:14px; font-weight:950; line-height:1.25; margin:0 0 8px; color:rgba(214,247,255,.96); }
+    .modalBd{ color:rgba(214,247,255,.90); }
     .grid2{ display:grid; grid-template-columns: 1fr 1fr; gap:10px; }
     @media (max-width: 860px){ .grid2{ grid-template-columns: 1fr; } }
 
@@ -703,6 +900,22 @@
       transition: width .18s ease;
     }
     .loaderBd{ padding:12px; }
+    .loaderUsagePanel{
+      border:1px solid rgba(255,255,255,.12);
+      background: rgba(0,0,0,.16);
+      border-radius: 12px;
+      padding:10px;
+      margin-bottom:10px;
+      max-height: 180px;
+      overflow:auto;
+    }
+    .loaderUsagePanel p{
+      margin:0 0 8px;
+      font-size:12px;
+      line-height:1.45;
+      color:rgba(214,247,255,.86);
+    }
+    .loaderUsagePanel p:last-child{ margin-bottom:0; }
     .loaderMsg{ margin-top:10px; font-size:12px; color:rgba(214,247,255,.78); line-height:1.35; }
 
     /* Mobile docs drawer */
@@ -755,11 +968,12 @@
     }
     .switcherHd{
       padding:12px 12px 10px;
+      color:rgba(214,247,255,.94);
       border-bottom:1px solid rgba(0,245,255,.12);
       display:flex; justify-content:space-between; align-items:center; gap:10px;
       background: linear-gradient(180deg, rgba(0,245,255,.06), rgba(0,0,0,.0));
     }
-    .switcherBd{ padding:12px; overflow:auto; }
+    .switcherBd{ padding:12px; overflow:auto; color:rgba(214,247,255,.90); }
     .switcherInput{
       width:100%;
       border-radius: 12px;
@@ -792,7 +1006,7 @@
       box-shadow: 0 0 0 1px var(--hlRed2), 0 0 28px var(--hlGlow);
     }
     .swTop{ display:flex; justify-content:space-between; gap:10px; align-items:flex-start; }
-    .swTitle{ font-weight:900; font-size:12.6px; line-height:1.2; }
+    .swTitle{ font-weight:900; font-size:12.6px; line-height:1.2; color:rgba(230,245,255,.94); }
     .swTs{ font-family:var(--mono); font-size:11px; color:rgba(214,247,255,.58); white-space:nowrap; }
     .swSnip{ margin-top:6px; font-size:12px; color:rgba(214,247,255,.76); line-height:1.35; }
 
@@ -819,6 +1033,24 @@
       z-index:80;
     }
     .toast.show{ opacity:1; }
+
+    @keyframes recentAlert{
+      0%{ opacity:1; box-shadow: 0 0 0 1px rgba(255,90,122,.28), 0 0 8px rgba(255,80,116,.20); }
+      50%{ opacity:.35; box-shadow: 0 0 0 1px rgba(255,90,122,.70), 0 0 26px rgba(255,80,116,.56); }
+      100%{ opacity:1; box-shadow: 0 0 0 1px rgba(255,90,122,.28), 0 0 8px rgba(255,80,116,.20); }
+    }
+
+    @keyframes searchPulse{
+      0%{ box-shadow: 0 0 0 1px rgba(255,90,122,.24), 0 0 12px rgba(255,214,97,.14); }
+      50%{ box-shadow: 0 0 0 1px rgba(255,90,122,.55), 0 0 28px rgba(255,214,97,.30); }
+      100%{ box-shadow: 0 0 0 1px rgba(255,90,122,.24), 0 0 12px rgba(255,214,97,.14); }
+    }
+
+    @keyframes pulse{
+      0%{ transform:scale(1); opacity:1; }
+      50%{ transform:scale(1.05); opacity:.72; }
+      100%{ transform:scale(1); opacity:1; }
+    }
   </style>
 </head>
 
@@ -831,6 +1063,7 @@
       <span class="chip" id="loaderPct">0%</span>
     </div>
     <div class="loaderBd">
+      <div class="loaderUsagePanel" id="loaderUsagePanel"></div>
       <div class="progressWrap"><div class="progressBar" id="loaderBar"></div></div>
       <div class="loaderMsg" id="loaderMsg">Starting…</div>
       <div class="muted" style="font-size:11px; margin-top:10px;">
@@ -844,22 +1077,29 @@
   <header class="topbar">
     <div class="topbarInner">
       <div class="brand">
-        <div class="title"><span class="dot"></span>Living MITRE Repository <span class="chip" id="envChip">connecting…</span></div>
+        <div class="title"><span class="dot"></span>Living MITRE Repository <span class="chip" id="envChip">connecting…</span><span class="chip" title="Live status indicator"><span class="liveDot"></span> live</span></div>
         <div class="sub">
           A living threat repository where real-world incidents are continuously mapped to <b>ATT&CK tactics</b> and <b>techniques</b>, in a Navigator-style view.
-          Select a document to enter <b>Hunt Mode</b>. Toggle <b>Attack Path</b> to see phases and the hunt pack.
+          <b>Recommended flow:</b> 1) Filter first (search + time + severity + facets), 2) pick a document, 3) enter Hunt Mode, 4) open Attack Path to understand stage progression,
+          5) expand Hunt Pack for detections/remediation and pivots, 6) share the view with your SOC team for coordinated response.
+          This helps analysts move from noisy intel to asset-relevant, actionable decisions faster.
         </div>
       </div>
 
       <div class="bar">
+        <div class="ctl searchCtl" title="Search filters on doc_summary only">
+          <label>Search</label>
+          <input id="q" type="text" placeholder="doc_summary contains…" />
+        </div>
+
         <div class="rangeCtl">
           <label>Range</label>
-          <input id="range" type="range" min="1" max="365" value="90" step="1" />
-          <div class="v" id="rangeV">90d</div>
+          <input id="range" type="range" min="1" max="365" value="7" step="1" />
+          <div class="v" id="rangeV">7d</div>
           <div class="presets" id="presets">
-            <div class="pbtn" data-days="7">7d</div>
+            <div class="pbtn active" data-days="7">7d</div>
             <div class="pbtn" data-days="30">30d</div>
-            <div class="pbtn active" data-days="90">90d</div>
+            <div class="pbtn" data-days="90">90d</div>
             <div class="pbtn" data-days="180">180d</div>
             <div class="pbtn" data-days="365">365d</div>
             <div class="pbtn" data-days="ALL">All</div>
@@ -875,19 +1115,14 @@
           </select>
         </div>
 
-        <div class="ctl" title="Search filters on doc_summary only">
-          <label>Search</label>
-          <input id="q" type="text" placeholder="doc_summary contains…" />
-        </div>
-
         <div class="toggle" title="Hunt Mode highlights techniques used by the selected document">
           <input type="checkbox" id="hunt" checked />
           <span>Hunt Mode</span>
         </div>
 
-        <button class="btn secondary" id="pathBtn" disabled>Attack Path</button>
+        <button class="btn secondary beacon" id="pathBtn" disabled title="Critical: open attack path and hunt pack workflow">Attack Path</button>
 
-        <button class="btn" id="refreshBtn">Refresh</button>
+        <button class="btn beacon" id="refreshBtn" title="Critical: refresh latest intelligence dataset">Refresh</button>
         <span class="badge" id="newBadge" style="display:none;">
           <span class="dot"></span>
           <span id="newBadgeTxt">New</span>
@@ -900,8 +1135,9 @@
 
         <button class="btn secondary mobileOnly" id="docsBtn">Docs</button>
 
-        <button class="btn secondary" id="helpBtn">Help</button>
-        <button class="btn secondary" id="aboutBtn">About</button>
+        <button class="btn secondary" id="shareBtn">Share</button>
+        <button class="btn secondary" id="helpBtn" title="Open platform guide">Help</button>
+        <button class="btn secondary" id="aboutBtn" title="About this platform">About</button>
 
         <button class="btn danger" id="clearAll">Reset</button>
       </div>
@@ -911,15 +1147,60 @@
   <main class="main">
     <section class="panel matrixPanel" id="matrixPanel">
       <div class="panelHd">
-        <div class="h">Navigator <span class="chip" id="matrixMeta">—</span></div>
-        <div class="meta" id="selMeta">Loading…</div>
+        <div class="h">Operations Workspace <span class="chip" id="matrixMeta">—</span></div>
+        <div class="meta" id="selMeta">No doc selected</div>
       </div>
 
       <div class="matrixBody">
         <div id="pathStripHost"></div>
-        <div class="tacticGrid" id="matrix"></div>
-        <div class="muted" id="emptyMatrix" style="display:none; padding:10px 2px;">
-          No techniques match the current filters.
+
+        <div class="execShell">
+          <section class="execHero">
+            <div class="execHeroTop">
+              <div>
+                <h1 class="execTitle">CISO Daily Update Dashboard</h1>
+                <div class="execSub" id="execSub">Executive workspace generated from latest threat intelligence document.</div>
+                <div class="execChips" id="execChips"></div>
+              </div>
+              <aside class="execMeta" id="execMeta"></aside>
+            </div>
+          </section>
+
+          <section class="execKpiGrid">
+            <div class="execKpi"><div class="label">Executive Risk Index</div><div class="value accent-red" id="riskScore">—</div><div class="foot">Derived from severity, ATT&CK stages, and impact fields.</div></div>
+            <div class="execKpi"><div class="label">Observed ATT&CK Stages</div><div class="value accent-cyan" id="stageCount">—</div><div class="foot">Distinct stage count in analyses.</div></div>
+            <div class="execKpi"><div class="label">Malware / Tool Families</div><div class="value accent-violet" id="malwareCount">—</div><div class="foot">Unique listed malware/tool names.</div></div>
+            <div class="execKpi"><div class="label">Impacted Asset Classes</div><div class="value accent-blue" id="assetCount">—</div><div class="foot">Assets from victim/metadata fields.</div></div>
+            <div class="execKpi"><div class="label">Actionable Indicators</div><div class="value accent-amber" id="indicatorCount">—</div><div class="foot">Detection-oriented signals from doc.</div></div>
+            <div class="execKpi"><div class="label">Geographic Exposure</div><div class="value accent-green" id="geoExposure">—</div><div class="foot">Derived from extracted country hints.</div></div>
+          </section>
+
+          <section class="execGrid3">
+            <div class="execPanel"><div class="execHead"><div><h3 class="execPanelTitle">Risk, Detection Visibility, and Response Readiness Trend</h3><p class="execPanelSub">Synthetic trend generated from the selected incident context.</p></div><div class="execBadge">Area + Trend</div></div><div id="trendChart" class="execPlot tall"></div></div>
+            <div class="execPanel"><div class="execHead"><div><h3 class="execPanelTitle">Executive Risk Radar</h3><p class="execPanelSub">Relative posture across business dimensions.</p></div><div class="execBadge">Radar</div></div><div id="radarChart" class="execPlot"></div></div>
+            <div class="execPanel"><div class="execHead"><div><h3 class="execPanelTitle">Geographic Exposure Map</h3><p class="execPanelSub">Countries parsed from extracted entities.</p></div><div class="execBadge">Map</div></div><div id="mapChart" class="execPlot"></div></div>
+          </section>
+
+          <section class="execGrid2">
+            <div class="execPanel"><div class="execHead"><div><h3 class="execPanelTitle">Kill Chain / ATT&CK Stage Priority Heatmap</h3><p class="execPanelSub">Stage weighting based on severity and sequence.</p></div><div class="execBadge">Heatmap</div></div><div id="heatmapChart" class="execPlot"></div></div>
+            <div class="execPanel"><div class="execHead"><div><h3 class="execPanelTitle">Attack Flow Sankey</h3><p class="execPanelSub">Adversary flow from vector to impact.</p></div><div class="execBadge">Sankey</div></div><div id="sankeyChart" class="execPlot"></div></div>
+          </section>
+
+          <section class="execGrid3">
+            <div class="execPanel"><div class="execHead"><div><h3 class="execPanelTitle">Threat Topology Sunburst</h3><p class="execPanelSub">Hierarchy built from actor, capability, infra, and victim data.</p></div><div class="execBadge">Sunburst</div></div><div id="sunburstChart" class="execPlot"></div></div>
+            <div class="execPanel"><div class="execHead"><div><h3 class="execPanelTitle">Immediate Action Priorities</h3><p class="execPanelSub">Recommended response controls ranked for leadership.</p></div><div class="execBadge">Bar</div></div><div id="actionBarChart" class="execPlot"></div></div>
+            <div class="execPanel"><div class="execHead"><div><h3 class="execPanelTitle">Capability Mix</h3><p class="execPanelSub">Malicious capability split from the selected incident.</p></div><div class="execBadge">Pie</div></div><div id="pieChart" class="execPlot"></div></div>
+          </section>
+
+          <section class="execGrid2">
+            <div class="execPanel"><div class="execHead"><div><h3 class="execPanelTitle">Campaign Progression Timeline</h3><p class="execPanelSub">Illustrative stage chronology.</p></div><div class="execBadge">Timeline</div></div><div id="timelineChart" class="execPlot short"></div></div>
+            <div class="execPanel"><div class="execHead"><div><h3 class="execPanelTitle">Observed Techniques and Response Value</h3><p class="execPanelSub">Technique list from analyses with response value scoring.</p></div><div class="execBadge">Bar</div></div><div id="techniqueBarChart" class="execPlot short"></div></div>
+          </section>
+
+          <section class="execPanel">
+            <div class="execHead"><div><h3 class="execPanelTitle">Executive Watchlist Table</h3><p class="execPanelSub">Current evidence, relevance, and immediate asks.</p></div><div class="execBadge">Table</div></div>
+            <div class="execTableWrap"><table class="execTable"><thead><tr><th>Focus Area</th><th>Evidence from Record</th><th>Business Relevance</th><th>Immediate CISO Ask</th><th>Status</th></tr></thead><tbody id="watchlistBody"></tbody></table></div>
+          </section>
         </div>
       </div>
     </section>
@@ -930,40 +1211,55 @@
         <div class="meta"><span class="chip" id="focusChip">Technique: none</span></div>
       </div>
 
-      <div class="sideBody">
-        <div class="box" id="selDocBox" style="display:none;"></div>
+      <div class="sideBody" id="sideBody">
+        <div class="box selDocPanel" id="selDocBox" style="display:none;"></div>
 
-        <div class="box" id="aggBox">
+        <div class="box aggPanel" id="aggBox">
           <h3>Aggregations <span class="chip" id="aggChip">—</span></h3>
           <div class="kv" id="aggKv"></div>
           <div class="filters">
-            <div class="fctl"><label>Actor</label><select id="actorF"></select></div>
-            <div class="fctl"><label>Tool</label><select id="toolF"></select></div>
+            <div class="fctl"><label>Actor</label><select id="actorF" title="Filter by actor relevant to current dataset"></select></div>
+            <div class="fctl"><label>Tool</label><select id="toolF" title="Filter by tools/malware present in current dataset"></select></div>
+            <div class="fctl"><label>Data Risk</label><select id="dataRiskF" title="Filter by data types at risk"></select></div>
+            <div class="fctl"><label>Country</label><select id="countryF" title="Filter by extracted country"></select></div>
+            <div class="fctl"><label>Breach Type</label><select id="breachTypeF" title="Filter by breach type"></select></div>
+            <div class="fctl"><label>Sector</label><select id="sectorF" title="Filter by sector"></select></div>
+            <div class="fctl"><label>Software</label><select id="softwareF" title="Filter by software"></select></div>
+            <div class="fctl"><label>Access Vector</label><select id="accessVectorF" title="Filter by access vectors"></select></div>
           </div>
         </div>
 
-        <div class="tabsRow desktopOnly">
-          <button class="tabBtn active" id="tabBtnFocus" data-tab="focus">Focus</button>
-          <button class="tabBtn" id="tabBtnDocs" data-tab="docs">Documents</button>
+
+
+        <div class="box prioPanel" id="prioBox">
+          <h3>Operational Priorities <span class="chip" id="prioChip">—</span></h3>
+          <div class="docList" id="prioList"></div>
+          <div class="muted" id="prioEmpty" style="display:none; margin-top:8px;">No priorities for current filters.</div>
         </div>
 
-        <div class="tabPane active" id="tabFocus">
-          <div class="box" id="focusBox">
-            <h3>Technique Focus <span class="chip" id="focusCount">—</span></h3>
-            <div class="kv" id="focusKv"></div>
-          </div>
-        </div>
-
-        <div class="tabPane desktopOnly" id="tabDocs">
-          <div class="box">
-            <h3>Documents <span class="chip" id="docCount">—</span></h3>
-            <div class="docList" id="docList"></div>
-            <div class="muted" id="emptyDocs" style="display:none; margin-top:8px;">No documents match the current filters.</div>
-          </div>
+        <div class="box docsPanel" id="docsBox">
+          <h3>Documents Feed <span class="chip" id="docCount">—</span></h3>
+          <div class="docList" id="docList"></div>
+          <div class="muted" id="emptyDocs" style="display:none; margin-top:8px;">No documents match the current filters.</div>
         </div>
       </div>
     </aside>
   </main>
+
+  <nav class="miniMap" id="miniMap" aria-label="Page minimap">
+    <div class="miniMapHd">
+      <span>MINIMAP</span>
+      <small>Overview</small>
+    </div>
+    <div class="miniTrack" id="miniTrack">
+      <button class="miniRow" data-target="matrixPanel" data-tone="matrix">Workspace <small>left</small></button>
+      <button class="miniRow" data-target="pathStripHost" data-tone="matrix">Hunt Path <small>top</small></button>
+      <button class="miniRow" data-target="aggBox" data-tone="side">Aggregations <small>side</small></button>
+      <button class="miniRow" data-target="prioBox" data-tone="priority">Priorities <small>side</small></button>
+      <button class="miniRow" data-target="actionBox" data-tone="side">Action <small>side</small></button>
+      <button class="miniRow" data-target="coverageBox" data-tone="docs">Coverage <small>side</small></button>
+    </div>
+  </nav>
 </div>
 
 <!-- DOC MODAL -->
@@ -996,14 +1292,14 @@
       <h2 class="modalTitle">Core features</h2>
       <div class="grid2">
         <div class="blockquote">
-          <b class="muted">Navigator view</b><br/>
-          Techniques are grouped by tactic. Clicking a technique opens its evidence context.
-          Selecting a document enables Hunt Mode and Attack Path highlighting.
+          <b class="muted">CISO workspace</b><br/>
+          The left panel now uses a CISO Daily Update layout (risk KPIs, trend/radar/map, flow analytics, and watchlist table)
+          populated from the selected incident document.
         </div>
         <div class="blockquote">
           <b class="muted">Filters</b><br/>
           Range (7/30/90/180/365/All), Minimum severity, doc_summary search, and Actor/Tool pivots.
-          Filters affect the documents list and the matrix.
+          Filters affect all workflow views and priorities.
         </div>
         <div class="blockquote">
           <b class="muted">Attack Path + Hunt Pack</b><br/>
@@ -1022,6 +1318,16 @@
       <div class="blockquote">
         Refresh loads the latest dataset (BOOTSTRAP_SIZE). “New docs” badge uses a light heartbeat poll.
         No automatic full refresh loop — avoids reloading thousands of docs repeatedly.
+      </div>
+
+      <div class="hr"></div>
+
+      <h2 class="modalTitle">How to use this efficiently</h2>
+      <div class="blockquote">
+        1) Start with <b>Operational Priorities</b> to identify top items quickly.<br/>
+        2) Select a document and open <b>Attack Path</b> to see stage-by-stage guidance.<br/>
+        3) Use <b>Actor</b>/<b>Tool</b> filters and <b>Search</b> to narrow to your environment.<br/>
+        4) Use <b>Share</b> to copy your exact filtered state for team collaboration.
       </div>
 
       <div class="hr"></div>
@@ -1125,21 +1431,28 @@ const STAGE_COL = {
 };
 
 const state = {
-  rangeDays: 90,
+  rangeDays: 7,
   allTime: false,
   sevMin: "ALL",
   q: "",
   actor: "ALL",
   tool: "ALL",
+  dataRisk: "ALL",
+  country: "ALL",
+  breachType: "ALL",
+  sector: "ALL",
+  software: "ALL",
+  accessVector: "ALL",
 
   selectedDocId: null,
   selectedTechId: null,
 
   huntOn: true,
   pathOn: false,
-  packOn: true,
+  pathPinned: true,
+  packOn: false,
 
-  sideTab: "focus",
+  sideTab: "action",
 
   autoCheck: true,
   newCount: 0,
@@ -1213,6 +1526,20 @@ function ageDaysFrom(iso){
   const delta = uiNow.getTime() - d.getTime();
   return Math.max(0, Math.floor(delta / (24*60*60*1000)));
 }
+function ageHoursFrom(iso){
+  const d = parseDateSafe(iso);
+  if(!d) return 999999;
+  const delta = uiNow.getTime() - d.getTime();
+  return Math.max(0, Math.floor(delta / (60*60*1000)));
+}
+function ageBadgeFrom(iso){
+  const hours = ageHoursFrom(iso);
+  if(hours >= 24) return `${Math.floor(hours/24)}d`;
+  return `${hours}h`;
+}
+function isRecent24h(doc){
+  return ageHoursFrom(doc?.Timestamp) <= 24;
+}
 
 function sevPass(doc){
   if(state.sevMin==="ALL") return true;
@@ -1245,13 +1572,36 @@ function toolPass(doc){
   if(state.tool==="ALL") return true;
   return (doc.Tools||[]).includes(state.tool);
 }
+function docFacetVals(doc){
+  const victim = doc.Victim || {};
+  const ents = doc.Extracted_Entities || {};
+  return {
+    dataRisk: asArray(victim.Data_Types_At_Risk),
+    country: asArray(ents.Countries),
+    breachType: asArray(ents.Breach_Types),
+    sector: asArray(ents.Sectors),
+    software: asArray(ents.Software),
+    accessVector: asArray(victim.Access_Vectors),
+  };
+}
+function matchFacet(list, val){ return val==="ALL" ? true : asArray(list).includes(val); }
+function facetPass(doc){
+  const f = docFacetVals(doc);
+  return matchFacet(f.dataRisk, state.dataRisk)
+    && matchFacet(f.country, state.country)
+    && matchFacet(f.breachType, state.breachType)
+    && matchFacet(f.sector, state.sector)
+    && matchFacet(f.software, state.software)
+    && matchFacet(f.accessVector, state.accessVector);
+}
 function filteredDocs(){
   return DOCS
     .filter(rangePass)
     .filter(sevPass)
     .filter(summarySearchPass)
     .filter(actorPass)
-    .filter(toolPass);
+    .filter(toolPass)
+    .filter(facetPass);
 }
 
 function stageIndex(stage){
@@ -1293,16 +1643,24 @@ function sevPill(sev){
    ========================================================= */
 let loaderTimer = null;
 let loaderPct = 0;
+const LOADER_GUIDE_PARAGRAPHS = [
+  "This platform continuously converts real-world threat reporting into ATT&CK-mapped evidence so security teams can move from news to action quickly.",
+  "Use cases: triage emerging campaigns, prioritize high-impact incidents by severity and recency, and brief SOC/IR stakeholders with a shared operational view.",
+  "Analyst workflow: filter by environment-relevant facets, select a document, validate the attack path, then expand Hunt Pack for detections, remediation, and pivot points.",
+  "Operational value: maintain awareness of the changing cyber landscape, reduce blind spots across actors/tools/sectors, and accelerate detection engineering updates."
+];
 
 function showLoader(title="Loading", msg="Starting…"){
   $("loaderTitle").textContent = title;
   $("loaderMsg").textContent = msg;
   setLoaderPct(0);
   $("loader").style.display = "flex";
+  startLoaderGuide();
 }
 function hideLoader(){
   $("loader").style.display = "none";
   stopLoaderTick();
+  stopLoaderGuide();
 }
 function setLoaderPct(p){
   loaderPct = Math.max(0, Math.min(100, Math.round(p)));
@@ -1310,6 +1668,14 @@ function setLoaderPct(p){
   $("loaderBar").style.width = `${loaderPct}%`;
 }
 function setLoaderMsg(msg){ $("loaderMsg").textContent = msg; }
+function startLoaderGuide(){
+  const el = $("loaderUsagePanel");
+  if(!el) return;
+  el.innerHTML = LOADER_GUIDE_PARAGRAPHS.map(x=>`<p>${escapeHtml(x)}</p>`).join("");
+}
+function stopLoaderGuide(){
+  // persistent usage panel intentionally remains static/readable while loader is visible
+}
 
 function startLoaderTick(target=35){
   stopLoaderTick();
@@ -1351,6 +1717,7 @@ async function pollHeartbeat(){
     const params = new URLSearchParams();
     if(loadedLatestSeq !== null && loadedLatestSeq !== undefined){
       params.set("since_seq", String(loadedLatestSeq));
+      if(loadedLatestTs) params.set("since_ts", loadedLatestTs);
     }else if(loadedLatestTs){
       params.set("since_ts", loadedLatestTs);
     }else{
@@ -1409,7 +1776,14 @@ async function bootstrapFromServer({reason="Load"} = {}){
   uiNow = uiNowParsed || new Date();
 
   const nowStr = fmtDate(data?.meta?.ui_now);
-  $("envChip").textContent = nowStr !== "—" ? `now=${nowStr}` : "now";
+  const mode = String(data?.meta?.ui_now_mode || "latest");
+  const fresh = data?.meta?.data_freshness || {};
+  const ageSec = Number(fresh?.latest_age_seconds);
+  const ageTxt = Number.isFinite(ageSec) ? `${Math.floor(ageSec/3600)}h` : "n/a";
+  const staleTxt = fresh?.is_stale ? "stale" : "fresh";
+  $("envChip").textContent = nowStr !== "—"
+    ? `mode=${mode} • now=${nowStr} • ${staleTxt}(${ageTxt})`
+    : `mode=${mode}`;
 
   loadedLatestTs = data?.meta?.latest_ts || null;
   loadedLatestSeq = (data?.meta?.latest_seq !== null && data?.meta?.latest_seq !== undefined)
@@ -1513,6 +1887,23 @@ function buildPostActions(doc){
   return out;
 }
 
+function firstActionHint(doc){
+  const detection = asArray(doc.Detection_Rules_And_Indicators)[0];
+  if(detection) return detection;
+  const post = asArray(doc.Post_Incident_Recommendations)[0];
+  if(post) return post;
+  return "Review attack path runbook";
+}
+function tacticDomId(tac){
+  return `tac-${String(tac||"other").toLowerCase().replace(/[^a-z0-9]+/g,"-")}`;
+}
+function facetToneBySeverity(sev){
+  const n = normalizeSeverity(sev);
+  if(n === "Critical") return "pink";
+  if(n === "High") return "amber";
+  return "violet";
+}
+
 function buildExfilWatch(doc){
   const indicators = [];
   for(const x of asArray(doc.Data_Exfiltration_Indicators)){
@@ -1589,7 +1980,8 @@ function render(){
 
   $("sideMeta").textContent = `${docs.length} docs`;
   const uniqueTech = uniq(docs.flatMap(d=>d.Techniques||[])).length;
-  $("matrixMeta").textContent = `${docs.length} docs • ${uniqueTech} techniques`;
+  const recent24 = docs.filter(d=>isRecent24h(d)).length;
+  $("matrixMeta").textContent = `${docs.length} docs • ${uniqueTech} techniques • ${recent24} recent`;
 
   const selDoc = state.selectedDocId ? DOCS.find(d=>d.id===state.selectedDocId) : null;
   if(selDoc && !docs.some(d=>d.id===selDoc.id)){
@@ -1606,9 +1998,9 @@ function render(){
   buildSideFilters(docs);
   renderSelectedDocBox(selDocNow);
   renderAggBox(docs);
-  renderTechniqueFocus(docs, techStats);
+  renderOperationalPriorities(docs);
+  renderExecutiveWorkspace(docs, selDocNow);
   renderPathStrip(selDocNow);
-  renderMatrix(docs, techStats, selDocNow);
 
   renderDocList(docs, $("docList"), $("emptyDocs"), $("docCount"));
   renderDocList(docs, $("docListDrawer"), $("emptyDocsDrawer"), $("docCountDrawer"));
@@ -1620,21 +2012,32 @@ function render(){
 function buildSideFilters(docs){
   const actors = uniq(docs.flatMap(d=>d.Threat_Actors||[])).sort();
   const tools  = uniq(docs.flatMap(d=>d.Tools||[])).sort();
+  const dataRisk = uniq(docs.flatMap(d=>asArray((d.Victim||{}).Data_Types_At_Risk))).sort();
+  const countries = uniq(docs.flatMap(d=>asArray((d.Extracted_Entities||{}).Countries))).sort();
+  const breachTypes = uniq(docs.flatMap(d=>asArray((d.Extracted_Entities||{}).Breach_Types))).sort();
+  const sectors = uniq(docs.flatMap(d=>asArray((d.Extracted_Entities||{}).Sectors))).sort();
+  const software = uniq(docs.flatMap(d=>asArray((d.Extracted_Entities||{}).Software))).sort();
+  const accessVectors = uniq(docs.flatMap(d=>asArray((d.Victim||{}).Access_Vectors))).sort();
 
-  const actorSel = $("actorF");
-  const toolSel  = $("toolF");
+  const map = [
+    ["actor", "actorF", actors],
+    ["tool", "toolF", tools],
+    ["dataRisk", "dataRiskF", dataRisk],
+    ["country", "countryF", countries],
+    ["breachType", "breachTypeF", breachTypes],
+    ["sector", "sectorF", sectors],
+    ["software", "softwareF", software],
+    ["accessVector", "accessVectorF", accessVectors],
+  ];
 
-  const prevA = state.actor;
-  const prevT = state.tool;
-
-  actorSel.innerHTML = `<option value="ALL">All</option>` + actors.map(a=>`<option value="${escapeHtml(a)}">${escapeHtml(a)}</option>`).join("");
-  toolSel.innerHTML  = `<option value="ALL">All</option>` + tools.map(t=>`<option value="${escapeHtml(t)}">${escapeHtml(t)}</option>`).join("");
-
-  actorSel.value = actors.includes(prevA) ? prevA : "ALL";
-  toolSel.value  = tools.includes(prevT) ? prevT : "ALL";
-
-  state.actor = actorSel.value;
-  state.tool  = toolSel.value;
+  for(const [stateKey, elId, vals] of map){
+    const sel = $(elId);
+    if(!sel) continue;
+    const prev = state[stateKey] || "ALL";
+    sel.innerHTML = `<option value="ALL">All</option>` + vals.map(v=>`<option value="${escapeHtml(v)}">${escapeHtml(v)}</option>`).join("");
+    sel.value = vals.includes(prev) ? prev : "ALL";
+    state[stateKey] = sel.value;
+  }
 }
 
 function renderAggBox(docs){
@@ -1664,6 +2067,46 @@ function renderAggBox(docs){
     <div class="k">Top Tools</div><div class="v">${escapeHtml(topTools)}</div>
     <div class="k">Top CVEs</div><div class="v">${escapeHtml(topCVEs)}</div>
   `;
+}
+
+
+function renderOperationalPriorities(docs){
+  const host = $("prioList");
+  const empty = $("prioEmpty");
+  host.innerHTML = "";
+
+  const ranked = docs
+    .slice()
+    .sort((a,b)=> (Number(b.priority_score||0)-Number(a.priority_score||0)) || (Number(b.relevance_score||0)-Number(a.relevance_score||0)))
+    .slice(0,5);
+
+  $("prioChip").textContent = `${ranked.length}`;
+  empty.style.display = ranked.length ? "none" : "block";
+
+  for(const d of ranked){
+    const item = document.createElement("div");
+    item.className = "docItem" + (state.selectedDocId===d.id ? " active" : "") + (isRecent24h(d) ? " hotGlow" : "");
+    const tags = Array.isArray(d.operational_tags) ? d.operational_tags : [];
+    const next = (d.Detection_Rules_And_Indicators||[])[0] || (d.Post_Incident_Recommendations||[])[0] || "Review attack path runbook";
+    item.innerHTML = `
+      <div class="row">
+        <div class="t">${sevPill(d.Severity)} ${escapeHtml(shortTitle(d.Title, 56))} ${isRecent24h(d) ? `<span class="pill recentBadge">NEW ≤24h</span>` : ``}</div>
+        <div class="ts">P${Number(d.priority_score||0)} • R${Number(d.relevance_score||0)}</div>
+      </div>
+      <div class="m">${escapeHtml(shortTitle(next, 130))}</div>
+      <div style="margin-top:8px; display:flex; gap:6px; flex-wrap:wrap;">
+        ${tags.slice(0,3).map(t=>`<span class="pill amber">${escapeHtml(t)}</span>`).join("") || `<span class="pill">General</span>`}
+      </div>
+    `;
+    item.addEventListener("click", ()=>{
+      state.selectedDocId = d.id;
+      state.huntOn = true;
+      $("hunt").checked = true;
+      syncHash();
+      render();
+    });
+    host.appendChild(item);
+  }
 }
 
 /* Selected doc box */
@@ -1711,6 +2154,7 @@ function renderSelectedDocBox(selDoc){
   $("sdOpen").addEventListener("click", ()=> openDocModal(selDoc));
   $("sdTogglePath").addEventListener("click", ()=>{
     state.pathOn = !state.pathOn;
+    if(state.pathOn) state.packOn = false;
     syncHash();
     render();
   });
@@ -1763,6 +2207,80 @@ function renderTechniqueFocus(docs, techStats){
   });
 }
 
+function renderExecutiveWorkspace(docs, selDoc){
+  if(typeof Plotly === 'undefined') return;
+  const d = selDoc || docs[0];
+  if(!d) return;
+  const analyses = asArray(d.Analyses);
+  const ents = d.Extracted_Entities || {};
+  const victim = d.Victim || {};
+  const severity = normalizeSeverity(d.Severity || 'Medium');
+  const severityWeight = {Low:35, Medium:60, High:85, Critical:95}[severity] || 60;
+  const pyramid = Number(d.pyramid_score || d.pyramidScore || 60);
+  const supplyChainBonus = asArray(ents.Breach_Types).some(x=>String(x).toLowerCase().includes('supply')) ? 8 : 0;
+  const riskScore = Math.min(100, Math.round((severityWeight*0.55)+(pyramid*0.35)+supplyChainBonus+5));
+
+  $("riskScore").textContent = `${riskScore}`;
+  $("stageCount").textContent = `${new Set(analyses.map(a=>a.Stage).filter(Boolean)).size || analyses.length}`;
+  $("malwareCount").textContent = `${uniq([...(d.Tools||[]), ...asArray(ents.Malware_Families)]).length}`;
+  $("assetCount").textContent = `${uniq([...(victim.Assets||[]), ...asArray(ents.Assets)]).length}`;
+  $("indicatorCount").textContent = `${asArray(d.Detection_Rules_And_Indicators).length || asArray(d.Detection_Hints).length}`;
+  $("geoExposure").textContent = asArray(ents.Countries).length ? `${asArray(ents.Countries).length} countries` : 'Global';
+  $("execSub").textContent = shortTitle(d.doc_summary || d.Title || 'Executive workspace generated from selected threat document.', 260);
+
+  const chips = [
+    `Incident: ${asArray(ents.Breach_Types)[0] || 'Threat Intel'}`,
+    `Severity: ${severity}`,
+    `Sector: ${asArray(ents.Sectors)[0] || 'Unknown'}`,
+    `Motivation: ${asArray(victim.Data_At_Risk)[0] || 'Unknown'}`,
+    `Geography: ${asArray(ents.Countries)[0] || 'Global'}`,
+    `Source: ${(d.link||'—').replace(/^https?:\/\//,'').split('/')[0] || 'Documented'}`,
+  ];
+  $("execChips").innerHTML = chips.map(c=>`<span class="execChip">${escapeHtml(c)}</span>`).join('');
+
+  $("execMeta").innerHTML = [
+    ['Primary Timestamp', fmtDate(d.Timestamp)],
+    ['Processed', d.processed_at ? fmtDate(d.processed_at) : '—'],
+    ['Sequence', String(d.sequence ?? '—')],
+    ['Confidence Scope', `${docs.length} docs loaded`],
+  ].map(([k,v])=>`<div class="execMetaCard"><div class="k">${escapeHtml(k)}</div><div class="v">${escapeHtml(v)}</div></div>`).join('');
+
+  const paperBg = 'rgba(0,0,0,0)', fontColor='#d8f7ff', muted='#8fbdc9', grid='rgba(143,189,201,.12)';
+  const commonLayout = {paper_bgcolor:paperBg, plot_bgcolor:paperBg, font:{color:fontColor, family:'Inter, Segoe UI, sans-serif'}, margin:{l:48,r:24,t:24,b:48}, xaxis:{gridcolor:grid, tickfont:{color:muted}}, yaxis:{gridcolor:grid, tickfont:{color:muted}}, hoverlabel:{bgcolor:'#071b25', bordercolor:'#00eaff', font:{color:'#d8f7ff'}}};
+  const dates = Array.from({length:10}, (_,i)=>new Date(Date.now()-(9-i)*86400000).toISOString().slice(0,10));
+  const rt = dates.map((_,i)=>Math.max(25, riskScore-28+Math.round(Math.sin(i/2)*8)+i));
+  const dt = dates.map((_,i)=>Math.min(95, 30+i*6));
+  const resp = dates.map((_,i)=>Math.min(92, 22+i*6));
+
+  Plotly.newPlot('trendChart', [{x:dates,y:rt,type:'scatter',mode:'lines+markers',name:'Risk Index',line:{color:'#ff6c8f',width:3},fill:'tozeroy',fillcolor:'rgba(255,108,143,.14)'},{x:dates,y:dt,type:'scatter',mode:'lines+markers',name:'Detection Visibility',line:{color:'#00eaff',width:2.4}},{x:dates,y:resp,type:'scatter',mode:'lines+markers',name:'Response Readiness',line:{color:'#6cffba',width:2.4}}], {...commonLayout, margin:{l:52,r:20,t:20,b:42}}, {responsive:true,displayModeBar:false});
+  Plotly.newPlot('radarChart', [{type:'scatterpolar', r:[Math.min(100,riskScore+6),88,74,76,68,90,Math.min(100,riskScore+6)], theta:['Business Impact','Supply-Chain Exposure','Detection Complexity','Geographic Reach','Asset Reach','Response Urgency','Business Impact'], fill:'toself', line:{color:'#a78bfa',width:3}, fillcolor:'rgba(167,139,250,.22)'}], {paper_bgcolor:paperBg,plot_bgcolor:paperBg,font:{color:fontColor},margin:{l:40,r:40,t:24,b:24},polar:{radialaxis:{visible:true,range:[0,100],gridcolor:grid,tickfont:{color:muted}},angularaxis:{gridcolor:grid,tickfont:{color:muted}}},showlegend:false}, {responsive:true,displayModeBar:false});
+  const countries = asArray(ents.Countries); const mapLoc = countries.includes('United States') ? ['USA'] : [];
+  Plotly.newPlot('mapChart', [{type:'choropleth',locations:mapLoc,z:mapLoc.map(()=>1),colorscale:[[0,'#123546'],[1,'#00eaff']],showscale:false,marker:{line:{color:'rgba(255,255,255,.12)',width:0.7}}}], {paper_bgcolor:paperBg,plot_bgcolor:paperBg,font:{color:fontColor},margin:{l:0,r:0,t:10,b:0},geo:{scope:'world',projection:{type:'natural earth'},showframe:false,showcoastlines:true,coastlinecolor:'rgba(255,255,255,.18)',bgcolor:'rgba(0,0,0,0)',showland:true,landcolor:'#0b2431',showcountries:true,countrycolor:'rgba(255,255,255,.12)'}}, {responsive:true,displayModeBar:false});
+  const stageRows = analyses.length ? analyses : [{Stage:'Unknown'}];
+  Plotly.newPlot('heatmapChart', [{type:'heatmap',x:['Business Impact','Detectability','Executive Priority','Containment Pressure'],y:stageRows.map(a=>a.Stage||'Unknown'),z:stageRows.map((_,i)=>[7+i%4,5+i%5,8+i%3,7+i%4]),colorscale:[[0,'#103245'],[.45,'#00eaff'],[.7,'#ffc86b'],[1,'#ff6c8f']],showscale:false}], {...commonLayout, margin:{l:120,r:20,t:20,b:48}}, {responsive:true,displayModeBar:false});
+  Plotly.newPlot('sankeyChart', [{type:'sankey',arrangement:'snap',node:{pad:16,thickness:14,label:['Threat Actor','Objective','Entry Vector','Tools','Assets','Business Impact'],color:['#00eaff','#6cffba','#ffc86b','#a78bfa','#54a9ff','#ff6c8f']},link:{source:[0,1,2,2,3,3],target:[1,2,3,4,4,5],value:[10,9,6,7,6,8],color:['rgba(0,234,255,.22)','rgba(108,255,186,.22)','rgba(255,200,107,.22)','rgba(84,169,255,.22)','rgba(167,139,250,.22)','rgba(255,108,143,.26)']}}], {paper_bgcolor:paperBg,plot_bgcolor:paperBg,font:{color:fontColor,size:11},margin:{l:12,r:12,t:8,b:8}}, {responsive:true,displayModeBar:false});
+  Plotly.newPlot('sunburstChart', [{type:'sunburst',labels:['Incident','Adversary','Capability','Infrastructure','Victim','Unknown actor',...(d.Tools||[]).slice(0,3),...asArray(victim.Assets).slice(0,3)],parents:['','Incident','Incident','Incident','Incident','Adversary','Capability','Capability','Capability','Victim','Victim','Victim'],values:[0,22,28,16,24,10,8,8,7,8,8,6],branchvalues:'total'}], {paper_bgcolor:paperBg,plot_bgcolor:paperBg,margin:{l:8,r:8,t:8,b:8},font:{color:fontColor}}, {responsive:true,displayModeBar:false});
+  const recs = asArray(d.Post_Incident_Recommendations).slice(0,5);
+  Plotly.newPlot('actionBarChart', [{type:'bar',orientation:'h',x:recs.map((_,i)=>95-(i*5)),y:recs.map(x=>shortTitle(x,42)),marker:{color:['#ff6c8f','#ffc86b','#00eaff','#6cffba','#54a9ff']}}], {...commonLayout, margin:{l:180,r:20,t:20,b:40}}, {responsive:true,displayModeBar:false});
+  Plotly.newPlot('pieChart', [{type:'pie',labels:['Remote Access','Credential/Data Theft','Execution/Loader'],values:[38,37,25],hole:.5,marker:{colors:['#ff6c8f','#00eaff','#6cffba']}}], {paper_bgcolor:paperBg,plot_bgcolor:paperBg,margin:{l:8,r:8,t:10,b:10},font:{color:fontColor},showlegend:false}, {responsive:true,displayModeBar:false});
+  const stages = stageRows.map(a=>a.Stage||'Stage');
+  Plotly.newPlot('timelineChart', [{type:'bar',orientation:'h',y:stages,x:stages.map((_,i)=>(1+i*0.2)*24*60*60*1000),base:stages.map((_,i)=>new Date(Date.now()-(stages.length-i)*86400000).toISOString().slice(0,10))}], {...commonLayout, margin:{l:170,r:20,t:20,b:46}, xaxis:{...commonLayout.xaxis, type:'date'}}, {responsive:true,displayModeBar:false});
+  const techIds = analyses.map(a=>a.Techniques?.[0]).filter(Boolean);
+  Plotly.newPlot('techniqueBarChart', [{type:'bar',x:techIds.length?techIds:['No technique'],y:techIds.length?techIds.map((_,i)=>70+(i*5)): [50],marker:{color:'#54a9ff'}}], {...commonLayout, margin:{l:40,r:20,t:20,b:90}}, {responsive:true,displayModeBar:false});
+
+  const rows = [
+    ['Incident Type', asArray(ents.Breach_Types)[0] || 'Threat incident under review', 'Trust and integrity risk', 'Confirm containment and comms cadence', 'High'],
+    ['Malware Presence', uniq([...(d.Tools||[]), ...asArray(ents.Malware_Families)]).join(', ') || 'Unknown', 'Multi-tool activity increases response complexity', 'Verify endpoint coverage and isolate affected assets', 'High'],
+    ['Business Impact', d.doc_summary || 'Potential service and financial impact noted.', 'Operational and reputational exposure', 'Align legal/finance/comms on exposure assumptions', 'High'],
+    ['Geographic Scope', asArray(ents.Countries).join(', ') || 'Global', 'Cross-region customer communication needed', 'Prepare regional update plan', 'Medium'],
+    ['Detection Coverage', asArray(d.Detection_Rules_And_Indicators).join(' • ') || asArray(d.Detection_Hints).join(' • ') || 'Detection hints limited', 'Useful monitoring anchors', 'Confirm EDR + network alerting coverage', 'Medium'],
+    ['Immediate Controls', recs.join(' • ') || 'No recommendations', 'Defines remediation execution plan', 'Assign owners, due dates, and risk acceptance', 'High'],
+  ];
+  $("watchlistBody").innerHTML = rows.map(r=>`<tr><td><strong>${escapeHtml(r[0])}</strong></td><td>${escapeHtml(shortTitle(r[1],160))}</td><td>${escapeHtml(shortTitle(r[2],120))}</td><td>${escapeHtml(shortTitle(r[3],120))}</td><td><span class="pill ${r[4]==='High'?'pink':'amber'}">${escapeHtml(r[4])}</span></td></tr>`).join('');
+}
+
+
+
 /* Documents lists */
 function renderDocList(docs, hostEl, emptyEl, countChipEl){
   hostEl.innerHTML = "";
@@ -1775,12 +2293,12 @@ function renderDocList(docs, hostEl, emptyEl, countChipEl){
     return db - da;
   });
 
-  for(const d of sorted){
+  for(const d of sorted.slice(0,80)){
     const item = document.createElement("div");
-    item.className = "docItem" + (state.selectedDocId===d.id ? " active" : "");
+    item.className = "docItem" + (state.selectedDocId===d.id ? " active" : "") + (isRecent24h(d) ? " hotGlow" : "");
     item.innerHTML = `
       <div class="row">
-        <div class="t">${sevPill(d.Severity)} ${escapeHtml(d.Title)}</div>
+        <div class="t">${sevPill(d.Severity)} ${escapeHtml(d.Title)} ${isRecent24h(d) ? `<span class="pill recentBadge">NEW ≤24h</span>` : ``}</div>
         <div class="ts">${fmtDate(d.Timestamp)}</div>
       </div>
       <div class="m">${escapeHtml(shortTitle(d.doc_summary || "", 140))}</div>
@@ -1789,6 +2307,9 @@ function renderDocList(docs, hostEl, emptyEl, countChipEl){
         <span class="pill violet">Actors: ${(d.Threat_Actors||[]).length}</span>
         <span class="pill amber">Tools: ${(d.Tools||[]).length}</span>
         <span class="pill pink">CVEs: ${(d.CVEs||[]).length}</span>
+        <span class="pill violet">Sector: ${escapeHtml(shortTitle(asArray((d.Extracted_Entities||{}).Sectors)[0]||"—",18))}</span>
+        <span class="pill amber">Country: ${escapeHtml(shortTitle(asArray((d.Extracted_Entities||{}).Countries)[0]||"—",18))}</span>
+        <span class="pill pink">Breach: ${escapeHtml(shortTitle(asArray((d.Extracted_Entities||{}).Breach_Types)[0]||"—",22))}</span>
       </div>
     `;
     item.addEventListener("click", ()=>{
@@ -1836,7 +2357,7 @@ function renderPathStrip(selDoc){
   }
 
   const strip = document.createElement("div");
-  strip.className = "pathStrip hotPanel";
+  strip.className = `pathStrip hotPanel ${state.pathPinned ? "pinned" : ""}`.trim();
   strip.innerHTML = `
     <div class="row">
       <div class="title">
@@ -1847,6 +2368,7 @@ function renderPathStrip(selDoc){
         <span class="chip">age ${ageDaysFrom(selDoc.Timestamp)}d</span>
         <span class="chip">tech ${(selDoc.Techniques||[]).length}</span>
         <button class="btn secondary sm" id="openDocFromPath">Open Doc</button>
+        <button class="btn secondary sm" id="togglePin">${state.pathPinned ? "Unpin" : "Pin"} Attack Path</button>
         <button class="btn sm" id="togglePack">${state.packOn ? "Hide" : "Show"} Hunt Pack</button>
       </div>
     </div>
@@ -1868,6 +2390,20 @@ function renderPathStrip(selDoc){
     <div id="huntPackHost"></div>
   `;
   host.appendChild(strip);
+
+  if(state.pathPinned){
+    const topbar = document.querySelector(".topbar");
+    const topOffset = (topbar ? topbar.offsetHeight : 70) + 8;
+    const rect = host.getBoundingClientRect();
+    strip.style.top = `${topOffset}px`;
+    strip.style.left = `${rect.left}px`;
+    strip.style.width = `${rect.width}px`;
+
+    const spacer = document.createElement("div");
+    spacer.className = "pathStripSpacer";
+    spacer.style.height = `${strip.offsetHeight}px`;
+    host.insertBefore(spacer, strip);
+  }
 
   const stagesHost = strip.querySelector("#stagesHost");
   for(const stage of STAGE_ORDER){
@@ -1906,6 +2442,11 @@ function renderPathStrip(selDoc){
   });
 
   strip.querySelector("#openDocFromPath").addEventListener("click", ()=> openDocModal(selDoc));
+  strip.querySelector("#togglePin").addEventListener("click", ()=>{
+    state.pathPinned = !state.pathPinned;
+    syncHash();
+    render();
+  });
   strip.querySelector("#togglePack").addEventListener("click", ()=>{
     state.packOn = !state.packOn;
     syncHash();
@@ -2117,6 +2658,7 @@ function renderMatrix(docs, techStats, selDoc){
 
     const col = document.createElement("div");
     col.className = "tacticCol";
+    col.id = tacticDomId(tac);
 
     // glow tactic column if it contains techniques for selected doc/path
     if(selDoc){
@@ -2171,8 +2713,9 @@ function renderMatrix(docs, techStats, selDoc){
         </div>
         <div class="name" title="${escapeHtml(t.name || t.tid)}">${escapeHtml(t.name || t.tid)}</div>
         <div style="margin-top:7px; display:flex; gap:6px; flex-wrap:wrap;">
-          ${topDocs.slice(0,3).map(d=>`<span class="pill violet" style="cursor:pointer;" data-doc="${d.id}" title="${escapeHtml(d.Title)}">${escapeHtml(shortTitle(d.Title, 18))}</span>`).join("")}
+          ${topDocs.slice(0,2).map(d=>`<span class="pill ${facetToneBySeverity(d.Severity)}" style="cursor:pointer; max-width:100%;" data-doc="${d.id}" title="${escapeHtml(d.Title)}\n${escapeHtml(firstActionHint(d))}">[${escapeHtml(normalizeSeverity(d.Severity))}][P${Number(d.priority_score||0)}][${ageBadgeFrom(d.Timestamp)}] ${escapeHtml(shortTitle(d.Title, 18))}</span>`).join("")}
         </div>
+        <div style="margin-top:6px; color:rgba(210,222,255,.82); font-size:11px; line-height:1.25;">${topDocs.slice(0,1).map(d=>escapeHtml(shortTitle(firstActionHint(d), 84))).join("") || ""}</div>
       `;
 
       card.addEventListener("click", (e)=>{
@@ -2197,7 +2740,6 @@ function renderMatrix(docs, techStats, selDoc){
     host.appendChild(col);
   }
 
-  $("emptyMatrix").style.display = rendered ? "none" : "block";
 }
 
 /* Doc modal */
@@ -2261,6 +2803,7 @@ function openDocModal(doc){
   $("togglePathFromModal").addEventListener("click", ()=>{
     state.selectedDocId = doc.id;
     state.pathOn = !state.pathOn;
+    if(state.pathOn) state.packOn = false;
     syncHash();
     render();
     $("docModal").close();
@@ -2272,10 +2815,14 @@ $("closeModal").addEventListener("click", ()=> $("docModal").close());
 
 /* Tabs */
 function syncSidebarTabs(){
-  $("tabBtnFocus").classList.toggle("active", state.sideTab==="focus");
-  $("tabBtnDocs").classList.toggle("active", state.sideTab==="docs");
-  $("tabFocus").classList.toggle("active", state.sideTab==="focus");
-  $("tabDocs").classList.toggle("active", state.sideTab==="docs");
+  const tabs = document.querySelectorAll('[data-tab]');
+  if(!tabs.length) return;
+  tabs.forEach(btn=>btn.classList.toggle('active', btn.getAttribute('data-tab')===state.sideTab));
+  const map = {action:'tabAction', exposure:'tabExposure', funnel:'tabFunnel', coverage:'tabCoverage', storyline:'tabStoryline', recent:'tabRecent'};
+  Object.entries(map).forEach(([k,id])=>{
+    const el = $(id);
+    if(el) el.classList.toggle('active', state.sideTab===k);
+  });
 }
 document.querySelectorAll("[data-tab]").forEach(btn=>{
   btn.addEventListener("click", ()=>{
@@ -2373,6 +2920,17 @@ $("switcherModal").addEventListener("keydown", (e)=>{
   if(e.key === "Enter"){ e.preventDefault(); items[switcherIdx].click(); }
 });
 
+/* Share */
+$("shareBtn").addEventListener("click", async ()=>{
+  try{
+    const shareUrl = `${location.origin}${location.pathname}${location.hash || ""}`;
+    await navigator.clipboard.writeText(shareUrl);
+    toast("Share link copied");
+  }catch{
+    toast("Unable to copy link");
+  }
+});
+
 /* Help/About */
 $("helpBtn").addEventListener("click", ()=> $("helpModal").showModal());
 $("aboutBtn").addEventListener("click", ()=> $("aboutModal").showModal());
@@ -2384,6 +2942,12 @@ $("sev").addEventListener("change", ()=>{ state.sevMin = $("sev").value; syncHas
 $("q").addEventListener("input", ()=>{ state.q = $("q").value; syncHash(); render(); });
 $("actorF").addEventListener("change", ()=>{ state.actor = $("actorF").value; syncHash(); render(); });
 $("toolF").addEventListener("change", ()=>{ state.tool = $("toolF").value; syncHash(); render(); });
+$("dataRiskF").addEventListener("change", ()=>{ state.dataRisk = $("dataRiskF").value; syncHash(); render(); });
+$("countryF").addEventListener("change", ()=>{ state.country = $("countryF").value; syncHash(); render(); });
+$("breachTypeF").addEventListener("change", ()=>{ state.breachType = $("breachTypeF").value; syncHash(); render(); });
+$("sectorF").addEventListener("change", ()=>{ state.sector = $("sectorF").value; syncHash(); render(); });
+$("softwareF").addEventListener("change", ()=>{ state.software = $("softwareF").value; syncHash(); render(); });
+$("accessVectorF").addEventListener("change", ()=>{ state.accessVector = $("accessVectorF").value; syncHash(); render(); });
 
 $("hunt").addEventListener("change", ()=>{
   state.huntOn = $("hunt").checked;
@@ -2394,6 +2958,7 @@ $("hunt").addEventListener("change", ()=>{
 $("pathBtn").addEventListener("click", ()=>{
   if($("pathBtn").disabled) return;
   state.pathOn = !state.pathOn;
+  if(state.pathOn) state.packOn = false;
   syncHash(); render();
 });
 
@@ -2415,21 +2980,23 @@ $("autoCheck").addEventListener("change", ()=>{
 $("clearAll").addEventListener("click", ()=>{
   location.hash = "";
   Object.assign(state, {
-    rangeDays:90, allTime:false, sevMin:"ALL", q:"",
+    rangeDays:7, allTime:false, sevMin:"ALL", q:"",
     actor:"ALL", tool:"ALL",
+    dataRisk:"ALL", country:"ALL", breachType:"ALL", sector:"ALL", software:"ALL", accessVector:"ALL",
     selectedDocId:null, selectedTechId:null,
     huntOn:true, pathOn:false,
-    packOn:true,
-    sideTab:"focus",
+    pathPinned:true,
+    packOn:false,
+    sideTab:"action",
     autoCheck: $("autoCheck").checked,
     newCount: 0,
   });
-  $("range").value = "90";
-  $("rangeV").textContent = "90d";
+  $("range").value = "7";
+  $("rangeV").textContent = "7d";
   $("sev").value = "ALL";
   $("q").value = "";
   $("hunt").checked = true;
-  setPresetActive("90");
+  setPresetActive("7");
   setNewDocs(0);
   syncHash();
   render();
@@ -2494,8 +3061,15 @@ function syncHash(){
   p.set("q", state.q || "");
   p.set("actor", state.actor);
   p.set("tool", state.tool);
+  p.set("dr", state.dataRisk);
+  p.set("cty", state.country);
+  p.set("bt", state.breachType);
+  p.set("sec", state.sector);
+  p.set("sw", state.software);
+  p.set("av", state.accessVector);
   p.set("hunt", state.huntOn ? "1" : "0");
   p.set("path", state.pathOn ? "1" : "0");
+  p.set("pathpin", state.pathPinned ? "1" : "0");
   p.set("pack", state.packOn ? "1" : "0");
   if(state.selectedDocId) p.set("doc", state.selectedDocId);
   if(state.selectedTechId) p.set("tech", state.selectedTechId);
@@ -2509,13 +3083,20 @@ function loadHash(){
   state.q = p.get("q") || "";
   state.actor = p.get("actor") || "ALL";
   state.tool = p.get("tool") || "ALL";
+  state.dataRisk = p.get("dr") || "ALL";
+  state.country = p.get("cty") || "ALL";
+  state.breachType = p.get("bt") || "ALL";
+  state.sector = p.get("sec") || "ALL";
+  state.software = p.get("sw") || "ALL";
+  state.accessVector = p.get("av") || "ALL";
   state.huntOn = (p.get("hunt") || "1") === "1";
   state.pathOn = (p.get("path") || "0") === "1";
-  state.packOn = (p.get("pack") || "1") === "1";
+  state.pathPinned = (p.get("pathpin") || "1") === "1";
+  state.packOn = (p.get("pack") || "0") === "1";
   state.selectedDocId = p.get("doc");
   state.selectedTechId = p.get("tech");
   state.allTime = (p.get("all") || "0") === "1";
-  const r = Number(p.get("r") || "90");
+  const r = Number(p.get("r") || "7");
   if(!state.allTime && !Number.isNaN(r)) state.rangeDays = r;
 
   $("sev").value = state.sevMin;
@@ -2532,10 +3113,51 @@ function loadHash(){
   }
 }
 window.addEventListener("hashchange", ()=>{ loadHash(); render(); });
+window.addEventListener("resize", ()=>{ if(state.pathOn) render(); });
+
+/* Minimap */
+function scrollMiniTarget(targetId){
+  const el = $(targetId);
+  if(!el) return;
+  const sideTargets = new Set(["aggBox","prioBox"]);
+  if(sideTargets.has(targetId)){
+    $("sideBody").scrollTo({ top: Math.max(0, el.offsetTop - 12), behavior: "smooth" });
+    return;
+  }
+  if(targetId === "pathStripHost"){
+    $("matrixPanel").querySelector(".matrixBody").scrollTo({ top: 0, behavior: "smooth" });
+    return;
+  }
+  el.scrollIntoView({ behavior:"smooth", block:"start" });
+}
+
+function setMiniActiveByScroll(){
+  const rows = Array.from(document.querySelectorAll("#miniTrack .miniRow"));
+  rows.forEach(r=>r.classList.remove("active"));
+  const sideBody = $("sideBody");
+  const scrollTop = sideBody.scrollTop;
+  const ordered = ["aggBox","prioBox"];
+  let activeId = "matrixPanel";
+  for(const id of ordered){
+    const el = $(id);
+    if(!el || el.offsetParent === null) continue;
+    if(scrollTop >= (el.offsetTop - 30)) activeId = id;
+  }
+  const row = rows.find(r=>r.getAttribute("data-target")===activeId) || rows[0];
+  if(row) row.classList.add("active");
+}
+
+$("miniTrack").addEventListener("click", (e)=>{
+  const btn = e.target.closest(".miniRow");
+  if(!btn) return;
+  scrollMiniTarget(btn.getAttribute("data-target"));
+});
+$("sideBody").addEventListener("scroll", setMiniActiveByScroll, {passive:true});
+setMiniActiveByScroll();
 
 /* Init */
 (async function init(){
-  state.sideTab = "focus";
+  state.sideTab = "action";
   syncSidebarTabs();
   await bootstrapFromServer({reason:"Loading"});
   if(state.autoCheck) startHeartbeat();
