@@ -249,7 +249,7 @@
     .main{
       padding:12px clamp(14px, 2vw, 28px) 14px;
       display:grid;
-      grid-template-columns: 1fr 390px;
+      grid-template-columns: 1fr 510px;
       gap:12px;
       min-height:0;
     }
@@ -1194,6 +1194,12 @@
           <div class="docList" id="prioList"></div>
           <div class="muted" id="prioEmpty" style="display:none; margin-top:8px;">No priorities for current filters.</div>
         </div>
+
+        <div class="box docsPanel" id="docsBox">
+          <h3>Documents Feed <span class="chip" id="docCount">—</span></h3>
+          <div class="docList" id="docList"></div>
+          <div class="muted" id="emptyDocs" style="display:none; margin-top:8px;">No documents match the current filters.</div>
+        </div>
       </div>
     </aside>
   </main>
@@ -1957,6 +1963,7 @@ function render(){
   renderStorylineMode(selDocNow);
   renderPathStrip(selDocNow);
 
+  renderDocList(docs, $("docList"), $("emptyDocs"), $("docCount"));
   renderDocList(docs, $("docListDrawer"), $("emptyDocsDrawer"), $("docCountDrawer"));
 
   syncSidebarTabs();
@@ -2249,7 +2256,7 @@ function renderDocList(docs, hostEl, emptyEl, countChipEl){
     return db - da;
   });
 
-  for(const d of sorted){
+  for(const d of sorted.slice(0,40)){
     const item = document.createElement("div");
     item.className = "docItem" + (state.selectedDocId===d.id ? " active" : "") + (isRecent24h(d) ? " hotGlow" : "");
     item.innerHTML = `
