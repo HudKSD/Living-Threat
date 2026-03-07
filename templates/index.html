@@ -250,11 +250,10 @@
     .main{
       padding:12px clamp(14px, 2vw, 28px) 14px;
       display:grid;
-      grid-template-columns: var(--left-col, 360px) 1fr var(--right-col, 360px);
+      grid-template-columns: 360px 1fr 360px;
       gap:12px;
       min-height:0;
     }
-    body.hide-ops{ --right-col: 16px; }
     @media (max-width: 1060px){
       body{ overflow:auto; }
       .main{ grid-template-columns: 1fr; }
@@ -444,30 +443,6 @@
       padding:12px;
     }
     .rightSidePanel{ background: rgba(28,20,8,.56); border-color: rgba(255,204,102,.30); }
-    #sidePanelRight{ transition: opacity .18s ease, transform .22s ease; }
-    body.hide-ops #sidePanelRight{
-      opacity:0;
-      pointer-events:none;
-      transform: translateX(20px);
-    }
-    .reopenOpsBtn{
-      position: fixed;
-      right: 8px;
-      top: 50%;
-      transform: translateY(-50%);
-      z-index: 26;
-      width: 28px;
-      height: 66px;
-      border-radius: 12px;
-      border:1px solid rgba(255,204,102,.34);
-      background: rgba(24,16,6,.86);
-      color:#ffe8ba;
-      display:none;
-      place-items:center;
-      cursor:pointer;
-      box-shadow: var(--shadow);
-    }
-    body.hide-ops .reopenOpsBtn{ display:grid; }
     .rightSidePanel .panelHd{
       border-bottom-color: rgba(255,204,102,.22);
       background: linear-gradient(180deg, rgba(255,204,102,.10), rgba(0,0,0,.0));
@@ -486,34 +461,6 @@
     }
 
     .panelTools{ display:flex; align-items:center; gap:8px; }
-    .collapseBtn{
-      width:28px; height:28px;
-      border-radius:10px;
-      border:1px solid rgba(255,255,255,.16);
-      background: rgba(0,0,0,.18);
-      color:rgba(214,247,255,.88);
-      cursor:pointer;
-      display:grid;
-      place-items:center;
-      font-size:14px;
-    }
-    .collapseBtn:hover{ border-color: rgba(0,245,255,.35); }
-    .panel.is-collapsed .sideBody,
-    .panel.is-collapsed .rightSideBody,
-    .panel.is-collapsed .panelHd .meta,
-    .panel.is-collapsed .panelHd .chip{ display:none; }
-    .panel.is-collapsed .panelHd{
-      writing-mode: vertical-rl;
-      text-orientation: mixed;
-      min-height: calc(100vh - 84px - 14px - 14px);
-      justify-content:flex-start;
-      align-items:center;
-      padding:12px 8px;
-      gap:12px;
-    }
-    .panel.is-collapsed .panelHd .h{ font-size:11px; }
-    .panel.is-collapsed .panelHd .panelTools{ writing-mode: horizontal-tb; }
-
     .aggSearch{ margin-bottom:8px; }
     .aggTopFilters{ margin-bottom:8px; }
     .aggPresetRow{ margin-bottom:8px; }
@@ -1417,7 +1364,6 @@
         <div class="h">Operations Sidebar <span class="chip" id="sideMetaRight">â€”</span></div>
         <div class="panelTools">
           <div class="meta"><span class="chip">Priorities + Documents</span></div>
-          <button class="collapseBtn" id="toggleOps" title="Hide/show operations sidebar">⟩</button>
         </div>
       </div>
 
@@ -1558,8 +1504,6 @@
     </div>
   </nav>
 </div>
-
-<button class="reopenOpsBtn" id="reopenOps" title="Show operations sidebar">⟨</button>
 
 <!-- DOC MODAL -->
 <dialog id="docModal">
@@ -3571,21 +3515,6 @@ $("presets").addEventListener("click", (e)=>{
   }
   syncHash(); render();
   if(tourActive) renderTour();
-});
-
-$("toggleOps").addEventListener("click", ()=>{
-  const hide = !document.body.classList.contains("hide-ops");
-  document.body.classList.toggle("hide-ops", hide);
-  $("toggleOps").textContent = hide ? "⟨" : "⟩";
-  $("toggleOps").title = hide ? "Show operations sidebar" : "Hide operations sidebar";
-  if(tourActive) positionTour();
-});
-
-$("reopenOps").addEventListener("click", ()=>{
-  document.body.classList.remove("hide-ops");
-  $("toggleOps").textContent = "⟩";
-  $("toggleOps").title = "Hide operations sidebar";
-  if(tourActive) positionTour();
 });
 
 $("tourNext").addEventListener("click", nextTour);
