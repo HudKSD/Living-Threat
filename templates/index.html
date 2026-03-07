@@ -1487,7 +1487,7 @@
 
         <div class="box aggPanel" id="aggBox">
           <h3>Aggregations <span class="chip" id="aggChip">â€”</span></h3>
-          <div class="rangeCtl aggTopFilters">
+          <div class="rangeCtl aggTopFilters" id="rangeFocus">
             <label>Range</label>
             <input id="range" type="range" min="1" max="365" value="7" step="1" />
             <div class="v" id="rangeV">7d</div>
@@ -1785,9 +1785,9 @@ const TOUR_STEPS = [
     desc: "Use Aggregations first: search + facets. This narrows evidence before analysis. Select at least one facet or type a search to unlock Next."
   },
   {
-    id: "sevCtl",
-    title: "Step 2: Set time + severity",
-    desc: "Tune time range from Aggregations and set minimum severity here to sharpen signal quality before navigating techniques."
+    id: "rangeFocus",
+    title: "Step 2: Set time range",
+    desc: "Tune the time range from Aggregations to focus on the relevant threat window before navigating techniques."
   },
   {
     id: "matrixPanel",
@@ -2818,6 +2818,7 @@ function renderPathStrip(selDoc){
         <button class="btn secondary sm" id="openDocFromPath">Open Doc</button>
         <button class="btn secondary sm" id="togglePin">${state.pathPinned ? "Unpin" : "Pin"} Attack Path</button>
         <button class="btn sm" id="togglePack">${state.packOn ? "Hide" : "Show"} Hunt Pack</button>
+        <button class="btn danger sm" id="closePathInStrip">Close Attack Path</button>
       </div>
     </div>
 
@@ -2924,6 +2925,12 @@ function renderPathStrip(selDoc){
   });
   strip.querySelector("#togglePack").addEventListener("click", ()=>{
     state.packOn = !state.packOn;
+    syncHash();
+    render();
+  });
+  strip.querySelector("#closePathInStrip").addEventListener("click", ()=>{
+    state.pathOn = false;
+    state.packOn = false;
     syncHash();
     render();
   });
