@@ -290,7 +290,7 @@
       text-align:right;
     }
 
-    .matrixPanel{ background: var(--panelA); border-color: rgba(0,245,255,.18); }
+    .matrixPanel{ background: var(--panelA); border-color: rgba(0,245,255,.18); position:relative; }
     .matrixPanel .panelHd{
       background: linear-gradient(180deg, rgba(0,245,255,.06), rgba(0,0,0,.0));
     }
@@ -323,12 +323,22 @@
     }
     .matrixNavTrack{ display:flex; gap:6px; flex-wrap:wrap; }
     .priorityLegendMap{
-      margin-top:8px;
-      border-top:1px solid rgba(0,245,255,.10);
-      padding-top:7px;
+      border:1px solid rgba(0,245,255,.20);
+      border-radius:14px;
+      background: rgba(2,8,14,.86);
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(8px);
+      padding:8px;
       display:flex;
       flex-direction:column;
       gap:4px;
+      width:170px;
+    }
+    .priorityLegendMap.floating{
+      position:absolute;
+      left: 12px;
+      bottom: 12px;
+      z-index: 24;
     }
     .priorityLegendRow{
       border-radius:8px;
@@ -482,6 +492,9 @@
       min-width: 0;
       transition: box-shadow .2s ease, border-color .2s ease, transform .08s ease;
     }
+    .tacticCol.rank1bg{ background: linear-gradient(180deg, rgba(255,132,132,.18), rgba(0,0,0,.14)); }
+    .tacticCol.rank2bg{ background: linear-gradient(180deg, rgba(255,222,120,.16), rgba(0,0,0,.14)); }
+    .tacticCol.rank3bg{ background: linear-gradient(180deg, rgba(134,186,255,.14), rgba(0,0,0,.14)); }
     .tacticCol.hotPanel{
       border-color: var(--hlRed);
       box-shadow:
@@ -586,6 +599,16 @@
     }
     .hunterList{ margin:0; padding-left:16px; display:grid; gap:3px; }
     .hunterList li{ font-size:11px; line-height:1.3; color:rgba(214,247,255,.86); }
+    .stageCtx{
+      margin-top:8px;
+      border-top:1px dashed rgba(255,255,255,.12);
+      padding-top:7px;
+      display:grid;
+      gap:4px;
+    }
+    .stageCtx .muted{ font-size:10.5px; }
+    .stageCtx ul{ margin:0; padding-left:16px; display:grid; gap:2px; }
+    .stageCtx li{ font-size:10.8px; line-height:1.28; color:rgba(214,247,255,.84); }
     @media (max-width: 980px){
       .hunterQuick{ grid-template-columns: 1fr; }
     }
@@ -1278,19 +1301,20 @@
         <div class="matrixNavMap" id="matrixNavMap">
           <div class="hd">Navigator Minimap â€¢ click tactic to jump</div>
           <div class="matrixNavTrack" id="matrixNavTrack"></div>
-          <div class="priorityLegendMap" aria-label="Priority legend">
-            <div class="priorityLegendRow r1"><span>RANK 1</span><small>reddish</small></div>
-            <div class="priorityLegendRow r2"><span>RANK 2</span><small>yellowish</small></div>
-            <div class="priorityLegendRow r3"><span>RANK 3</span><small>bluish</small></div>
-            <div class="priorityLegendRow hit"><span>DOC-HIT</span><small>bright yellow</small></div>
-            <div class="priorityLegendRow fade"><span>OTHERS</span><small>fade to background</small></div>
-          </div>
         </div>
         <div id="pathStripHost"></div>
         <div class="tacticGrid" id="matrix"></div>
         <div class="muted" id="emptyMatrix" style="display:none; padding:10px 2px;">
           No techniques match the current filters.
         </div>
+      </div>
+
+      <div class="priorityLegendMap floating" aria-label="Priority legend">
+        <div class="priorityLegendRow r1"><span>RANK 1</span><small>reddish</small></div>
+        <div class="priorityLegendRow r2"><span>RANK 2</span><small>yellowish</small></div>
+        <div class="priorityLegendRow r3"><span>RANK 3</span><small>bluish</small></div>
+        <div class="priorityLegendRow hit"><span>DOC-HIT</span><small>bright yellow</small></div>
+        <div class="priorityLegendRow fade"><span>OTHERS</span><small>fade</small></div>
       </div>
     </section>
 
@@ -2452,11 +2476,31 @@ function renderPathStrip(selDoc){
   const hunterQuick = buildHunterQuick(selDoc);
 
   const stageMap = {};
+  const stageCtx = {};
   for(const st of STAGE_ORDER) stageMap[st] = new Set();
   for(const a of (selDoc.Analyses||[])){
     const stage = a.Stage || "Unknown";
     if(!stageMap[stage]) stageMap[stage] = new Set();
+    if(!stageCtx[stage]) stageCtx[stage] = { desc: [], det: [], rem: [], tac: [], tech: [] };
     for(const t of (a.Techniques||[])) stageMap[stage].add(t);
+
+    const desc = String(a.Description || "").trim();
+    if(desc && !/^no significant activity detected$/i.test(desc)) stageCtx[stage].desc.push(desc);
+
+    asArray(a.Detection).forEach(x=>{ if(x) stageCtx[stage].det.push(String(x)); });
+    asArray(a.Remediation).forEach(x=>{ if(x) stageCtx[stage].rem.push(String(x)); });
+
+    asArray(a.Tactics).forEach(t=>{
+      if(!t || typeof t !== "object") return;
+      const n = String(t.tactic_name || t.tactic_id || "").trim();
+      if(n) stageCtx[stage].tac.push(n);
+    });
+
+    asArray(a.Technique_Details).forEach(t=>{
+      if(!t || typeof t !== "object") return;
+      const n = String(t.technique_name || t.technique_id || "").trim();
+      if(n) stageCtx[stage].tech.push(n);
+    });
   }
 
   const strip = document.createElement("div");
@@ -2527,6 +2571,12 @@ function renderPathStrip(selDoc){
     const color = STAGE_COL[stage] || "#77ffb0";
     const ts = Array.from(stageMap[stage] || []).sort();
     const has = ts.length > 0;
+    const ctx = stageCtx[stage] || { desc: [], det: [], rem: [], tac: [], tech: [] };
+    const descTop = uniq(ctx.desc).slice(0,1);
+    const detTop = uniq(ctx.det).slice(0,2);
+    const remTop = uniq(ctx.rem).slice(0,2);
+    const tacTop = uniq(ctx.tac).slice(0,2);
+    const techTop = uniq(ctx.tech).slice(0,2);
 
     const col = document.createElement("div");
     col.className = "stage " + (has ? "hasTech" : "noTech");
@@ -2544,6 +2594,13 @@ function renderPathStrip(selDoc){
             ? ts.map(tid=>`<span class="pill green" style="border-color:${color}66; background:${color}10; cursor:pointer;" data-tech="${tid}" title="${escapeHtml((TECH[tid]?.name)||"")}">${tid}</span>`).join("")
             : `<span class="chip">â€”</span>`
         }
+      </div>
+      <div class="stageCtx">
+        ${descTop.length ? `<div class="muted">${escapeHtml(shortTitle(descTop[0], 110))}</div>` : `<div class="muted">No explicit narrative for this phase.</div>`}
+        ${tacTop.length ? `<div class="muted">Tactics: ${escapeHtml(tacTop.join("; "))}</div>` : ``}
+        ${techTop.length ? `<div class="muted">Techniques: ${escapeHtml(techTop.join("; "))}</div>` : ``}
+        ${detTop.length ? `<ul>${detTop.map(x=>`<li>Detect: ${escapeHtml(shortTitle(x, 95))}</li>`).join("")}</ul>` : ``}
+        ${remTop.length ? `<ul>${remTop.map(x=>`<li>Respond: ${escapeHtml(shortTitle(x, 95))}</li>`).join("")}</ul>` : ``}
       </div>
     `;
     stagesHost.appendChild(col);
@@ -2784,6 +2841,15 @@ function renderMatrix(docs, techStats, selDoc){
     const col = document.createElement("div");
     col.className = "tacticCol";
     col.id = tacticDomId(tac);
+
+    const ranksInCol = list
+      .map(x=>recommendedRank.get(x.tid))
+      .filter(x=>x===1 || x===2 || x===3)
+      .sort((a,b)=>a-b);
+    if(ranksInCol.length){
+      const bestRank = ranksInCol[0];
+      col.classList.add(bestRank===1 ? "rank1bg" : (bestRank===2 ? "rank2bg" : "rank3bg"));
+    }
 
     col.innerHTML = `
       <div class="tacticHd">
