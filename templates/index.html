@@ -256,6 +256,65 @@
     @media (max-width: 1060px){
       body{ overflow:auto; }
       .main{ grid-template-columns: 1fr; }
+      /* Mobile-first content flow: Navigator -> Operations -> Evidence */
+      #matrixPanel{ order:1; }
+      #sidePanelRight{ order:2; }
+      #sidePanel{ order:3; }
+    }
+
+    @media (max-width: 860px){
+      .topbarInner{ padding:10px 12px; }
+      .brand{ min-width:0; width:100%; }
+      .brand .sub{ font-size:11px; }
+      .bar{
+        min-width:0;
+        width:100%;
+        justify-content:flex-start;
+      }
+      .ctl, .rangeCtl, .toggle{ width:100%; border-radius:12px; }
+      .rangeCtl{ flex-wrap:wrap; }
+      input[type="range"]{ width:100%; }
+      .presets{ width:100%; }
+      .btn{ width:100%; text-align:center; }
+      .filters{ grid-template-columns: 1fr; }
+      .kv{ grid-template-columns: 1fr; }
+      .matrixBody, .sideBody, .rightSideBody{ padding:10px; }
+      .tacticGrid{ grid-template-columns: 1fr; gap:8px; }
+      .techCard{ padding:8px; }
+      .row1{ gap:6px; }
+      .score{ font-size:10px; }
+      .rankBadge{ font-size:9px; }
+      .cardDocBtn{ width:24px; height:24px; }
+      .hunterQuick{ grid-template-columns: 1fr; }
+      .pathStrip.pinned{
+        position: static;
+        max-height: none;
+        overflow: visible;
+      }
+      .pathStrip.pinned .huntPack{ max-height:none; overflow:visible; }
+      .pathStripSpacer{ display:none; }
+      .priorityLegendMap.floating{
+        position: static;
+        width:100%;
+        margin-top:8px;
+      }
+      .modal, .drawer{ width:100%; border-radius:14px; }
+    }
+
+    @media (max-width: 560px){
+      .topbarInner{ gap:8px; }
+      .brand .title{ font-size:13px; }
+      .chip{ font-size:10px; }
+      .panelHd{ padding:8px 10px; }
+      .tacticHd{ padding:8px 8px 6px; }
+      .tacticHd b{ font-size:11.5px; }
+      .tacticHd .count{ font-size:10px; }
+      .legendRow{ font-size:10px; }
+      .stage{ min-width: 100%; }
+      .hpCard{ padding:8px; }
+      .docItem .t{ font-size:12px; }
+      .docItem .m{ font-size:11px; }
+      .priorityLegendRow{ font-size:9.5px; }
     }
 
     .panel{
