@@ -254,7 +254,7 @@
       gap:12px;
       min-height:0;
     }
-    body.hide-ops{ --right-col: 16px; }
+    body.hide-evidence{ --left-col: 16px; }
     @media (max-width: 1060px){
       body{ overflow:auto; }
       .main{ grid-template-columns: 1fr; }
@@ -444,30 +444,30 @@
       padding:12px;
     }
     .rightSidePanel{ background: rgba(28,20,8,.56); border-color: rgba(255,204,102,.30); }
-    #sidePanelRight{ transition: opacity .18s ease, transform .22s ease; }
-    body.hide-ops #sidePanelRight{
+    #sidePanel{ transition: opacity .18s ease, transform .22s ease; }
+    body.hide-evidence #sidePanel{
       opacity:0;
       pointer-events:none;
-      transform: translateX(20px);
+      transform: translateX(-20px);
     }
-    .reopenOpsBtn{
+    .reopenEvidenceBtn{
       position: fixed;
-      right: 8px;
+      left: 8px;
       top: 50%;
       transform: translateY(-50%);
       z-index: 26;
       width: 28px;
       height: 66px;
       border-radius: 12px;
-      border:1px solid rgba(255,204,102,.34);
-      background: rgba(24,16,6,.86);
-      color:#ffe8ba;
+      border:1px solid rgba(181,139,255,.34);
+      background: rgba(20,10,34,.86);
+      color:#decbff;
       display:none;
       place-items:center;
       cursor:pointer;
       box-shadow: var(--shadow);
     }
-    body.hide-ops .reopenOpsBtn{ display:grid; }
+    body.hide-evidence .reopenEvidenceBtn{ display:grid; }
     .rightSidePanel .panelHd{
       border-bottom-color: rgba(255,204,102,.22);
       background: linear-gradient(180deg, rgba(255,204,102,.10), rgba(0,0,0,.0));
@@ -1417,7 +1417,6 @@
         <div class="h">Operations Sidebar <span class="chip" id="sideMetaRight">â€”</span></div>
         <div class="panelTools">
           <div class="meta"><span class="chip">Priorities + Documents</span></div>
-          <button class="collapseBtn" id="toggleOps" title="Hide/show operations sidebar">⟩</button>
         </div>
       </div>
 
@@ -1479,6 +1478,7 @@
         <div class="h">Evidence Sidebar <span class="chip" id="sideMeta">â€”</span></div>
         <div class="panelTools">
           <div class="meta"><span class="chip" id="focusChip">Technique: none</span></div>
+          <button class="collapseBtn" id="toggleEvidence" title="Hide/show evidence sidebar">⟨</button>
         </div>
       </div>
 
@@ -1559,7 +1559,7 @@
   </nav>
 </div>
 
-<button class="reopenOpsBtn" id="reopenOps" title="Show operations sidebar">⟨</button>
+<button class="reopenEvidenceBtn" id="reopenEvidence" title="Show evidence sidebar">⟩</button>
 
 <!-- DOC MODAL -->
 <dialog id="docModal">
@@ -3573,19 +3573,18 @@ $("presets").addEventListener("click", (e)=>{
   if(tourActive) renderTour();
 });
 
-$("toggleOps").addEventListener("click", ()=>{
-  const hide = !document.body.classList.contains("hide-ops");
-  document.body.classList.toggle("hide-ops", hide);
-  $("sidePanelRight").classList.toggle("is-collapsed", false);
-  $("toggleOps").textContent = hide ? "⟨" : "⟩";
-  $("toggleOps").title = hide ? "Show operations sidebar" : "Hide operations sidebar";
+$("toggleEvidence").addEventListener("click", ()=>{
+  const hide = !document.body.classList.contains("hide-evidence");
+  document.body.classList.toggle("hide-evidence", hide);
+  $("toggleEvidence").textContent = hide ? "⟩" : "⟨";
+  $("toggleEvidence").title = hide ? "Show evidence sidebar" : "Hide evidence sidebar";
   if(tourActive) positionTour();
 });
 
-$("reopenOps").addEventListener("click", ()=>{
-  document.body.classList.remove("hide-ops");
-  $("toggleOps").textContent = "⟩";
-  $("toggleOps").title = "Hide operations sidebar";
+$("reopenEvidence").addEventListener("click", ()=>{
+  document.body.classList.remove("hide-evidence");
+  $("toggleEvidence").textContent = "⟨";
+  $("toggleEvidence").title = "Hide evidence sidebar";
   if(tourActive) positionTour();
 });
 
