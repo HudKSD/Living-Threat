@@ -94,7 +94,7 @@
       display:flex; gap:12px; align-items:center; justify-content:space-between; flex-wrap:wrap;
     }
 
-    .topLeftActions{ display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
+    .topNavActions{ display:flex; align-items:center; gap:8px; flex-wrap:wrap; margin-left:auto; justify-content:flex-end; }
     .brand{ display:flex; flex-direction:column; gap:4px; min-width:260px; flex:1; }
     .brand .title{ display:flex; align-items:center; gap:10px; font-weight:900; letter-spacing:.25px; font-size:14px; }
     .brand .title .dot{
@@ -254,7 +254,6 @@
       gap:12px;
       min-height:0;
     }
-    body.hide-evidence{ --left-col: 54px; }
     body.hide-ops{ --right-col: 16px; }
     @media (max-width: 1060px){
       body{ overflow:auto; }
@@ -269,13 +268,12 @@
       .topbarInner{ padding:10px 12px; }
       .brand{ min-width:0; width:100%; }
       .brand .sub{ font-size:11px; }
-      .topLeftActions{ width:100%; }
+      .topNavActions{ width:100%; }
       .bar{
         min-width:0;
         width:100%;
         justify-content:flex-start;
       }
-      .topFilterFocus{ width:100%; flex-wrap:wrap; }
       .ctl, .rangeCtl, .toggle{ width:100%; border-radius:12px; }
       .rangeCtl{ flex-wrap:wrap; }
       input[type="range"]{ width:100%; }
@@ -517,9 +515,12 @@
     .panel.is-collapsed .panelHd .panelTools{ writing-mode: horizontal-tb; }
 
     .aggSearch{ margin-bottom:8px; }
-    .topFilterFocus{ display:flex; align-items:stretch; gap:8px; }
     .aggTopFilters{ margin-bottom:8px; }
-    .navActions{ display:flex; gap:8px; align-items:center; flex-wrap:wrap; }
+    .aggPresetRow{ margin-bottom:8px; }
+    .navActions{ display:flex; gap:8px; align-items:center; flex-wrap:nowrap; }
+    #pathBtn{ min-width:120px; }
+    #hidePathBtn{ min-width:110px; }
+    #newBadge{ min-width:80px; justify-content:center; }
 
     .onboardingOverlay{
       position:fixed;
@@ -1376,14 +1377,6 @@
 <div class="app">
   <header class="topbar">
     <div class="topbarInner">
-      <div class="topLeftActions">
-        <button class="btn secondary" id="shareBtn">Share</button>
-        <button class="btn beacon" id="refreshBtn" title="Critical: refresh latest intelligence dataset">Refresh</button>
-        <button class="btn secondary" id="helpBtn" title="Open platform guide">Help</button>
-        <button class="btn secondary" id="workflowBtn" title="Start guided workflow">Workflow</button>
-        <button class="btn secondary" id="aboutBtn" title="About this platform">About</button>
-      </div>
-
       <div class="brand">
         <div class="title"><span class="dot"></span>Living MITRE Repository <span class="chip" id="envChip">connectingâ€¦</span><span class="chip" title="Live status indicator"><span class="liveDot"></span> live</span></div>
         <div class="sub">
@@ -1394,18 +1387,15 @@
         </div>
       </div>
 
-      <div class="bar">
-        <div class="topFilterFocus" id="topFilterFocus">
-          <div class="ctl" id="sevCtl">
-            <label>Min Sev</label>
-            <select id="sev">
-              <option value="ALL" selected>All</option>
-              <option value="Moderate">Moderate+</option>
-              <option value="High">High+</option>
-            </select>
-          </div>
-        </div>
+      <div class="topNavActions">
+        <button class="btn secondary" id="shareBtn">Share</button>
+        <button class="btn beacon" id="refreshBtn" title="Critical: refresh latest intelligence dataset">Refresh</button>
+        <button class="btn secondary" id="helpBtn" title="Open platform guide">Help</button>
+        <button class="btn secondary" id="workflowBtn" title="Start guided workflow">Workflow</button>
+        <button class="btn secondary" id="aboutBtn" title="About this platform">About</button>
+      </div>
 
+      <div class="bar">
         <div class="toggle" title="Hunt Mode highlights techniques used by the selected document">
           <input type="checkbox" id="hunt" checked />
           <span>Hunt Mode</span>
@@ -1453,7 +1443,8 @@
           <div class="meta" id="selMeta">Loadingâ€¦</div>
           <div class="navActions">
             <button class="btn secondary beacon" id="pathBtn" disabled title="Critical: open attack path and hunt pack workflow">Attack Path</button>
-            <span class="badge" id="newBadge" style="display:none;">
+            <button class="btn secondary" id="hidePathBtn" style="visibility:hidden;" title="Hide current attack path">Hide Path</button>
+            <span class="badge" id="newBadge" style="visibility:hidden;">
               <span class="dot"></span>
               <span id="newBadgeTxt">New</span>
             </span>
@@ -1488,7 +1479,6 @@
         <div class="h">Evidence Sidebar <span class="chip" id="sideMeta">â€”</span></div>
         <div class="panelTools">
           <div class="meta"><span class="chip" id="focusChip">Technique: none</span></div>
-          <button class="collapseBtn" id="toggleEvidence" title="Hide/show evidence sidebar">⟨</button>
         </div>
       </div>
 
@@ -1501,18 +1491,26 @@
             <label>Range</label>
             <input id="range" type="range" min="1" max="365" value="7" step="1" />
             <div class="v" id="rangeV">7d</div>
-            <div class="presets" id="presets">
-              <div class="pbtn active" data-days="7">7d</div>
-              <div class="pbtn" data-days="30">30d</div>
-              <div class="pbtn" data-days="90">90d</div>
-              <div class="pbtn" data-days="180">180d</div>
-              <div class="pbtn" data-days="365">365d</div>
-              <div class="pbtn" data-days="ALL">All</div>
-            </div>
+          </div>
+          <div class="presets aggPresetRow" id="presets">
+            <div class="pbtn active" data-days="7">7d</div>
+            <div class="pbtn" data-days="30">30d</div>
+            <div class="pbtn" data-days="90">90d</div>
+            <div class="pbtn" data-days="180">180d</div>
+            <div class="pbtn" data-days="365">365d</div>
+            <div class="pbtn" data-days="ALL">All</div>
           </div>
           <div class="ctl searchCtl aggSearch" title="Search filters on doc_summary only">
             <label>Search</label>
             <input id="q" type="text" placeholder="doc_summary containsâ€¦" />
+          </div>
+          <div class="ctl" id="sevCtl">
+            <label>Min Sev</label>
+            <select id="sev">
+              <option value="ALL" selected>All</option>
+              <option value="Moderate">Moderate+</option>
+              <option value="High">High+</option>
+            </select>
           </div>
           <div class="kv" id="aggKv"></div>
           <div class="filters">
@@ -2175,12 +2173,12 @@ function setNewDocs(n){
   state.newCount = Math.max(0, Number(n||0));
   const b = $("newBadge");
   if(state.newCount > 0){
-    b.style.display = "inline-flex";
+    b.style.visibility = "visible";
     b.classList.add("hot");
     $("newBadgeTxt").textContent = `New (${state.newCount})`;
     $("refreshBtn").classList.add("hotGlow");
   }else{
-    b.style.display = "none";
+    b.style.visibility = "hidden";
     b.classList.remove("hot");
     $("newBadgeTxt").textContent = "New";
     $("refreshBtn").classList.remove("hotGlow");
@@ -2470,7 +2468,7 @@ function render(){
   const selDocNow = state.selectedDocId ? DOCS.find(d=>d.id===state.selectedDocId) : null;
 
   $("pathBtn").disabled = !selDocNow;
-  $("pathBtn").textContent = state.pathOn ? "Hide Attack Path" : "Attack Path";
+  $("hidePathBtn").style.visibility = state.pathOn ? "visible" : "hidden";
   $("selMeta").textContent = selDocNow ? `Doc: ${selDocNow.Title} (${fmtDate(selDocNow.Timestamp)})` : "No doc selected";
 
   buildSideFilters(docs);
@@ -3483,9 +3481,15 @@ $("hunt").addEventListener("change", ()=>{
 
 $("pathBtn").addEventListener("click", ()=>{
   if($("pathBtn").disabled) return;
-  state.pathOn = !state.pathOn;
+  state.pathOn = true;
   if(state.pathOn) state.packOn = false;
   if(tourActive && TOUR_STEPS[tourIdx]?.id === "matrixPanel" && state.pathOn) endTour();
+  syncHash(); render();
+});
+
+$("hidePathBtn").addEventListener("click", ()=>{
+  if(!state.pathOn) return;
+  state.pathOn = false;
   syncHash(); render();
 });
 
@@ -3560,15 +3564,6 @@ $("presets").addEventListener("click", (e)=>{
   }
   syncHash(); render();
   if(tourActive) renderTour();
-});
-
-$("toggleEvidence").addEventListener("click", ()=>{
-  const hide = !document.body.classList.contains("hide-evidence");
-  document.body.classList.toggle("hide-evidence", hide);
-  $("sidePanel").classList.toggle("is-collapsed", hide);
-  $("toggleEvidence").textContent = hide ? "⟩" : "⟨";
-  $("toggleEvidence").title = hide ? "Show evidence sidebar" : "Hide evidence sidebar";
-  if(tourActive) positionTour();
 });
 
 $("toggleOps").addEventListener("click", ()=>{
