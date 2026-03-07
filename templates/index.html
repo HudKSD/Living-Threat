@@ -499,7 +499,7 @@
       z-index:140;
       display:none;
       background: rgba(2,7,14,.40);
-      backdrop-filter: blur(4px);
+      pointer-events:none;
     }
     .onboardingOverlay.show{ display:block; }
     .tourSpotlight{
@@ -1791,6 +1791,11 @@ function isAggregationCompleted(){
 function isTopFilterCompleted(){
   return state.sevMin !== "ALL" || state.allTime || state.rangeDays !== 7;
 }
+function canAdvanceTourStep(){
+  if(tourIdx === 0) return isAggregationCompleted();
+  if(tourIdx === 1) return isTopFilterCompleted();
+  return true;
+}
 function endTour(){
   tourActive = false;
   tourIdx = -1;
@@ -1830,7 +1835,7 @@ function renderTour(){
   $("tourPrev").style.display = tourIdx === 0 ? "none" : "inline-flex";
   const nextBtn = $("tourNext");
   nextBtn.textContent = tourIdx === TOUR_STEPS.length - 1 ? "Finish" : "Next";
-  nextBtn.disabled = (tourIdx === 0 && !isAggregationCompleted()) || (tourIdx === 1 && !isTopFilterCompleted());
+  nextBtn.disabled = false;
   $("onboardingOverlay").classList.add("show");
   $("tourSpotlight").classList.add("show");
   $("tourCard").classList.add("show");
@@ -1841,7 +1846,14 @@ function renderTour(){
   positionTour();
 }
 function startTour(){ tourActive = true; tourIdx = 0; renderTour(); }
-function nextTour(){ if(tourIdx >= TOUR_STEPS.length - 1) endTour(); else { tourIdx += 1; renderTour(); } }
+function nextTour(){
+  if(!canAdvanceTourStep()){
+    toast(tourIdx === 0 ? "Apply at least one Aggregations filter to continue" : "Adjust range or severity to continue");
+    return;
+  }
+  if(tourIdx >= TOUR_STEPS.length - 1) endTour();
+  else { tourIdx += 1; renderTour(); }
+}
 function prevTour(){ if(tourIdx > 0){ tourIdx -= 1; renderTour(); } }
 
 function normalizeSeverity(sev){
@@ -3537,7 +3549,6 @@ $("tourNext").addEventListener("click", nextTour);
 $("tourPrev").addEventListener("click", prevTour);
 $("tourSkip").addEventListener("click", endTour);
 $("tourDismiss").addEventListener("click", endTour);
-$("onboardingOverlay").addEventListener("click", endTour);
 window.addEventListener("resize", ()=>{ if(tourActive) positionTour(); });
 function setPresetActive(val){
   document.querySelectorAll(".pbtn").forEach(b=>b.classList.remove("active"));
