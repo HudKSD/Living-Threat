@@ -322,6 +322,30 @@
       margin-bottom:6px;
     }
     .matrixNavTrack{ display:flex; gap:6px; flex-wrap:wrap; }
+    .priorityLegend{
+      margin-top:8px;
+      border-top:1px solid rgba(0,245,255,.10);
+      padding-top:7px;
+      display:flex;
+      gap:6px;
+      flex-wrap:wrap;
+      align-items:center;
+      font-size:10.5px;
+      font-family:var(--mono);
+      color:rgba(214,247,255,.72);
+    }
+    .legendMiniChip{
+      border-radius:999px;
+      padding:3px 8px;
+      border:1px solid rgba(255,255,255,.16);
+      background: rgba(0,0,0,.22);
+      white-space:nowrap;
+    }
+    .legendMiniChip.r1{ background: rgba(255,132,132,.20); border-color: rgba(255,132,132,.56); color:#ffd8d8; }
+    .legendMiniChip.r2{ background: rgba(255,220,120,.20); border-color: rgba(255,220,120,.60); color:#fff2c8; }
+    .legendMiniChip.r3{ background: rgba(140,190,255,.20); border-color: rgba(140,190,255,.56); color:#d9ecff; }
+    .legendMiniChip.hit{ background: rgba(255,225,112,.28); border-color: rgba(255,225,112,.72); color:#fff5cf; }
+    .legendMiniChip.fade{ background: rgba(255,255,255,.06); border-color: rgba(255,255,255,.18); color:rgba(214,247,255,.72); }
     .matrixNavDot{
       border:1px solid rgba(0,245,255,.16);
       border-radius:999px;
@@ -501,7 +525,7 @@
     .techCard:hover{ transform: translateY(-1px); border-color: rgba(0,245,255,.32); }
     .techCard.active{ outline: 2px solid rgba(181,139,255,.22); border-color: rgba(181,139,255,.30); }
 
-    .techCard.docHit, .techCard.pathHit{
+    .techCard.pathHit{
       border-color: var(--hlRed);
       box-shadow: 0 0 0 1px var(--hlRed2), 0 0 30px var(--hlGlow);
       background: linear-gradient(180deg, rgba(255, 132, 132, .10), rgba(7,26,34,.40));
@@ -510,7 +534,25 @@
       border-left: 4px solid var(--pathColor, rgba(255, 132, 132, .90));
       padding-left: 7px;
     }
-    .techCard.dim{ filter: saturate(.65) opacity(.60); }
+    .techCard.dim{ filter: saturate(.28) opacity(.22); }
+    .techCard.recommended{
+      border-color: rgba(0,245,255,.14);
+      box-shadow: none;
+    }
+    .techCard.recommended.rank1{
+      background: linear-gradient(180deg, rgba(255,132,132,.30), rgba(255,132,132,.14), rgba(7,26,34,.40));
+    }
+    .techCard.recommended.rank2{
+      background: linear-gradient(180deg, rgba(255,222,120,.30), rgba(255,222,120,.14), rgba(7,26,34,.40));
+    }
+    .techCard.recommended.rank3{
+      background: linear-gradient(180deg, rgba(134,186,255,.26), rgba(134,186,255,.12), rgba(7,26,34,.40));
+    }
+    .techCard.docHit{
+      border-color: rgba(255,225,112,.80);
+      box-shadow: 0 0 0 1px rgba(255,225,112,.46), 0 0 30px rgba(255,225,112,.34);
+      background: linear-gradient(180deg, rgba(255,225,112,.34), rgba(255,225,112,.16), rgba(7,26,34,.40));
+    }
 
     .row1{ display:flex; justify-content:space-between; align-items:center; gap:8px; margin-bottom:6px; min-width:0; }
     .tid{
@@ -1200,6 +1242,13 @@
         <div class="matrixNavMap" id="matrixNavMap">
           <div class="hd">Navigator Minimap â€¢ click tactic to jump</div>
           <div class="matrixNavTrack" id="matrixNavTrack"></div>
+          <div class="priorityLegend">
+            <span class="legendMiniChip r1">Rank 1 â†’ reddish</span>
+            <span class="legendMiniChip r2">Rank 2 â†’ yellowish</span>
+            <span class="legendMiniChip r3">Rank 3 â†’ bluish</span>
+            <span class="legendMiniChip hit">Doc-hit â†’ bright yellow</span>
+            <span class="legendMiniChip fade">Others fade to background</span>
+          </div>
         </div>
         <div id="pathStripHost"></div>
         <div class="tacticGrid" id="matrix"></div>
@@ -1679,6 +1728,25 @@ function heatBg(score, max){
   const b = Math.round(255*(1-t) + 176*t);
   return `rgba(${r},${g},${b},${0.10 + 0.18*t})`;
 }
+
+function rankedTechniquesForGuidance(techStats){
+  const ranked = Object.entries(techStats).map(([tid, s])=>{
+    const topDoc = (s.docs||[]).slice().sort((a,b)=>docRankScore(b)-docRankScore(a))[0] || null;
+    const topDocScore = topDoc ? docRankScore(topDoc) : 0;
+    const score = (Number(s.weight||0) * 4) + (Number(s.count||0) * 2) + topDocScore;
+    const meta = TECH[tid] || {};
+    return {
+      tid,
+      score,
+      tactic: meta.tactic || "Other",
+      name: meta.name || tid,
+      count: Number(s.count||0),
+      weight: Number(s.weight||0)
+    };
+  });
+  return ranked.sort((a,b)=>b.score-a.score);
+}
+
 function sevPill(sev){
   const n = normalizeSeverity(sev);
   const cls = (n==="High"||n==="Critical") ? "pink" : (n==="Moderate" ? "amber" : "green");
@@ -2602,6 +2670,9 @@ function renderHuntPackHTML(doc, pack){
 function renderMatrix(docs, techStats, selDoc){
   const host = $("matrix");
   host.innerHTML = "";
+  const guidance = rankedTechniquesForGuidance(techStats);
+  const recommendedIds = new Set(guidance.slice(0,3).map(g=>g.tid));
+  const recommendedRank = new Map(guidance.slice(0,3).map((g, idx)=>[g.tid, idx + 1]));
 
   const byTactic = {};
   for(const tid of Object.keys(techStats)){
@@ -2637,14 +2708,6 @@ function renderMatrix(docs, techStats, selDoc){
     col.className = "tacticCol";
     col.id = tacticDomId(tac);
 
-    // glow tactic column if it contains techniques for selected doc/path
-    if(selDoc){
-      const docTech = new Set(selDoc.Techniques||[]);
-      const hasDocTech = state.huntOn && list.some(x=>docTech.has(x.tid));
-      const hasPathTech = state.pathOn && list.some(x=>stageFor[x.tid]);
-      if(hasDocTech || hasPathTech) col.classList.add("hotPanel");
-    }
-
     col.innerHTML = `
       <div class="tacticHd">
         <b>${escapeHtml(tac)}</b>
@@ -2667,8 +2730,14 @@ function renderMatrix(docs, techStats, selDoc){
       const topDocs = (t.docs||[]).slice().sort((a,b)=>docRankScore(b)-docRankScore(a)).slice(0,10);
       const card = document.createElement("div");
       card.className = "techCard";
+      card.setAttribute("data-tech-id", t.tid);
       if(state.selectedTechId===t.tid) card.classList.add("active");
       card.style.background = heatBg(t.weight, maxW);
+      if(recommendedIds.has(t.tid)){
+        card.classList.add("recommended");
+        const rank = recommendedRank.get(t.tid) || 3;
+        card.classList.add(rank===1 ? "rank1" : (rank===2 ? "rank2" : "rank3"));
+      }
 
       const isDocHit = !!(selDoc && state.huntOn && (selDoc.Techniques||[]).includes(t.tid));
       if(isDocHit) card.classList.add("docHit");
