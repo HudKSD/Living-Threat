@@ -322,30 +322,31 @@
       margin-bottom:6px;
     }
     .matrixNavTrack{ display:flex; gap:6px; flex-wrap:wrap; }
-    .priorityLegend{
+    .priorityLegendMap{
       margin-top:8px;
       border-top:1px solid rgba(0,245,255,.10);
       padding-top:7px;
       display:flex;
-      gap:6px;
-      flex-wrap:wrap;
+      flex-direction:column;
+      gap:4px;
+    }
+    .priorityLegendRow{
+      border-radius:8px;
+      border:1px solid rgba(255,255,255,.12);
+      min-height:16px;
+      padding:3px 6px;
+      font-size:10px;
+      color:rgba(214,247,255,.82);
+      display:flex;
       align-items:center;
-      font-size:10.5px;
+      justify-content:space-between;
       font-family:var(--mono);
-      color:rgba(214,247,255,.72);
     }
-    .legendMiniChip{
-      border-radius:999px;
-      padding:3px 8px;
-      border:1px solid rgba(255,255,255,.16);
-      background: rgba(0,0,0,.22);
-      white-space:nowrap;
-    }
-    .legendMiniChip.r1{ background: rgba(255,132,132,.20); border-color: rgba(255,132,132,.56); color:#ffd8d8; }
-    .legendMiniChip.r2{ background: rgba(255,220,120,.20); border-color: rgba(255,220,120,.60); color:#fff2c8; }
-    .legendMiniChip.r3{ background: rgba(140,190,255,.20); border-color: rgba(140,190,255,.56); color:#d9ecff; }
-    .legendMiniChip.hit{ background: rgba(255,225,112,.28); border-color: rgba(255,225,112,.72); color:#fff5cf; }
-    .legendMiniChip.fade{ background: rgba(255,255,255,.06); border-color: rgba(255,255,255,.18); color:rgba(214,247,255,.72); }
+    .priorityLegendRow.r1{ background: rgba(255,132,132,.22); border-color: rgba(255,132,132,.58); color:#ffd8d8; }
+    .priorityLegendRow.r2{ background: rgba(255,220,120,.22); border-color: rgba(255,220,120,.62); color:#fff1c4; }
+    .priorityLegendRow.r3{ background: rgba(140,190,255,.22); border-color: rgba(140,190,255,.58); color:#d9ecff; }
+    .priorityLegendRow.hit{ background: rgba(255,225,112,.30); border-color: rgba(255,225,112,.76); color:#fff6cf; }
+    .priorityLegendRow.fade{ background: rgba(255,255,255,.06); border-color: rgba(255,255,255,.18); color:rgba(214,247,255,.72); }
     .matrixNavDot{
       border:1px solid rgba(0,245,255,.16);
       border-radius:999px;
@@ -540,18 +541,53 @@
       box-shadow: none;
     }
     .techCard.recommended.rank1{
-      background: linear-gradient(180deg, rgba(255,132,132,.30), rgba(255,132,132,.14), rgba(7,26,34,.40));
+      background: linear-gradient(180deg, rgba(255,132,132,.46), rgba(255,132,132,.26), rgba(7,26,34,.40));
     }
     .techCard.recommended.rank2{
-      background: linear-gradient(180deg, rgba(255,222,120,.30), rgba(255,222,120,.14), rgba(7,26,34,.40));
+      background: linear-gradient(180deg, rgba(255,222,120,.44), rgba(255,222,120,.24), rgba(7,26,34,.40));
     }
     .techCard.recommended.rank3{
-      background: linear-gradient(180deg, rgba(134,186,255,.26), rgba(134,186,255,.12), rgba(7,26,34,.40));
+      background: linear-gradient(180deg, rgba(134,186,255,.40), rgba(134,186,255,.22), rgba(7,26,34,.40));
     }
     .techCard.docHit{
       border-color: rgba(255,225,112,.80);
       box-shadow: 0 0 0 1px rgba(255,225,112,.46), 0 0 30px rgba(255,225,112,.34);
       background: linear-gradient(180deg, rgba(255,225,112,.34), rgba(255,225,112,.16), rgba(7,26,34,.40));
+    }
+    .rankBadge{
+      font-family:var(--mono);
+      font-size:10px;
+      padding:2px 6px;
+      border-radius:999px;
+      border:1px solid rgba(255,255,255,.16);
+      white-space:nowrap;
+    }
+    .rankBadge.r1{ background: rgba(255,132,132,.28); border-color: rgba(255,132,132,.70); color:#ffd8d8; }
+    .rankBadge.r2{ background: rgba(255,220,120,.28); border-color: rgba(255,220,120,.72); color:#fff1c4; }
+    .rankBadge.r3{ background: rgba(140,190,255,.28); border-color: rgba(140,190,255,.70); color:#d9ecff; }
+
+    .hunterQuick{
+      margin-top:10px;
+      display:grid;
+      grid-template-columns: repeat(3, minmax(220px, 1fr));
+      gap:8px;
+    }
+    .hunterBox{
+      border:1px solid rgba(255,255,255,.12);
+      border-radius:12px;
+      background: rgba(0,0,0,.14);
+      padding:8px;
+    }
+    .hunterBox h4{
+      margin:0 0 6px;
+      font-size:11.5px;
+      font-weight:900;
+      color:rgba(214,247,255,.92);
+    }
+    .hunterList{ margin:0; padding-left:16px; display:grid; gap:3px; }
+    .hunterList li{ font-size:11px; line-height:1.3; color:rgba(214,247,255,.86); }
+    @media (max-width: 980px){
+      .hunterQuick{ grid-template-columns: 1fr; }
     }
 
     .row1{ display:flex; justify-content:space-between; align-items:center; gap:8px; margin-bottom:6px; min-width:0; }
@@ -1242,12 +1278,12 @@
         <div class="matrixNavMap" id="matrixNavMap">
           <div class="hd">Navigator Minimap â€¢ click tactic to jump</div>
           <div class="matrixNavTrack" id="matrixNavTrack"></div>
-          <div class="priorityLegend">
-            <span class="legendMiniChip r1">Rank 1 â†’ reddish</span>
-            <span class="legendMiniChip r2">Rank 2 â†’ yellowish</span>
-            <span class="legendMiniChip r3">Rank 3 â†’ bluish</span>
-            <span class="legendMiniChip hit">Doc-hit â†’ bright yellow</span>
-            <span class="legendMiniChip fade">Others fade to background</span>
+          <div class="priorityLegendMap" aria-label="Priority legend">
+            <div class="priorityLegendRow r1"><span>RANK 1</span><small>reddish</small></div>
+            <div class="priorityLegendRow r2"><span>RANK 2</span><small>yellowish</small></div>
+            <div class="priorityLegendRow r3"><span>RANK 3</span><small>bluish</small></div>
+            <div class="priorityLegendRow hit"><span>DOC-HIT</span><small>bright yellow</small></div>
+            <div class="priorityLegendRow fade"><span>OTHERS</span><small>fade to background</small></div>
           </div>
         </div>
         <div id="pathStripHost"></div>
@@ -2380,6 +2416,32 @@ function applyPivot(spec){
   render();
 }
 
+function buildHunterQuick(doc){
+  const ex = doc.Extracted_Entities || {};
+  const access = asArray((doc.Victim||{}).Access_Vectors).filter(Boolean);
+  const breach = asArray(ex.Breach_Types).filter(Boolean);
+  const software = asArray(ex.Software).filter(Boolean);
+  const malwareFamilies = asArray(ex.Malware_Families).filter(Boolean);
+  const domains = asArray(ex.Domains).filter(Boolean);
+  const tools = asArray((doc.Capability||{}).Tools).filter(Boolean);
+
+  const stageDetections = (doc.Analyses||[])
+    .flatMap(a=>asArray(a.Detection).map(x=>`[${a.Stage || "Unknown"}] ${x}`))
+    .filter(Boolean);
+
+  const indicators = [
+    ...asArray(doc.Detection_Rules_And_Indicators),
+    ...asArray(doc.Data_Exfiltration_Indicators),
+    ...stageDetections,
+  ].filter(Boolean);
+
+  return {
+    initial: uniq([...access, ...breach, ...software]).slice(0,6),
+    infra: uniq([...malwareFamilies, ...domains, ...tools]).slice(0,6),
+    detect: uniq(indicators).slice(0,8),
+  };
+}
+
 /* Attack path strip + hunt pack */
 function renderPathStrip(selDoc){
   const host = $("pathStripHost");
@@ -2387,6 +2449,7 @@ function renderPathStrip(selDoc){
   if(!selDoc || !state.pathOn) return;
 
   const pack = buildHuntPack(selDoc);
+  const hunterQuick = buildHunterQuick(selDoc);
 
   const stageMap = {};
   for(const st of STAGE_ORDER) stageMap[st] = new Set();
@@ -2427,6 +2490,20 @@ function renderPathStrip(selDoc){
     </div>
 
     <div class="stages" id="stagesHost"></div>
+    <div class="hunterQuick">
+      <div class="hunterBox">
+        <h4>Initial Access Hypotheses</h4>
+        ${hunterQuick.initial.length ? `<ul class="hunterList">${hunterQuick.initial.map(x=>`<li>${escapeHtml(x)}</li>`).join("")}</ul>` : `<div class="muted">No direct hypotheses.</div>`}
+      </div>
+      <div class="hunterBox">
+        <h4>Malware / Infrastructure Watch</h4>
+        ${hunterQuick.infra.length ? `<ul class="hunterList">${hunterQuick.infra.map(x=>`<li>${escapeHtml(x)}</li>`).join("")}</ul>` : `<div class="muted">No infrastructure indicators.</div>`}
+      </div>
+      <div class="hunterBox">
+        <h4>Detection Priorities</h4>
+        ${hunterQuick.detect.length ? `<ul class="hunterList">${hunterQuick.detect.map(x=>`<li>${escapeHtml(shortTitle(x, 130))}</li>`).join("")}</ul>` : `<div class="muted">No explicit detections.</div>`}
+      </div>
+    </div>
     <div id="huntPackHost"></div>
   `;
   host.appendChild(strip);
@@ -2735,8 +2812,8 @@ function renderMatrix(docs, techStats, selDoc){
       card.style.background = heatBg(t.weight, maxW);
       if(recommendedIds.has(t.tid)){
         card.classList.add("recommended");
-        const rank = recommendedRank.get(t.tid) || 3;
-        card.classList.add(rank===1 ? "rank1" : (rank===2 ? "rank2" : "rank3"));
+        const rankIdx = recommendedRank.get(t.tid) || 3;
+        card.classList.add(rankIdx===1 ? "rank1" : (rankIdx===2 ? "rank2" : "rank3"));
       }
 
       const isDocHit = !!(selDoc && state.huntOn && (selDoc.Techniques||[]).includes(t.tid));
@@ -2753,9 +2830,13 @@ function renderMatrix(docs, techStats, selDoc){
 
       const techMeta = techniqueMetaForCard(t.docs, t.tid);
 
+      const rank = recommendedRank.get(t.tid) || null;
+      const rankBadge = rank ? `<span class="rankBadge ${rank===1?"r1":rank===2?"r2":"r3"}">R${rank}</span>` : "";
+
       card.innerHTML = `
         <div class="row1">
           <span class="tid">${escapeHtml(techMeta.technique_id)}</span>
+          ${rankBadge}
           <span class="score">w:${t.weight} â€¢ n:${t.count}</span>
           <button class="cardDocBtn" type="button" title="Show top documents" data-doc-toggle>📄</button>
         </div>
