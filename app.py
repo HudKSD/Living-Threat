@@ -536,23 +536,23 @@ def _sort_attack_path(stages: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
     return sorted(stages, key=key_fn)
 
 
-def _build_similarity_index(doc: Dict[str, Any]) -> Dict[str, set]:
+def _build_similarity_index(doc: Dict[str, Any]) -> Dict[str, List[str]]:
     diamond = doc.get("diamond") or {}
     attack = doc.get("attack") or {}
     entities = doc.get("entities") or {}
 
     return {
-        "techniques": {t.get("technique_id") for t in (attack.get("techniques") or []) if t.get("technique_id")},
-        "tactics": {_norm(t).lower() for t in (attack.get("tactics") or []) if _norm(t)},
-        "domains": {_norm(x).lower() for x in (diamond.get("infrastructure", {}).get("domains") or []) if _norm(x)},
-        "ips": {_norm(x).lower() for x in (diamond.get("infrastructure", {}).get("ips") or []) if _norm(x)},
-        "tools": {_norm(x).lower() for x in (diamond.get("capability", {}).get("tools") or []) if _norm(x)},
-        "malware": {_norm(x).lower() for x in (diamond.get("capability", {}).get("malware") or []) if _norm(x)},
-        "sectors": {_norm(x).lower() for x in entities.get("sectors", []) if _norm(x)},
-        "countries": {_norm(x).lower() for x in entities.get("countries", []) if _norm(x)},
-        "breach_types": {_norm(x).lower() for x in entities.get("breach_types", []) if _norm(x)},
-        "access_vectors": {_norm(x).lower() for x in entities.get("access_vectors", []) if _norm(x)},
-        "actors": {_norm(x).lower() for x in entities.get("actors", []) if _norm(x)},
+        "techniques": sorted({t.get("technique_id") for t in (attack.get("techniques") or []) if t.get("technique_id")}),
+        "tactics": sorted({_norm(t).lower() for t in (attack.get("tactics") or []) if _norm(t)}),
+        "domains": sorted({_norm(x).lower() for x in (diamond.get("infrastructure", {}).get("domains") or []) if _norm(x)}),
+        "ips": sorted({_norm(x).lower() for x in (diamond.get("infrastructure", {}).get("ips") or []) if _norm(x)}),
+        "tools": sorted({_norm(x).lower() for x in (diamond.get("capability", {}).get("tools") or []) if _norm(x)}),
+        "malware": sorted({_norm(x).lower() for x in (diamond.get("capability", {}).get("malware") or []) if _norm(x)}),
+        "sectors": sorted({_norm(x).lower() for x in entities.get("sectors", []) if _norm(x)}),
+        "countries": sorted({_norm(x).lower() for x in entities.get("countries", []) if _norm(x)}),
+        "breach_types": sorted({_norm(x).lower() for x in entities.get("breach_types", []) if _norm(x)}),
+        "access_vectors": sorted({_norm(x).lower() for x in entities.get("access_vectors", []) if _norm(x)}),
+        "actors": sorted({_norm(x).lower() for x in entities.get("actors", []) if _norm(x)}),
     }
 
 
@@ -719,7 +719,7 @@ def score_related(base: Dict[str, Any], candidate: Dict[str, Any]) -> Dict[str, 
     overlaps: List[str] = []
 
     for key, weight in RELATED_WEIGHTS.items():
-        shared = sorted((b.get(key) or set()) & (c.get(key) or set()))
+        shared = sorted(set(b.get(key) or []) & set(c.get(key) or []))
         if not shared:
             continue
         score += weight * min(4, len(shared))
