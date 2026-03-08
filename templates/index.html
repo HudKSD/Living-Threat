@@ -648,6 +648,25 @@
       grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
       gap:10px;
       align-items:start;
+      position:relative;
+    }
+    .matrixFlowLayer{
+      position:absolute;
+      inset:0;
+      width:100%;
+      height:100%;
+      pointer-events:none;
+      z-index:6;
+      overflow:visible;
+    }
+    .matrixFlowPath{
+      fill:none;
+      stroke:rgba(0,245,255,.54);
+      stroke-width:1.8;
+      stroke-linecap:round;
+      stroke-dasharray:3.5 4.5;
+      vector-effect: non-scaling-stroke;
+      filter: drop-shadow(0 0 7px rgba(0,245,255,.24));
     }
     .tacticCol{
       border-radius: 14px;
@@ -733,6 +752,23 @@
       border-color: rgba(255,225,112,.80);
       box-shadow: 0 0 0 1px rgba(255,225,112,.46), 0 0 30px rgba(255,225,112,.34);
       background: linear-gradient(180deg, rgba(255,225,112,.34), rgba(255,225,112,.16), rgba(7,26,34,.40));
+    }
+    .techCard.flowTarget{
+      outline:1px dashed rgba(0,245,255,.44);
+      outline-offset:1px;
+    }
+    .flowJump{
+      margin-top:7px;
+      font-family:var(--mono);
+      font-size:10.4px;
+      color:rgba(182,244,255,.90);
+      border:1px dashed rgba(0,245,255,.30);
+      border-radius:9px;
+      background:rgba(0,245,255,.08);
+      padding:4px 6px;
+      white-space:nowrap;
+      overflow:hidden;
+      text-overflow:ellipsis;
     }
     .rankBadge{
       font-family:var(--mono);
@@ -1390,7 +1426,7 @@
       <div class="brand">
         <div class="title"><span class="dot"></span>Living MITRE Repository <span class="chip" id="envChip">connectingâ€¦</span><span class="chip" title="Live status indicator"><span class="liveDot"></span> live</span></div>
         <div class="sub">
-          The Living MITRE Repository converts extracted security incident reports into a Navigator-style MITRE ATT&CK view. Incidents are aggregated, correlated, and mapped to ATT&CK tactics and techniques, allowing analysts to quickly move from raw reporting to structured threat context. Each tactic column contains technique cards linked to real incident reports. Selecting a report highlights the incidentâ€™s ATT&CK technique flow in the Navigator. The user can then open Attack Path for a Cyber Kill Chain view and Hunt Pack for deeper context, investigative guidance, and remediation information.
+          A living threat repository where real-world incidents are continuously mapped to ATT&CK tactics and techniques, in a Navigator-style view. Incidents are aggregated, correlated, and mapped to ATT&CK tactics and techniques, allowing analysts to quickly move from raw reporting to structured threat context. Each tactic column contains technique cards linked to real incident reports. Selecting a report highlights the incidentâ€™s ATT&CK technique flow in the Navigator. The user can then open Attack Path for a Cyber Kill Chain view and Hunt Pack for deeper context, investigative guidance, and remediation information.
         </div>
       </div>
 
@@ -1466,13 +1502,13 @@
 
       <div class="matrixBody">
         <div class="matrixNavMap" id="matrixNavMap">
-          <div class="hd">Navigator Minimap â€¢ click tactic to jump</div>
+          <div class="hd">Navigator Minimap â€¢ click component to jump</div>
           <div class="matrixNavTrack" id="matrixNavTrack"></div>
         </div>
         <div id="pathStripHost"></div>
-        <div class="tacticGrid" id="matrix"></div>
+        <div class="tacticGrid" id="matrix" aria-label="Incident diamond model flow map"></div>
         <div class="muted" id="emptyMatrix" style="display:none; padding:10px 2px;">
-          No techniques match the current filters.
+          No diamond signals match the current filters.
         </div>
       </div>
 
@@ -2081,6 +2117,187 @@ function stageOfTechInDoc(doc, tid){
   return null;
 }
 
+function buildIncidentFlow(doc){
+  const analyses = (doc?.Analyses||[]).slice().sort((a,b)=>stageIndex(a.Stage)-stageIndex(b.Stage));
+  const ordered = [];
+  for(const a of analyses){
+    const stageTechs = [];
+    for(const td of asArray(a.Technique_Details)){
+      const tid = String(td?.technique_id || "").trim();
+      if(tid) stageTechs.push(tid);
+    }
+    for(const tid of asArray(a.Techniques)){
+      const norm = String(tid || "").trim();
+      if(norm) stageTechs.push(norm);
+    }
+    for(const tid of stageTechs){
+      if(!ordered.includes(tid)) ordered.push(tid);
+    }
+  }
+  const nextByTid = {};
+  const prevByTid = {};
+  for(let i=0;i<ordered.length-1;i++){
+    nextByTid[ordered[i]] = ordered[i+1];
+    prevByTid[ordered[i+1]] = ordered[i];
+  }
+  return { ordered, nextByTid, prevByTid };
+}
+
+function renderIncidentFlowOverlay(host, incidentFlow){
+  if(!host) return;
+  let layer = host.querySelector('.matrixFlowLayer');
+  if(!layer){
+    layer = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+    layer.classList.add('matrixFlowLayer');
+    layer.setAttribute('aria-hidden', 'true');
+    host.appendChild(layer);
+  }
+
+  const sequence = incidentFlow?.ordered || [];
+  if(sequence.length < 2){
+    layer.innerHTML = '';
+    return;
+  }
+
+  const hostRect = host.getBoundingClientRect();
+  const headerFloor = {};
+  host.querySelectorAll('.tacticCol').forEach(col=>{
+    const key = col.id || '';
+    const hd = col.querySelector('.tacticHd');
+    const hdRect = hd?.getBoundingClientRect();
+    headerFloor[key] = hdRect ? (hdRect.bottom - hostRect.top + 6) : 0;
+  });
+
+  const cards = {};
+  host.querySelectorAll('.techCard[data-tech-id]').forEach(el=>{ cards[el.getAttribute('data-tech-id')] = el; });
+
+  const laneCounts = {};
+  const nextBaseLane = (key)=>{
+    const idx = laneCounts[key] || 0;
+    laneCounts[key] = idx + 1;
+    if(idx===0) return 0;
+    const step = Math.ceil(idx/2);
+    const sign = (idx % 2 === 1) ? 1 : -1;
+    return sign * step * 12;
+  };
+  const laneVariants = [0, 14, -14, 28, -28, 42, -42];
+
+  const borderPoint = (rect, dx, dy)=>{
+    const cx = rect.left - hostRect.left + rect.width/2;
+    const cy = rect.top - hostRect.top + rect.height/2;
+    const hw = rect.width/2;
+    const hh = rect.height/2;
+    const ax = Math.abs(dx) || 0.0001;
+    const ay = Math.abs(dy) || 0.0001;
+    const scale = 1 / Math.max(ax/hw, ay/hh);
+    return { x: cx + dx*scale, y: cy + dy*scale };
+  };
+
+  const rectOverlapArea = (a, b)=>{
+    const w = Math.max(0, Math.min(a.maxX, b.maxX) - Math.max(a.minX, b.minX));
+    const h = Math.max(0, Math.min(a.maxY, b.maxY) - Math.max(a.minY, b.minY));
+    return w * h;
+  };
+  const occupied = [];
+
+  const paths = [];
+  for(let i=0;i<sequence.length-1;i++){
+    const src = cards[sequence[i]];
+    const dst = cards[sequence[i+1]];
+    if(!src || !dst) continue;
+
+    const sRect = src.getBoundingClientRect();
+    const dRect = dst.getBoundingClientRect();
+    const srcCol = src.closest('.tacticCol')?.id || '';
+    const dstCol = dst.closest('.tacticCol')?.id || '';
+
+    const scx = sRect.left - hostRect.left + sRect.width/2;
+    const scy = sRect.top - hostRect.top + sRect.height/2;
+    const dcx = dRect.left - hostRect.left + dRect.width/2;
+    const dcy = dRect.top - hostRect.top + dRect.height/2;
+    const vx = dcx - scx;
+    const vy = dcy - scy;
+
+    const start = borderPoint(sRect, vx, vy);
+    const end = borderPoint(dRect, -vx, -vy);
+
+    const minSrcY = (headerFloor[srcCol] || 0) + 6;
+    const minDstY = (headerFloor[dstCol] || 0) + 6;
+    const sx = start.x;
+    const sy = Math.max(start.y, minSrcY);
+    const ex = end.x;
+    const ey = Math.max(end.y, minDstY);
+
+    const dx = ex - sx;
+    const dy = ey - sy;
+    const dist = Math.hypot(dx, dy) || 1;
+    const ux = dx / dist;
+    const uy = dy / dist;
+    const px = -uy;
+    const py = ux;
+
+    const longJump = Math.abs(dx) > 260;
+    const baseLane = nextBaseLane(`${srcCol}->${dstCol}`);
+
+    let chosen = null;
+    for(const laneDelta of laneVariants){
+      const lane = baseLane + laneDelta;
+      const midX = (sx + ex) / 2;
+      const midY = (sy + ey) / 2;
+      const curve = Math.min(62, 16 + dist * 0.16) + Math.abs(lane) * 0.22;
+
+      let d = '';
+      let samplePts = [];
+      if(longJump){
+        const mx = midX + px * (lane * 0.6);
+        const my = midY + py * (curve + lane);
+        const c1x = sx + ux * Math.min(46, dist * 0.25) + px * lane;
+        const c1y = sy + uy * Math.min(46, dist * 0.25) + py * lane;
+        const c2x = ex - ux * Math.min(46, dist * 0.25) + px * lane;
+        const c2y = ey - uy * Math.min(46, dist * 0.25) + py * lane;
+        d = `M ${sx.toFixed(1)} ${sy.toFixed(1)} Q ${c1x.toFixed(1)} ${c1y.toFixed(1)} ${mx.toFixed(1)} ${my.toFixed(1)} Q ${c2x.toFixed(1)} ${c2y.toFixed(1)} ${ex.toFixed(1)} ${ey.toFixed(1)}`;
+        samplePts = [
+          {x:sx,y:sy}, {x:c1x,y:c1y}, {x:mx,y:my}, {x:c2x,y:c2y}, {x:ex,y:ey}
+        ];
+      }else{
+        const cx = midX + px * (curve + lane);
+        const cy = midY + py * (curve + lane);
+        d = `M ${sx.toFixed(1)} ${sy.toFixed(1)} Q ${cx.toFixed(1)} ${cy.toFixed(1)} ${ex.toFixed(1)} ${ey.toFixed(1)}`;
+        samplePts = [{x:sx,y:sy},{x:cx,y:cy},{x:ex,y:ey}];
+      }
+
+      const xs = samplePts.map(p=>p.x);
+      const ys = samplePts.map(p=>p.y);
+      const bbox = {
+        minX: Math.min(...xs) - 12,
+        maxX: Math.max(...xs) + 12,
+        minY: Math.min(...ys) - 12,
+        maxY: Math.max(...ys) + 12,
+      };
+      const areaHit = occupied.reduce((sum, o)=>sum + rectOverlapArea(bbox, o), 0);
+      if(areaHit < 6400){
+        chosen = { d, bbox };
+        break;
+      }
+      if(!chosen) chosen = { d, bbox };
+    }
+
+    if(!chosen) continue;
+    occupied.push(chosen.bbox);
+    paths.push(`<path class="matrixFlowPath" d="${chosen.d}" marker-end="url(#flowArrowHead)" />`);
+  }
+
+  layer.innerHTML = `
+    <defs>
+      <marker id="flowArrowHead" markerWidth="9" markerHeight="9" refX="7" refY="4.5" orient="auto" markerUnits="strokeWidth">
+        <path d="M0,0 L9,4.5 L0,9 z" fill="rgba(0,245,255,.78)"></path>
+      </marker>
+    </defs>
+    ${paths.join('')}
+  `;
+}
+
+
 function techniqueMetaForCard(docs, tid){
   for(const d of (docs||[])){
     for(const a of (d.Analyses||[])){
@@ -2421,6 +2638,85 @@ function firstActionHint(doc){
 }
 function tacticDomId(tac){
   return `tac-${String(tac||"other").toLowerCase().replace(/[^a-z0-9]+/g,"-")}`;
+}
+
+const DIAMOND_ORDER = ["Adversary", "Capability", "Infrastructure", "Victim"];
+const DIAMOND_COL = {
+  Adversary: "rgba(255,132,132,.90)",
+  Capability: "rgba(255,222,120,.90)",
+  Infrastructure: "rgba(134,186,255,.90)",
+  Victim: "rgba(119,255,176,.90)"
+};
+function diamondEntries(value, path=""){
+  const out = [];
+  const keyPath = path || "Summary";
+  if(value==null) return out;
+  if(Array.isArray(value)){
+    for(const item of value){
+      if(item==null) continue;
+      if(typeof item === "object") out.push(...diamondEntries(item, keyPath));
+      else{
+        const txt = String(item||"").trim();
+        if(txt) out.push({path:keyPath, value:txt});
+      }
+    }
+    return out;
+  }
+  if(typeof value === "object"){
+    for(const [k,v] of Object.entries(value)){
+      const nextPath = path ? `${path}.${k}` : k;
+      out.push(...diamondEntries(v, nextPath));
+    }
+    return out;
+  }
+  const txt = String(value||"").trim();
+  if(txt && txt.toLowerCase() !== "no significant activity detected") out.push({path:keyPath, value:txt});
+  return out;
+}
+function buildDiamondMatrixStats(docs){
+  const byComponent = Object.fromEntries(DIAMOND_ORDER.map(c=>[c, []]));
+  const idx = {};
+  for(const doc of docs){
+    for(const component of DIAMOND_ORDER){
+      const seen = new Set();
+      const entries = diamondEntries(doc?.[component], "");
+      for(const e of entries){
+        const normVal = String(e.value||"").trim();
+        if(!normVal) continue;
+        const path = String(e.path||"Summary").replace(/_/g, " ").replace(/\./g, " › ");
+        const normKey = `${component}::${path.toLowerCase()}::${normVal.toLowerCase()}`;
+        if(seen.has(normKey)) continue;
+        seen.add(normKey);
+        if(!idx[normKey]){
+          idx[normKey] = { tid:normKey, component, facet:path, value:normVal, count:0, weight:0, docs:[] };
+          byComponent[component].push(idx[normKey]);
+        }
+        const item = idx[normKey];
+        item.count += 1;
+        item.weight += docRankScore(doc);
+        item.docs.push(doc);
+      }
+    }
+  }
+  for(const component of DIAMOND_ORDER){
+    byComponent[component].sort((a,b)=>b.weight-a.weight || b.count-a.count || a.facet.localeCompare(b.facet));
+  }
+  return byComponent;
+}
+function buildDiamondIncidentFlow(selDoc, byComponent){
+  const ordered = [];
+  if(!selDoc) return { ordered, nextByTid:{}, prevByTid:{} };
+  for(const component of DIAMOND_ORDER){
+    const hit = (byComponent[component]||[]).find(x=>(x.docs||[]).some(d=>d.id===selDoc.id));
+    if(hit) ordered.push(hit.tid);
+  }
+  const nextByTid = {};
+  const prevByTid = {};
+  for(let i=0;i<ordered.length-1;i++){
+    nextByTid[ordered[i]] = ordered[i+1];
+    prevByTid[ordered[i+1]] = ordered[i];
+  }
+  return { ordered, nextByTid, prevByTid };
 }
 function facetToneBySeverity(sev){
   const n = normalizeSeverity(sev);
@@ -3201,47 +3497,29 @@ function renderHuntPackHTML(doc, pack){
   `;
 }
 
-/* Matrix (adds glow to whole tactic columns when applicable) */
+/* Matrix (Diamond Model) */
 function renderMatrix(docs, techStats, selDoc){
   const host = $("matrix");
   host.innerHTML = "";
-  const guidance = rankedTechniquesForGuidance(techStats);
-  const recommendedIds = new Set(guidance.slice(0,3).map(g=>g.tid));
-  const recommendedRank = new Map(guidance.slice(0,3).map((g, idx)=>[g.tid, idx + 1]));
 
-  const byTactic = {};
-  for(const tid of Object.keys(techStats)){
-    const meta = TECH[tid] || {name:tid, tactic:"Other"};
-    const tac = meta.tactic || "Other";
-    byTactic[tac] = byTactic[tac] || [];
-    const s = techStats[tid];
-    byTactic[tac].push({
-      tid,
-      name: meta.name,
-      tactic: tac,
-      ...s
-    });
-  }
+  const byComponent = buildDiamondMatrixStats(docs);
+  const allItems = DIAMOND_ORDER.flatMap(c=>byComponent[c]||[]);
+  const recommended = allItems.slice().sort((a,b)=>b.weight-a.weight).slice(0,3);
+  const recommendedIds = new Set(recommended.map(x=>x.tid));
+  const recommendedRank = new Map(recommended.map((x, idx)=>[x.tid, idx + 1]));
+  const maxW = Math.max(0, ...allItems.map(s=>s.weight));
 
-  const maxW = Math.max(0, ...Object.values(techStats).map(s=>s.weight));
-
-  const stageFor = {};
-  if(selDoc){
-    for(const tid of (selDoc.Techniques||[])){
-      const st = stageOfTechInDoc(selDoc, tid);
-      if(st) stageFor[tid] = st;
-    }
-  }
+  const incidentFlow = (selDoc && state.huntOn) ? buildDiamondIncidentFlow(selDoc, byComponent) : { ordered: [], nextByTid: {}, prevByTid: {} };
+  const flowSet = new Set(incidentFlow.ordered);
 
   let rendered = 0;
-
-  for(const tac of TACTIC_ORDER){
-    const list = (byTactic[tac] || []).slice().sort((a,b)=>b.weight-a.weight);
+  for(const comp of DIAMOND_ORDER){
+    const list = (byComponent[comp] || []);
     rendered += list.length;
 
     const col = document.createElement("div");
     col.className = "tacticCol";
-    col.id = tacticDomId(tac);
+    col.id = tacticDomId(comp);
 
     const ranksInCol = list
       .map(x=>recommendedRank.get(x.tid))
@@ -3254,8 +3532,8 @@ function renderMatrix(docs, techStats, selDoc){
 
     col.innerHTML = `
       <div class="tacticHd">
-        <b>${escapeHtml(tac)}</b>
-        <div class="count">${list.length} tech</div>
+        <b>${escapeHtml(comp)}</b>
+        <div class="count">${list.length} signals</div>
       </div>
       <div class="techList"></div>
     `;
@@ -3264,7 +3542,7 @@ function renderMatrix(docs, techStats, selDoc){
     if(!list.length){
       const empty = document.createElement("div");
       empty.className = "emptyCol";
-      empty.textContent = "No hits for current filters.";
+      empty.textContent = "No signals for current filters.";
       techList.appendChild(empty);
       host.appendChild(col);
       continue;
@@ -3275,48 +3553,46 @@ function renderMatrix(docs, techStats, selDoc){
       const card = document.createElement("div");
       card.className = "techCard";
       card.setAttribute("data-tech-id", t.tid);
-      if(state.selectedTechId===t.tid) card.classList.add("active");
       card.style.background = heatBg(t.weight, maxW);
+
       if(recommendedIds.has(t.tid)){
         card.classList.add("recommended");
         const rankIdx = recommendedRank.get(t.tid) || 3;
         card.classList.add(rankIdx===1 ? "rank1" : (rankIdx===2 ? "rank2" : "rank3"));
-        // Apply rank tint directly on the card background (inline) so it remains visible.
-        if(rankIdx===1){
-          card.style.background = "linear-gradient(180deg, rgba(255,132,132,.46), rgba(255,132,132,.26), rgba(7,26,34,.40))";
-        }else if(rankIdx===2){
-          card.style.background = "linear-gradient(180deg, rgba(255,222,120,.44), rgba(255,222,120,.24), rgba(7,26,34,.40))";
-        }else{
-          card.style.background = "linear-gradient(180deg, rgba(134,186,255,.40), rgba(134,186,255,.22), rgba(7,26,34,.40))";
-        }
       }
 
-      const isDocHit = !!(selDoc && state.huntOn && (selDoc.Techniques||[]).includes(t.tid));
+      const isDocHit = !!(selDoc && state.huntOn && topDocs.some(d=>d.id===selDoc.id));
       if(isDocHit) card.classList.add("docHit");
 
-      const isPathHit = !!(selDoc && state.pathOn && stageFor[t.tid]);
+      const isPathHit = !!(selDoc && state.pathOn && flowSet.has(t.tid));
       if(isPathHit){
         card.classList.add("pathHit");
-        card.style.setProperty("--pathColor", STAGE_COL[stageFor[t.tid]] || "rgba(255, 132, 132, .90)");
+        card.style.setProperty("--pathColor", DIAMOND_COL[t.component] || "rgba(0,245,255,.90)");
       }
 
       if(selDoc && state.huntOn && !isDocHit) card.classList.add("dim");
       if(selDoc && state.pathOn && !isPathHit) card.classList.add("dim");
 
-      const techMeta = techniqueMetaForCard(t.docs, t.tid);
+      const nextTid = incidentFlow.nextByTid[t.tid] || null;
+      const prevTid = incidentFlow.prevByTid[t.tid] || null;
+      if(prevTid) card.classList.add("flowTarget");
+      const nextComp = nextTid ? (nextTid.split("::")[0] || "") : "";
+      const flowJumpText = (nextTid && nextComp && nextComp !== t.component)
+        ? `→ ${nextComp}`
+        : "";
 
       const rank = recommendedRank.get(t.tid) || null;
       const rankBadge = rank ? `<span class="rankBadge ${rank===1?"r1":rank===2?"r2":"r3"}">R${rank}</span>` : "";
-
       card.innerHTML = `
         <div class="row1">
-          <span class="tid">${escapeHtml(techMeta.technique_id)}</span>
+          <span class="tid">${escapeHtml(shortTitle(t.facet, 26))}</span>
           ${rankBadge}
-          <span class="score">w:${t.weight} â€¢ n:${t.count}</span>
+          <span class="score">w:${t.weight} • n:${t.count}</span>
           <button class="cardDocBtn" type="button" title="Show top documents" data-doc-toggle>📄</button>
         </div>
-        <div style="font-weight:900; font-size:12px; line-height:1.25; margin-bottom:4px;">${escapeHtml(techMeta.technique_name)}</div>
-        <div style="font-size:11px; line-height:1.25; color:rgba(210,222,255,.86);">${escapeHtml(shortTitle(techMeta.technique_description, 160))}</div>
+        <div style="font-weight:900; font-size:12px; line-height:1.25; margin-bottom:4px;">${escapeHtml(shortTitle(t.value, 95))}</div>
+        <div style="font-size:11px; line-height:1.25; color:rgba(210,222,255,.86);">${escapeHtml(t.facet)}</div>
+        ${flowJumpText ? `<div class="flowJump" title="Incident flow continues to ${escapeHtml(nextComp)}">${escapeHtml(flowJumpText)}</div>` : ""}
         <div class="cardDocMenu" data-doc-menu style="display:none;">
           ${topDocs.length
             ? topDocs.map(d=>`<button class="cardDocItem" type="button" data-doc-id="${escapeHtml(d.id)}" title="${escapeHtml(d.Title)}">${escapeHtml(shortTitle(d.Title, 80))}</button>`).join("")
@@ -3326,9 +3602,7 @@ function renderMatrix(docs, techStats, selDoc){
 
       card.addEventListener("click", (e)=>{
         if(e.target.closest("[data-doc-toggle]") || e.target.closest("[data-doc-id]")) return;
-        state.selectedTechId = (state.selectedTechId===t.tid) ? null : t.tid;
-        syncHash();
-        render();
+        if(topDocs[0]) toggleDocSelection(topDocs[0].id);
       });
 
       const menu = card.querySelector("[data-doc-menu]");
@@ -3356,10 +3630,10 @@ function renderMatrix(docs, techStats, selDoc){
 
   const nav = $("matrixNavTrack");
   if(nav){
-    nav.innerHTML = TACTIC_ORDER.map(tac=>{
-      const cnt = (byTactic[tac]||[]).length;
+    nav.innerHTML = DIAMOND_ORDER.map(comp=>{
+      const cnt = (byComponent[comp]||[]).length;
       const cls = cnt ? "matrixNavDot hot" : "matrixNavDot";
-      return `<button class="${cls}" data-tac="${escapeHtml(tac)}">${escapeHtml(shortTitle(tac, 16))} (${cnt})</button>`;
+      return `<button class="${cls}" data-tac="${escapeHtml(comp)}">${escapeHtml(shortTitle(comp, 16))} (${cnt})</button>`;
     }).join("");
     nav.querySelectorAll("[data-tac]").forEach(btn=>{
       btn.addEventListener("click", ()=>{
@@ -3369,8 +3643,11 @@ function renderMatrix(docs, techStats, selDoc){
     });
   }
 
+  $("matrixMeta").textContent = `${docs.length} docs • ${allItems.length} diamond signals`;
+  requestAnimationFrame(()=>renderIncidentFlowOverlay(host, incidentFlow));
   $("emptyMatrix").style.display = rendered ? "none" : "block";
 }
+
 
 /* Doc modal */
 function openDocModal(doc){
@@ -3825,7 +4102,7 @@ function loadHash(){
   }
 }
 window.addEventListener("hashchange", ()=>{ loadHash(); render(); });
-window.addEventListener("resize", ()=>{ if(state.pathOn) render(); });
+window.addEventListener("resize", ()=>{ if(state.pathOn || (state.huntOn && state.selectedDocId)) render(); });
 
 /* Minimap */
 function scrollMiniTarget(targetId){
