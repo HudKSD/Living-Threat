@@ -2,104 +2,173 @@
 <html lang="en">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Living Threat Workbench</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+  <meta name="theme-color" content="#06131a" />
+  <title>Living Threat Workbench • Diamond-first Operations Console</title>
   <style>
     :root{
-      --bg:#050b12;--panel:#0d1620;--panel2:#101b27;--text:#d8ecff;--muted:#8ea6bb;
-      --line:#1f3142;--accent:#00d2ff;--accent2:#ff7f8d;--ok:#76e4a3;
+      --bg0:#04080c; --bg1:#06131a;
+      --text:#d6f7ff; --muted:rgba(214,247,255,.68);
+      --cyan:#00f5ff; --green:#77ffb0; --violet:#b58bff; --amber:#ffcc66; --pink:#ff5a7a;
+      --panelA: rgba(7,26,34,.78); --panelB: rgba(16,10,28,.72); --panelC: rgba(10,16,28,.84);
+      --line: rgba(0,245,255,.16); --lineSoft: rgba(255,255,255,.12);
+      --radius: 16px; --shadow: 0 14px 36px rgba(0,0,0,.45);
+      --sans: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial;
+      --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
     }
-    *{box-sizing:border-box} body{margin:0;background:linear-gradient(180deg,#040911,#071321);color:var(--text);font:14px/1.4 Inter,system-ui,sans-serif}
-    .app{display:grid;grid-template-rows:auto 1fr;height:100vh}
-    .top{border-bottom:1px solid var(--line);padding:10px 14px;background:rgba(3,7,12,.9);backdrop-filter:blur(8px)}
-    .title{font-weight:700;font-size:16px}
-    .subtitle{color:var(--muted);font-size:12px;margin-top:2px}
-    .controls{display:grid;grid-template-columns:repeat(6,minmax(120px,1fr));gap:8px;margin-top:10px}
-    .control,input,select,button{background:var(--panel);border:1px solid var(--line);color:var(--text);border-radius:8px;padding:8px}
-    .control label{display:block;font-size:11px;color:var(--muted);margin-bottom:4px}
-    .toolbar{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:10px}
-    button{cursor:pointer} button.primary{border-color:#2f718d;background:#0f2332}
-    .main{display:grid;grid-template-columns:320px 1fr 340px;gap:10px;padding:10px;min-height:0}
-    .panel{background:var(--panel2);border:1px solid var(--line);border-radius:12px;min-height:0;display:flex;flex-direction:column}
-    .panel h3{margin:0;padding:12px;border-bottom:1px solid var(--line);font-size:13px;letter-spacing:.2px}
-    .body{padding:10px;overflow:auto}
-    .incident{border:1px solid var(--line);border-radius:10px;padding:8px;margin-bottom:8px;cursor:pointer}
-    .incident:hover,.incident.active{border-color:var(--accent)} .meta{font-size:11px;color:var(--muted)}
-    .sev{padding:2px 8px;border-radius:999px;border:1px solid var(--line);font-size:11px}
-    .diamond{display:grid;grid-template-columns:1fr 1fr;grid-template-rows:1fr 1fr;gap:10px;min-height:290px}
-    .quad{border:1px solid var(--line);border-radius:12px;padding:10px;background:#0b1722;cursor:pointer;display:flex;flex-direction:column;gap:8px}
-    .quad.active{border-color:var(--accent)} .quad h4{margin:0;font-size:13px}
-    .pill{display:inline-block;padding:2px 6px;border-radius:999px;font-size:11px;background:#11283a;color:#b8dfff;margin:2px}
-    .gap{color:#f0b1b8;border:1px dashed #80434f;padding:6px;border-radius:8px;font-size:12px}
-    .tabs{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px}
-    .tab{padding:6px 10px;border:1px solid var(--line);border-radius:999px;background:#0c1722;cursor:pointer}
-    .tab.active{border-color:var(--accent);color:#98e9ff}
-    .tabPane{display:none;border-top:1px solid var(--line);margin-top:8px;padding-top:8px}
-    .tabPane.active{display:block}
-    .card{background:#0a151f;border:1px solid var(--line);border-radius:10px;padding:8px;margin-bottom:8px}
-    .list{margin:0;padding-left:18px}
-    .empty{color:var(--muted);border:1px dashed var(--line);border-radius:8px;padding:8px}
-    @media (max-width:1200px){.controls{grid-template-columns:repeat(4,minmax(120px,1fr))}.main{grid-template-columns:280px 1fr}}
-    @media (max-width:900px){.controls{grid-template-columns:repeat(2,minmax(120px,1fr))}.main{grid-template-columns:1fr}.panel{max-height:none}}
+    *{box-sizing:border-box; scrollbar-width:thin; scrollbar-color: rgba(0,245,255,.45) rgba(255,255,255,.08);}
+    *::-webkit-scrollbar{width:10px;height:10px} *::-webkit-scrollbar-track{background:rgba(255,255,255,.06);border-radius:99px}
+    *::-webkit-scrollbar-thumb{background:linear-gradient(180deg, rgba(0,245,255,.62), rgba(181,139,255,.52));border-radius:99px;border:2px solid rgba(0,0,0,.2)}
+    html,body{height:100%}
+    body{
+      margin:0; font-family:var(--sans); color:var(--text); overflow:hidden;
+      background:
+        radial-gradient(1200px 800px at 10% -20%, rgba(0,245,255,.10), transparent 60%),
+        radial-gradient(900px 600px at 115% 10%, rgba(181,139,255,.10), transparent 56%),
+        linear-gradient(180deg, var(--bg0), var(--bg1));
+    }
+
+    .loader{
+      position:fixed; inset:0; z-index:200; display:flex; align-items:center; justify-content:center;
+      background:rgba(2,8,12,.8); backdrop-filter: blur(6px);
+    }
+    .loader.hidden{display:none}
+    .loaderCard{width:min(560px,92vw); border:1px solid var(--line); border-radius:16px; background:var(--panelA); box-shadow:var(--shadow); padding:16px}
+    .loaderHd{display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; font-weight:700}
+    .bar{height:10px; border-radius:999px; background:rgba(255,255,255,.08); overflow:hidden; border:1px solid var(--lineSoft)}
+    .bar > span{display:block; height:100%; width:0%; background:linear-gradient(90deg, var(--cyan), var(--violet)); transition:width .25s ease}
+    .loaderSub{margin-top:8px; color:var(--muted); font-size:12px}
+
+    .app{height:100%; display:grid; grid-template-rows:auto 1fr}
+    .topbar{position:sticky; top:0; z-index:20; border-bottom:1px solid var(--line); background:linear-gradient(180deg, rgba(0,0,0,.56), rgba(0,0,0,.2)); backdrop-filter: blur(10px)}
+    .topInner{padding:12px clamp(12px,2vw,24px); display:grid; gap:10px}
+    .brandRow{display:flex; gap:10px; justify-content:space-between; align-items:flex-start; flex-wrap:wrap}
+    .title{display:flex; align-items:center; gap:10px; font-weight:900; letter-spacing:.2px}
+    .dot{width:9px;height:9px;border-radius:50%;background:radial-gradient(circle at 30% 30%,var(--cyan),rgba(0,245,255,.2));box-shadow:0 0 18px rgba(0,245,255,.45)}
+    .subtitle{color:var(--muted); font-size:12px; max-width:960px}
+    .actions{display:flex; gap:8px; flex-wrap:wrap}
+
+    .btn{cursor:pointer; border:1px solid rgba(0,245,255,.2); background:linear-gradient(180deg, rgba(0,245,255,.12), rgba(0,245,255,.04)); color:var(--text); padding:8px 10px; border-radius:999px; font-size:12px; box-shadow:var(--shadow)}
+    .btn.secondary{border-color: rgba(181,139,255,.24); background:linear-gradient(180deg, rgba(181,139,255,.14), rgba(181,139,255,.05))}
+
+    .searchRow{display:grid; grid-template-columns:1fr auto auto; gap:8px; align-items:center}
+    .searchInput, .fItem select{
+      width:100%; border:1px solid var(--lineSoft); background:rgba(7,26,34,.52); color:var(--text);
+      border-radius:10px; padding:10px 12px; outline:none;
+    }
+    .searchInput:focus,.fItem select:focus{border-color:rgba(0,245,255,.45); box-shadow:0 0 0 2px rgba(0,245,255,.16)}
+
+    .filterGrid{display:grid; grid-template-columns:repeat(9,minmax(130px,1fr)); gap:8px; align-items:end}
+    .fItem{display:grid; gap:5px}
+    .fItem label{font-size:11px; color:var(--muted); font-family:var(--mono)}
+
+    .main{min-height:0; padding:10px; display:grid; grid-template-columns:320px 1fr 350px; gap:10px}
+    .panel{border:1px solid var(--line); border-radius:var(--radius); background:var(--panelC); min-height:0; display:grid; grid-template-rows:auto 1fr}
+    .panelHd{padding:10px 12px; border-bottom:1px solid var(--lineSoft); display:flex; align-items:center; justify-content:space-between; gap:8px}
+    .panelBd{padding:10px; overflow:auto}
+    .muted{color:var(--muted)}
+
+    .incident{padding:10px; border:1px solid var(--lineSoft); border-radius:12px; margin-bottom:8px; background:rgba(0,0,0,.14); cursor:pointer}
+    .incident:hover,.incident.active{border-color:rgba(0,245,255,.46)}
+    .sev{font-size:11px; padding:2px 8px; border:1px solid var(--lineSoft); border-radius:999px}
+
+    .overview{padding:10px; border:1px solid var(--lineSoft); border-radius:12px; background:rgba(0,0,0,.12); margin-bottom:10px}
+    .diamond{display:grid; grid-template-columns:1fr 1fr; gap:10px}
+    .quad{padding:10px; border:1px solid var(--lineSoft); border-radius:12px; background:rgba(5,13,20,.72); cursor:pointer}
+    .quad:hover,.quad.active{border-color:rgba(0,245,255,.45)}
+    .pill{display:inline-block; font-size:11px; border-radius:999px; padding:3px 8px; margin:2px; border:1px solid rgba(0,245,255,.18); background:rgba(0,245,255,.09)}
+    .gap{margin-top:6px; font-size:12px; color:rgba(255,176,190,.92); border:1px dashed rgba(255,90,122,.4); border-radius:10px; padding:8px}
+
+    .tabs{display:flex; gap:6px; margin-top:10px; flex-wrap:wrap}
+    .tab{cursor:pointer; font-size:12px; padding:6px 10px; border-radius:999px; border:1px solid var(--lineSoft); background:rgba(255,255,255,.04)}
+    .tab.active{border-color:rgba(0,245,255,.45); color:#a9f3ff}
+    .card{margin-top:8px; border:1px solid var(--lineSoft); border-radius:12px; padding:10px; background:rgba(0,0,0,.14)}
+
+    .skeleton{position:relative; overflow:hidden}
+    .skeleton::after{content:""; position:absolute; inset:0; transform:translateX(-100%); background:linear-gradient(90deg,transparent,rgba(255,255,255,.07),transparent); animation:sh 1.2s infinite}
+    @keyframes sh{to{transform:translateX(100%)}}
+
+    .toast{position:fixed; left:50%; bottom:18px; transform:translateX(-50%); padding:10px 12px; border-radius:12px; background:rgba(0,0,0,.75); border:1px solid var(--line); opacity:0; transition:opacity .2s; z-index:120}
+    .toast.show{opacity:1}
+
+    @media (max-width:1300px){.filterGrid{grid-template-columns:repeat(5,minmax(120px,1fr))}.main{grid-template-columns:280px 1fr}}
+    @media (max-width:980px){body{overflow:auto}.app{height:auto;min-height:100%}.searchRow{grid-template-columns:1fr}.filterGrid{grid-template-columns:repeat(2,minmax(120px,1fr))}.main{grid-template-columns:1fr}}
   </style>
 </head>
 <body>
-<div class="app">
-  <div class="top">
-    <div class="title">Living Threat Workbench</div>
-    <div class="subtitle">Diamond-first intel-to-action workflow for SOC, IR, CTI, and detection teams.</div>
-    <div class="controls" id="filterControls"></div>
-    <div class="toolbar">
-      <input id="q" placeholder="Global search: title, summary, actors, malware, tools, domains..." style="flex:1;min-width:260px" />
-      <button class="primary" id="refreshBtn">Refresh</button>
-      <button id="resetBtn">Reset</button>
-      <span class="meta" id="meta"></span>
+  <div id="loader" class="loader">
+    <div class="loaderCard">
+      <div class="loaderHd"><span id="loaderStage">Initializing Workbench…</span><span id="loaderPct">0%</span></div>
+      <div class="bar"><span id="loaderBar"></span></div>
+      <div class="loaderSub" id="loaderSub">Preparing filters, incidents, and analyst workspace.</div>
     </div>
   </div>
 
-  <div class="main">
-    <section class="panel">
-      <h3>Incident Selection</h3>
-      <div class="body">
-        <div class="toolbar" style="margin:0 0 8px 0">
-          <select id="sortBy">
+  <div class="app">
+    <header class="topbar">
+      <div class="topInner">
+        <div class="brandRow">
+          <div>
+            <div class="title"><span class="dot"></span>Living Threat Workbench</div>
+            <div class="subtitle">Diamond-first investigation workflow with ATT&CK drill-down, attack path, hunt pack, and related incident pivots.</div>
+          </div>
+          <div class="actions">
+            <button class="btn secondary" id="focusSearchBtn">Focus Search</button>
+            <button class="btn" id="refreshBtn">Refresh</button>
+            <button class="btn secondary" id="resetBtn">Reset</button>
+          </div>
+        </div>
+
+        <div class="searchRow">
+          <input id="q" class="searchInput" placeholder="Search title, summary, actors, malware, tools, domains, sectors… (Ctrl+K)" />
+          <select id="sortBy" class="searchInput" style="max-width:200px">
             <option value="recency">Sort: Recency</option>
             <option value="severity">Sort: Severity</option>
             <option value="priority">Sort: Relevance</option>
           </select>
+          <div class="muted" id="meta">0 incidents</div>
         </div>
-        <div id="incidentList"></div>
-      </div>
-    </section>
 
-    <section class="panel">
-      <h3>Diamond Navigator</h3>
-      <div class="body">
-        <div id="emptyState" class="empty">Select an incident to explore adversary, capability, infrastructure, victim, behavior, and action-oriented guidance.</div>
-        <div id="workspace" style="display:none">
-          <div class="card" id="incidentOverview"></div>
-          <div class="diamond" id="diamond"></div>
-          <div class="tabs" id="tabs"></div>
-          <div id="paneContainer"></div>
-        </div>
+        <div class="filterGrid" id="filterControls"></div>
       </div>
-    </section>
+    </header>
 
-    <aside class="panel">
-      <h3>Evidence & Related</h3>
-      <div class="body">
-        <div class="card">
-          <strong>Evidence Snapshot</strong>
-          <ul class="list" id="evidenceList"></ul>
+    <main class="main">
+      <section class="panel">
+        <div class="panelHd"><b>Incident Selection</b><span class="muted" id="listMeta">—</span></div>
+        <div class="panelBd" id="incidentList"></div>
+      </section>
+
+      <section class="panel">
+        <div class="panelHd"><b>Diamond Navigator</b><span class="muted" id="diamondMeta">No incident selected</span></div>
+        <div class="panelBd">
+          <div id="emptyState" class="card muted">Select an incident to explore adversary, capability, infrastructure, victim, behavior, and action-oriented guidance.</div>
+          <div id="workspace" style="display:none">
+            <div class="overview" id="incidentOverview"></div>
+            <div class="diamond" id="diamond"></div>
+            <div class="tabs" id="tabs"></div>
+            <div id="paneContainer"></div>
+          </div>
         </div>
-        <div class="card">
-          <strong>Related Incidents</strong>
-          <div id="relatedList" class="meta">Select incident to load related matches.</div>
+      </section>
+
+      <aside class="panel">
+        <div class="panelHd"><b>Evidence & Related</b><span class="muted" id="relatedMeta">Awaiting selection</span></div>
+        <div class="panelBd">
+          <div class="card">
+            <b>Evidence Snapshot</b>
+            <ul id="evidenceList"></ul>
+          </div>
+          <div class="card">
+            <b>Related Incidents</b>
+            <div id="relatedList" class="muted">Select an incident to load related matches.</div>
+          </div>
         </div>
-      </div>
-    </aside>
+      </aside>
+    </main>
   </div>
-</div>
+
+  <div class="toast" id="toast">Updated</div>
 
 <script>
 const FILTERS = [
@@ -107,165 +176,210 @@ const FILTERS = [
   ["malware","Malware/Tool"],["access","Access Vector"],["breach","Breach Type"],["timeRange","Time Range"]
 ];
 const TAB_ORDER = ["Overview","ATT&CK","Attack Path","Hunt Pack","Related Incidents","Pyramid of Pain","Raw Evidence"];
-let DOCS=[],FILTERED=[],SELECTED=null,RELATED=[];
-const state={filters:{},tab:"Overview"};
+let DOCS=[], FILTERED=[], SELECTED=null, RELATED=[];
+const state={filters:{},tab:"Overview",activeQuad:""};
 
-function esc(s){return String(s??"").replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[m]));}
-function uniq(arr){return [...new Set((arr||[]).filter(Boolean))];}
-function fmt(ts){if(!ts)return "Unknown"; const d=new Date(ts); return isNaN(d)?ts:d.toLocaleString();}
-function sevRank(s){return {Critical:4,High:3,Moderate:2,Low:1}[s]||1;}
-function pick(arr){return (arr&&arr.length)?arr:["Not present in source document"]}
-function q(id){return document.getElementById(id)}
+const q=(id)=>document.getElementById(id);
+const esc=(s)=>String(s??"").replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[m]));
+const uniq=(arr)=>[...new Set((arr||[]).filter(Boolean))];
+const sevRank=(s)=>({Critical:4,High:3,Moderate:2,Low:1}[s]||1);
+const pick=(arr,fallback="Not present in source document")=>(arr&&arr.length)?arr:[fallback];
+const fmt=(ts)=>{if(!ts)return"Unknown"; const d=new Date(ts); return isNaN(d)?ts:d.toLocaleString();};
+
+function toast(msg){ q('toast').textContent=msg; q('toast').classList.add('show'); setTimeout(()=>q('toast').classList.remove('show'), 1500); }
+function setLoader(stage,pct,sub){ q('loaderStage').textContent=stage; q('loaderPct').textContent=`${pct}%`; q('loaderBar').style.width=`${pct}%`; if(sub) q('loaderSub').textContent=sub; }
+function hideLoader(){ q('loader').classList.add('hidden'); }
 
 function buildFilterControls(){
-  q("filterControls").innerHTML=FILTERS.map(([k,label])=>`<div class="control"><label>${label}</label>${k==="timeRange"?`<select id="f_${k}"><option value="all">All time</option><option value="30d">Last 30 days</option><option value="90d">Last 90 days</option><option value="365d">Last 365 days</option></select>`:`<select id="f_${k}"><option value="all">All</option></select>`}</div>`).join("");
-  FILTERS.forEach(([k])=>q(`f_${k}`).addEventListener("change",applyFilters));
+  q('filterControls').innerHTML = FILTERS.map(([k,label])=>`
+    <div class="fItem">
+      <label for="f_${k}">${label}</label>
+      ${k==='timeRange' ? `<select id="f_${k}"><option value="all">All time</option><option value="30d">Last 30 days</option><option value="90d">Last 90 days</option><option value="365d">Last 365 days</option></select>` : `<select id="f_${k}"><option value="all">All</option></select>`}
+    </div>`).join('');
+  FILTERS.forEach(([k])=>q(`f_${k}`).addEventListener('change', applyFilters));
 }
 
 function normalizeForSearch(d){
-  const fields=[d.Title,d.doc_summary,...(d.entities?.actors||[]),...(d.entities?.malware||[]),...(d.entities?.tools||[]),...(d.entities?.domains||[])];
-  return fields.join(" ").toLowerCase();
+  return [d.Title,d.doc_summary,...(d.entities?.actors||[]),...(d.entities?.malware||[]),...(d.entities?.tools||[]),...(d.entities?.domains||[]),...(d.entities?.sectors||[])].join(' ').toLowerCase();
 }
 
 function populateFilterOptions(){
   const map={severity:new Set(),sector:new Set(),country:new Set(),software:new Set(),actor:new Set(),malware:new Set(),access:new Set(),breach:new Set()};
   DOCS.forEach(d=>{
     map.severity.add(d.Severity);
-    (d.entities?.sectors||[]).forEach(x=>map.sector.add(x));
-    (d.entities?.countries||[]).forEach(x=>map.country.add(x));
-    (d.entities?.software||[]).forEach(x=>map.software.add(x));
-    (d.entities?.actors||[]).forEach(x=>map.actor.add(x));
+    (d.entities?.sectors||[]).forEach(x=>map.sector.add(x)); (d.entities?.countries||[]).forEach(x=>map.country.add(x));
+    (d.entities?.software||[]).forEach(x=>map.software.add(x)); (d.entities?.actors||[]).forEach(x=>map.actor.add(x));
     uniq([...(d.entities?.malware||[]),...(d.entities?.tools||[])]).forEach(x=>map.malware.add(x));
-    (d.entities?.access_vectors||[]).forEach(x=>map.access.add(x));
-    (d.entities?.breach_types||[]).forEach(x=>map.breach.add(x));
+    (d.entities?.access_vectors||[]).forEach(x=>map.access.add(x)); (d.entities?.breach_types||[]).forEach(x=>map.breach.add(x));
   });
   Object.entries(map).forEach(([k,set])=>{
-    const sel=q(`f_${k}`); if(!sel) return;
+    const el=q(`f_${k}`); if(!el) return;
     const vals=[...set].filter(Boolean).sort((a,b)=>String(a).localeCompare(String(b)));
-    sel.innerHTML=`<option value="all">All</option>`+vals.map(v=>`<option>${esc(v)}</option>`).join("");
+    el.innerHTML = `<option value="all">All</option>` + vals.map(v=>`<option>${esc(v)}</option>`).join('');
   });
 }
 
 function inTimeRange(d,range){
-  if(range==="all") return true;
-  const ts=new Date(d.Timestamp||"1970-01-01");
-  if(isNaN(ts)) return false;
-  const days={"30d":30,"90d":90,"365d":365}[range]||100000;
+  if(range==='all') return true;
+  const ts = new Date(d.Timestamp||'1970-01-01'); if (isNaN(ts)) return false;
+  const days={"30d":30,"90d":90,"365d":365}[range]||99999;
   return (Date.now()-ts.getTime()) <= days*86400000;
 }
 
 function filterMatch(d,key,val){
-  if(val==="all") return true;
+  if(val==='all') return true;
   const e=d.entities||{};
-  const map={
-    severity:[d.Severity],sector:e.sectors||[],country:e.countries||[],software:e.software||[],actor:e.actors||[],
-    malware:uniq([...(e.malware||[]),...(e.tools||[])]),access:e.access_vectors||[],breach:e.breach_types||[]
-  };
+  const map={severity:[d.Severity],sector:e.sectors||[],country:e.countries||[],software:e.software||[],actor:e.actors||[],malware:uniq([...(e.malware||[]),...(e.tools||[])]),access:e.access_vectors||[],breach:e.breach_types||[]};
   return (map[key]||[]).map(x=>String(x).toLowerCase()).includes(String(val).toLowerCase());
 }
 
 function applyFilters(){
-  state.filters = Object.fromEntries(FILTERS.map(([k])=>[k,q(`f_${k}`)?.value||"all"]));
-  const text=(q("q").value||"").toLowerCase().trim();
+  state.filters = Object.fromEntries(FILTERS.map(([k])=>[k, q(`f_${k}`)?.value || 'all']));
+  const search=(q('q').value||'').toLowerCase().trim();
   FILTERED = DOCS.filter(d=>{
     if(!inTimeRange(d,state.filters.timeRange)) return false;
-    for(const [k] of FILTERS){ if(k!=="timeRange" && !filterMatch(d,k,state.filters[k])) return false; }
-    if(text && !normalizeForSearch(d).includes(text)) return false;
+    for(const [k] of FILTERS){ if(k!=='timeRange' && !filterMatch(d,k,state.filters[k])) return false; }
+    if(search && !normalizeForSearch(d).includes(search)) return false;
     return true;
   });
   sortAndRenderList();
-  if(SELECTED && !FILTERED.find(x=>x.id===SELECTED.id)) {SELECTED=null; renderWorkspace();}
+  if(SELECTED && !FILTERED.find(x=>x.id===SELECTED.id)){ SELECTED=null; renderWorkspace(); }
+}
+
+function renderIncidentSkeleton(){
+  q('incidentList').innerHTML = Array.from({length:6}).map(()=>`<div class="incident skeleton" style="height:88px"></div>`).join('');
 }
 
 function sortAndRenderList(){
-  const sort=q("sortBy").value;
-  FILTERED.sort((a,b)=>{
-    if(sort==="severity") return sevRank(b.Severity)-sevRank(a.Severity);
-    if(sort==="priority") return (b.priority_score||0)-(a.priority_score||0);
-    return new Date(b.Timestamp||0)-new Date(a.Timestamp||0);
-  });
-  q("incidentList").innerHTML = FILTERED.map(d=>`<div class="incident ${SELECTED?.id===d.id?"active":""}" data-id="${esc(d.id)}"><div><strong>${esc(d.Title)}</strong></div><div class="meta">${fmt(d.Timestamp)} · <span class="sev">${esc(d.Severity)}</span></div><div class="meta">${esc(d.doc_summary||"No evidence captured")}</div></div>`).join("") || `<div class="empty">No incidents match filters.</div>`;
-  q("incidentList").querySelectorAll(".incident").forEach(el=>el.onclick=()=>{SELECTED=FILTERED.find(d=>d.id===el.dataset.id); renderWorkspace(); loadRelated(); sortAndRenderList();});
-  q("meta").textContent=`${FILTERED.length} of ${DOCS.length} incidents`;
+  const mode=q('sortBy').value;
+  FILTERED.sort((a,b)=> mode==='severity' ? sevRank(b.Severity)-sevRank(a.Severity) : mode==='priority' ? (b.priority_score||0)-(a.priority_score||0) : (new Date(b.Timestamp||0)-new Date(a.Timestamp||0)));
+
+  q('incidentList').innerHTML = FILTERED.length ? FILTERED.map(d=>`
+    <div class="incident ${SELECTED?.id===d.id?'active':''}" data-id="${esc(d.id)}">
+      <div><b>${esc(d.Title)}</b></div>
+      <div class="muted" style="font-size:12px">${fmt(d.Timestamp)} • <span class="sev">${esc(d.Severity)}</span></div>
+      <div class="muted" style="font-size:12px">${esc(d.doc_summary || 'No evidence captured')}</div>
+    </div>`).join('') : `<div class="card muted">No incidents match the current filters.</div>`;
+
+  q('incidentList').querySelectorAll('.incident').forEach(el=>el.onclick=()=>{SELECTED=FILTERED.find(d=>d.id===el.dataset.id); renderWorkspace(); loadRelated(); sortAndRenderList();});
+  q('meta').textContent = `${FILTERED.length} / ${DOCS.length} incidents`;
+  q('listMeta').textContent = FILTERED.length ? 'Filtered' : 'No matches';
 }
 
 function renderDiamond(){
   const d=SELECTED?.diamond||{};
-  const quads=[
-    ["adversary","Adversary",[...(d.adversary?.aliases||[]),d.adversary?.description||"Knowledge gap"]],
-    ["capability","Capability",uniq([...(d.capability?.tools||[]),...(d.capability?.malware||[]),...(d.capability?.attack_techniques||[])])],
-    ["infrastructure","Infrastructure",uniq([...(d.infrastructure?.domains||[]),...(d.infrastructure?.ips||[]),...(d.infrastructure?.protocols||[])])],
-    ["victim","Victim",uniq([...(d.victim?.industry||[]),...(d.victim?.geography||[]),...(d.victim?.access_vectors||[])])]
+  const blocks=[
+    ['adversary','Adversary',uniq([...(d.adversary?.aliases||[]),...(d.adversary?.threat_actors||[]),d.adversary?.motivation])],
+    ['capability','Capability',uniq([...(d.capability?.tools||[]),...(d.capability?.malware||[]),...(d.capability?.attack_techniques||[])])],
+    ['infrastructure','Infrastructure',uniq([...(d.infrastructure?.domains||[]),...(d.infrastructure?.ips||[]),...(d.infrastructure?.protocols||[])])],
+    ['victim','Victim',uniq([...(d.victim?.industry||[]),...(d.victim?.geography||[]),...(d.victim?.access_vectors||[])])]
   ];
-  q("diamond").innerHTML = quads.map(([k,title,vals])=>{
+  q('diamond').innerHTML = blocks.map(([k,t,vals])=>{
     const list=(vals||[]).filter(Boolean).slice(0,8);
-    return `<div class="quad" data-quad="${k}"><h4>${title}</h4>${list.length?list.map(v=>`<span class="pill">${esc(v)}</span>`).join(""):`<div class="gap">Unknown / Not enough evidence / Knowledge gap</div>`}</div>`;
-  }).join("");
-  q("diamond").querySelectorAll(".quad").forEach(el=>el.onclick=()=>showQuadrant(el.dataset.quad));
+    return `<div class="quad ${state.activeQuad===k?'active':''}" data-quad="${k}"><b>${t}</b><div>${list.length?list.map(x=>`<span class="pill">${esc(x)}</span>`).join(''):`<div class="gap">Unknown / Not enough evidence / Knowledge gap</div>`}</div></div>`;
+  }).join('');
+  q('diamond').querySelectorAll('.quad').forEach(el=>el.onclick=()=>showQuadrant(el.dataset.quad));
 }
 
 function showQuadrant(name){
+  state.activeQuad=name;
+  renderDiamond();
   const data=SELECTED?.diamond?.[name]||{};
-  const rows=Object.entries(data).map(([k,v])=>`<div class="card"><strong>${esc(k.replaceAll("_"," "))}</strong><div class="meta">${Array.isArray(v)?(v.length?v.map(x=>`<span class='pill'>${esc(x)}</span>`).join(""):"Not present in source document"):esc(v||"Not present in source document")}</div></div>`).join("");
-  q("evidenceList").innerHTML = `<li><b>${esc(name)}</b> selected for deep inspection.</li><li>Use ATT&CK and Attack Path tabs to pivot from context to behavior.</li>`;
-  q("paneContainer").insertAdjacentHTML("afterbegin", `<div class="card" id="quadDrill"><strong>${esc(name[0].toUpperCase()+name.slice(1))} Drill-down</strong>${rows}</div>`);
+  const rows=Object.entries(data).map(([k,v])=>`<div class="card"><b>${esc(k.replaceAll('_',' '))}</b><div class="muted">${Array.isArray(v)?pick(v).map(x=>`<span class='pill'>${esc(x)}</span>`).join(''):esc(v||'Not present in source document')}</div></div>`).join('');
+  q('paneContainer').innerHTML = `<div class="card"><b>${esc(name[0].toUpperCase()+name.slice(1))} Drill-down</b>${rows}</div>` + q('paneContainer').innerHTML;
 }
 
 function renderTabs(){
-  q("tabs").innerHTML = TAB_ORDER.map(t=>`<button class="tab ${state.tab===t?"active":""}" data-tab="${esc(t)}">${esc(t)}</button>`).join("");
-  q("tabs").querySelectorAll(".tab").forEach(btn=>btn.onclick=()=>{state.tab=btn.dataset.tab; renderTabPane(); renderTabs();});
+  q('tabs').innerHTML = TAB_ORDER.map(t=>`<button class="tab ${state.tab===t?'active':''}" data-tab="${esc(t)}">${esc(t)}</button>`).join('');
+  q('tabs').querySelectorAll('.tab').forEach(btn=>btn.onclick=()=>{state.tab=btn.dataset.tab; renderTabs(); renderTabPane();});
 }
 
 function renderTabPane(){
-  const d=SELECTED; if(!d) return;
-  const attack=d.attack||{}; const path=d.attack_path||[]; const pack=d.action_pack||{}; const pop=d.pyramid_of_pain||{};
-  const panes={
-    "Overview": `<div class='card'><b>Summary</b><div>${esc(d.doc_summary||"No evidence captured")}</div></div><div class='card'><b>Diamond Summary</b><div>${esc(d.diamond_model_summary||"Knowledge gap")}</div></div>`,
-    "ATT&CK": `<div class='card'><b>Tactics</b><div>${(attack.tactics||[]).length?(attack.tactics||[]).map(t=>`<span class='pill'>${esc(t)}</span>`).join(""):`<div class='gap'>No tactics captured</div>`}</div></div>${(attack.techniques||[]).map(t=>`<div class='card'><b>${esc(t.technique_id)} · ${esc(t.name)}</b><div class='meta'>${esc(t.description||"Not present in source document")}</div></div>`).join("")||"<div class='empty'>No techniques captured</div>"}`,
-    "Attack Path": path.map(s=>`<div class='card'><b>${esc(s.Stage)}</b><div>${esc(s.Description||"No stage narrative")}</div><div class='meta'>Detections: ${esc(s.Detection||"No evidence captured")}</div><div class='meta'>Remediation: ${esc(s.Remediation||"No evidence captured")}</div></div>`).join("") || `<div class='empty'>No kill chain stages captured.</div>`,
-    "Hunt Pack": `<div class='card'><b>Likely Threat Pattern</b><div>${esc(pack.threat_pattern||"Knowledge gap")}</div></div><div class='card'><b>Review Next</b><ul class='list'>${pick(pack.review_next).map(x=>`<li>${esc(x)}</li>`).join("")}</ul></div><div class='card'><b>Telemetry Focus</b><ul class='list'>${pick(pack.telemetry_focus).map(x=>`<li>${esc(x)}</li>`).join("")}</ul></div><div class='card'><b>Rule Availability</b><div class='meta'>${esc(pack.ready_made_rule_status||"No ready-made rule available in source data")}</div></div>`,
-    "Related Incidents": RELATED.length?RELATED.map(r=>`<div class='card'><b>${esc(r.title)}</b><div class='meta'>${fmt(r.timestamp)} · ${esc(r.severity)} · score ${r.score}</div><div>${esc(r.explanation)}</div></div>`).join(""):`<div class='empty'>No related incidents scored yet.</div>`,
-    "Pyramid of Pain": `<div class='card'><b>Domains</b><div>${pick(pop.domains).map(x=>`<span class='pill'>${esc(x)}</span>`).join("")}</div></div><div class='card'><b>IPs</b><div>${pick(pop.ips).map(x=>`<span class='pill'>${esc(x)}</span>`).join("")}</div></div><div class='card'><b>Tools / TTPs</b><div>${pick([...(pop.tools||[]),...(pop.ttps||[])]).map(x=>`<span class='pill'>${esc(x)}</span>`).join("")}</div></div><div class='card'><b>Artifacts</b><div class='meta'>${pick([...(pop.hashes||[]),...(pop.host_artifacts||[]),...(pop.network_artifacts||[])]).join(" • ")}</div></div>`,
-    "Raw Evidence": `<pre style='white-space:pre-wrap'>${esc(JSON.stringify(d,null,2))}</pre>`
+  if(!SELECTED) return;
+  const d=SELECTED, attack=d.attack||{}, path=d.attack_path||[], pack=d.action_pack||{}, pop=d.pyramid_of_pain||{};
+  const html={
+    "Overview": `<div class='card'><b>Incident Summary</b><div>${esc(d.doc_summary||'No evidence captured')}</div></div><div class='card'><b>Diamond Summary</b><div>${esc(d.diamond_model_summary||'Knowledge gap')}</div></div>`,
+    "ATT&CK": `<div class='card'><b>Tactics</b><div>${(attack.tactics||[]).length?(attack.tactics||[]).map(t=>`<span class='pill'>${esc(t)}</span>`).join(''):`<div class='gap'>No tactics captured</div>`}</div></div>${(attack.techniques||[]).map(t=>`<div class='card'><b>${esc(t.technique_id)} • ${esc(t.name)}</b><div class='muted'>${esc(t.description||'Not present in source document')}</div></div>`).join('')||`<div class='card muted'>No techniques captured.</div>`}`,
+    "Attack Path": `${path.map(s=>`<div class='card'><b>${esc(s.Stage)}</b><div>${esc(s.Description||'No stage narrative')}</div><div class='muted'>Detection: ${esc(s.Detection||'No evidence captured')}</div><div class='muted'>Remediation: ${esc(s.Remediation||'No evidence captured')}</div></div>`).join('')||`<div class='card muted'>No kill chain stages captured.</div>`}`,
+    "Hunt Pack": `<div class='card'><b>Likely Pattern</b><div>${esc(pack.threat_pattern||'Knowledge gap')}</div></div><div class='card'><b>Review Next</b><ul>${pick(pack.review_next).map(x=>`<li>${esc(x)}</li>`).join('')}</ul></div><div class='card'><b>Telemetry Focus</b><ul>${pick(pack.telemetry_focus).map(x=>`<li>${esc(x)}</li>`).join('')}</ul></div><div class='card'><b>Rule Availability</b><div class='muted'>${esc(pack.ready_made_rule_status||'No ready-made rule available in source data')}</div></div>`,
+    "Related Incidents": RELATED.length ? RELATED.map(r=>`<div class='card'><b>${esc(r.title)}</b><div class='muted'>${fmt(r.timestamp)} • ${esc(r.severity)} • score ${r.score}</div><div>${esc(r.explanation)}</div></div>`).join('') : `<div class='card muted'>No related incidents scored yet.</div>`,
+    "Pyramid of Pain": `<div class='card'><b>Domains</b><div>${pick(pop.domains).map(x=>`<span class='pill'>${esc(x)}</span>`).join('')}</div></div><div class='card'><b>IPs</b><div>${pick(pop.ips).map(x=>`<span class='pill'>${esc(x)}</span>`).join('')}</div></div><div class='card'><b>Tools / TTPs</b><div>${pick([...(pop.tools||[]),...(pop.ttps||[])]).map(x=>`<span class='pill'>${esc(x)}</span>`).join('')}</div></div>`,
+    "Raw Evidence": `<div class='card'><pre style='white-space:pre-wrap;margin:0'>${esc(JSON.stringify(d,null,2))}</pre></div>`
   };
-  q("paneContainer").innerHTML = `<div class="tabPane active">${panes[state.tab]||""}</div>`;
+  q('paneContainer').innerHTML = html[state.tab] || '';
 }
 
 function renderWorkspace(){
-  q("emptyState").style.display=SELECTED?"none":"block";
-  q("workspace").style.display=SELECTED?"block":"none";
-  q("evidenceList").innerHTML = SELECTED ? `<li>Source: ${esc(SELECTED.source||"Unknown")}</li><li>Summary: ${esc(SELECTED.doc_summary||"No evidence captured")}</li><li>Kill chain summary: ${esc(SELECTED.kill_chain_summary||"Not present in source document")}</li>` : "";
+  q('emptyState').style.display = SELECTED ? 'none' : 'block';
+  q('workspace').style.display = SELECTED ? 'block' : 'none';
+  q('diamondMeta').textContent = SELECTED ? `Selected: ${SELECTED.Title}` : 'No incident selected';
+  q('evidenceList').innerHTML = SELECTED ? `<li>Source: ${esc(SELECTED.source||'Unknown')}</li><li>Summary: ${esc(SELECTED.doc_summary||'No evidence captured')}</li><li>Kill chain summary: ${esc(SELECTED.kill_chain_summary||'Not present in source document')}</li>` : '';
   if(!SELECTED) return;
-  q("incidentOverview").innerHTML=`<div><strong>${esc(SELECTED.Title)}</strong></div><div class='meta'>${fmt(SELECTED.Timestamp)} · ${esc(SELECTED.Severity)} · priority ${SELECTED.priority_score||0}</div>`;
-  q("paneContainer").innerHTML="";
+  q('incidentOverview').innerHTML = `<b>${esc(SELECTED.Title)}</b><div class='muted'>${fmt(SELECTED.Timestamp)} • ${esc(SELECTED.Severity)} • Priority ${SELECTED.priority_score||0}</div>`;
+  state.activeQuad='';
   renderDiamond(); renderTabs(); renderTabPane();
 }
 
 async function loadRelated(){
-  if(!SELECTED){RELATED=[];return}
+  if(!SELECTED){ RELATED=[]; return; }
+  q('relatedMeta').textContent='Loading related…';
+  q('relatedList').innerHTML = `<div class='card skeleton' style='height:82px'></div><div class='card skeleton' style='height:82px'></div>`;
   try{
-    const res=await fetch(`/api/related/${encodeURIComponent(SELECTED.id)}?limit=8`);
-    const data=await res.json();
-    RELATED=data.related||[];
-    q("relatedList").innerHTML = RELATED.length?RELATED.map(r=>`<div class='card'><strong>${esc(r.title)}</strong><div class='meta'>score ${r.score}</div><div class='meta'>${esc(r.explanation)}</div></div>`).join(""):`<div class='empty'>No related incidents.</div>`;
-    if(state.tab==="Related Incidents") renderTabPane();
-  }catch(e){q("relatedList").textContent="Unable to load related incidents.";}
+    const res = await fetch(`/api/related/${encodeURIComponent(SELECTED.id)}?limit=8`);
+    const data = await res.json();
+    RELATED = data.related || [];
+    q('relatedMeta').textContent = `${RELATED.length} related`;
+    q('relatedList').innerHTML = RELATED.length ? RELATED.map(r=>`<div class='card'><b>${esc(r.title)}</b><div class='muted'>score ${r.score}</div><div class='muted'>${esc(r.explanation)}</div></div>`).join('') : `<div class='card muted'>No related incidents found.</div>`;
+    if(state.tab==='Related Incidents') renderTabPane();
+  }catch(e){
+    q('relatedMeta').textContent='Unavailable';
+    q('relatedList').innerHTML = `<div class='card muted'>Unable to load related incidents.</div>`;
+  }
 }
 
-async function load(){
-  const data = await (await fetch("/api/bootstrap")).json();
-  DOCS = data.docs||[];
-  populateFilterOptions();
-  FILTERED=[...DOCS];
-  sortAndRenderList();
+async function loadBootstrap(){
+  renderIncidentSkeleton();
+  let pct=8;
+  setLoader('Connecting to threat repository…', pct, 'Contacting backend and preparing your workspace.');
+  const ticker=setInterval(()=>{ pct=Math.min(88,pct+Math.floor(Math.random()*8)); setLoader('Loading incident intelligence…', pct); }, 180);
+  try{
+    const res = await fetch('/api/bootstrap');
+    if(!res.ok) throw new Error('bootstrap failed');
+    const data = await res.json();
+    setLoader('Normalizing incidents…', 92, 'Building filters, diamond context, and ATT&CK drill-down.');
+    DOCS = data.docs || [];
+    populateFilterOptions();
+    FILTERED = [...DOCS];
+    sortAndRenderList();
+    setLoader('Finalizing analyst workspace…', 100, 'Ready.');
+    setTimeout(hideLoader, 280);
+    toast('Workbench loaded');
+  }catch(err){
+    setLoader('Unable to load data', 100, 'Backend is reachable but incident data is unavailable. Try Refresh.');
+    q('incidentList').innerHTML = `<div class='card muted'>Could not load incident dataset. Verify Elasticsearch and try Refresh.</div>`;
+    setTimeout(hideLoader, 800);
+  }finally{
+    clearInterval(ticker);
+  }
+}
+
+function resetFilters(){
+  q('q').value='';
+  FILTERS.forEach(([k])=>{ const el=q(`f_${k}`); if(el) el.value='all'; });
+  state.filters={};
+  applyFilters();
+  toast('Filters reset');
 }
 
 buildFilterControls();
-q("q").addEventListener("input",applyFilters);
-q("sortBy").addEventListener("change",sortAndRenderList);
-q("refreshBtn").onclick=()=>load();
-q("resetBtn").onclick=()=>{q("q").value="";FILTERS.forEach(([k])=>{const el=q(`f_${k}`); if(el) el.value="all"});applyFilters();};
-load();
+q('q').addEventListener('input', applyFilters);
+q('sortBy').addEventListener('change', sortAndRenderList);
+q('refreshBtn').onclick = ()=>{ q('loader').classList.remove('hidden'); loadBootstrap(); };
+q('resetBtn').onclick = resetFilters;
+q('focusSearchBtn').onclick = ()=>q('q').focus();
+window.addEventListener('keydown', (e)=>{ if((e.ctrlKey||e.metaKey) && e.key.toLowerCase()==='k'){ e.preventDefault(); q('q').focus(); q('q').select(); }});
+
+loadBootstrap();
 </script>
 </body>
 </html>
