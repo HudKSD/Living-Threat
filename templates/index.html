@@ -17,7 +17,8 @@
       --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
     }
     *{box-sizing:border-box; scrollbar-width:thin; scrollbar-color: rgba(0,245,255,.45) rgba(255,255,255,.08);}
-    *::-webkit-scrollbar{width:10px;height:10px} *::-webkit-scrollbar-track{background:rgba(255,255,255,.06);border-radius:99px}
+    *::-webkit-scrollbar{width:10px;height:10px}
+    *::-webkit-scrollbar-track{background:rgba(255,255,255,.06);border-radius:99px}
     *::-webkit-scrollbar-thumb{background:linear-gradient(180deg, rgba(0,245,255,.62), rgba(181,139,255,.52));border-radius:99px;border:2px solid rgba(0,0,0,.2)}
     html,body{height:100%}
     body{
@@ -28,10 +29,7 @@
         linear-gradient(180deg, var(--bg0), var(--bg1));
     }
 
-    .loader{
-      position:fixed; inset:0; z-index:200; display:flex; align-items:center; justify-content:center;
-      background:rgba(2,8,12,.8); backdrop-filter: blur(6px);
-    }
+    .loader{position:fixed; inset:0; z-index:200; display:flex; align-items:center; justify-content:center; background:rgba(2,8,12,.8); backdrop-filter: blur(6px)}
     .loader.hidden{display:none}
     .loaderCard{width:min(560px,92vw); border:1px solid var(--line); border-radius:16px; background:var(--panelA); box-shadow:var(--shadow); padding:16px}
     .loaderHd{display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; font-weight:700}
@@ -50,26 +48,29 @@
 
     .btn{cursor:pointer; border:1px solid rgba(0,245,255,.2); background:linear-gradient(180deg, rgba(0,245,255,.12), rgba(0,245,255,.04)); color:var(--text); padding:8px 10px; border-radius:999px; font-size:12px; box-shadow:var(--shadow)}
     .btn.secondary{border-color: rgba(181,139,255,.24); background:linear-gradient(180deg, rgba(181,139,255,.14), rgba(181,139,255,.05))}
+    .btn.warn{border-color:rgba(255,122,89,.4); background:linear-gradient(180deg, rgba(255,122,89,.2), rgba(255,122,89,.07))}
 
     .searchRow{display:grid; grid-template-columns:1fr auto auto; gap:8px; align-items:center}
-    .searchInput, .fItem select{
-      width:100%; border:1px solid var(--lineSoft); background:rgba(7,26,34,.52); color:var(--text);
-      border-radius:10px; padding:10px 12px; outline:none;
-    }
-    .searchInput:focus,.fItem select:focus{border-color:rgba(0,245,255,.45); box-shadow:0 0 0 2px rgba(0,245,255,.16)}
+    .searchInput, .fItem select, .paletteInput{width:100%; border:1px solid var(--lineSoft); background:rgba(7,26,34,.52); color:var(--text); border-radius:10px; padding:10px 12px; outline:none}
+    .searchInput:focus,.fItem select:focus,.paletteInput:focus{border-color:rgba(0,245,255,.45); box-shadow:0 0 0 2px rgba(0,245,255,.16)}
 
     .filterGrid{display:grid; grid-template-columns:repeat(9,minmax(130px,1fr)); gap:8px; align-items:end}
     .fItem{display:grid; gap:5px}
     .fItem label{font-size:11px; color:var(--muted); font-family:var(--mono)}
 
     .main{min-height:0; padding:10px; display:grid; grid-template-columns:320px 1fr 350px; gap:10px}
-    .panel{border:1px solid var(--line); border-radius:var(--radius); background:var(--panelC); min-height:0; display:grid; grid-template-rows:auto 1fr}
+    .panel{border-radius:var(--radius); min-height:0; display:grid; grid-template-rows:auto 1fr; box-shadow:var(--shadow)}
+    .leftPanel{border:1px solid rgba(119,255,176,.2); background:linear-gradient(180deg, rgba(10,24,28,.85), rgba(9,22,26,.68))}
+    .centerPanel{border:1px solid rgba(0,245,255,.24); background:linear-gradient(180deg, rgba(9,18,28,.9), rgba(9,18,28,.74))}
+    .rightPanel{border:1px solid rgba(181,139,255,.26); background:linear-gradient(180deg, rgba(19,12,29,.82), rgba(18,12,30,.68))}
     .panelHd{padding:10px 12px; border-bottom:1px solid var(--lineSoft); display:flex; align-items:center; justify-content:space-between; gap:8px}
+    .leftPanel .panelHd{background:rgba(119,255,176,.08)} .centerPanel .panelHd{background:rgba(0,245,255,.07)} .rightPanel .panelHd{background:rgba(181,139,255,.08)}
     .panelBd{padding:10px; overflow:auto}
     .muted{color:var(--muted)}
 
-    .incident{padding:10px; border:1px solid var(--lineSoft); border-radius:12px; margin-bottom:8px; background:rgba(0,0,0,.14); cursor:pointer}
-    .incident:hover,.incident.active{border-color:rgba(0,245,255,.46)}
+    .incident{padding:10px; border:1px solid var(--lineSoft); border-radius:12px; margin-bottom:8px; background:rgba(0,0,0,.14); cursor:pointer; transition:transform .08s ease}
+    .incident:hover{transform:translateY(-1px)}
+    .incident.active{border-color:rgba(0,245,255,.46); box-shadow:0 0 0 1px rgba(0,245,255,.15)}
     .sev{font-size:11px; padding:2px 8px; border:1px solid var(--lineSoft); border-radius:999px}
 
     .overview{padding:10px; border:1px solid var(--lineSoft); border-radius:12px; background:rgba(0,0,0,.12); margin-bottom:10px}
@@ -84,12 +85,34 @@
     .tab.active{border-color:rgba(0,245,255,.45); color:#a9f3ff}
     .card{margin-top:8px; border:1px solid var(--lineSoft); border-radius:12px; padding:10px; background:rgba(0,0,0,.14)}
 
+    .attTech{cursor:pointer}
+    .attTech:hover{border-color:rgba(255,204,102,.5)}
+
     .skeleton{position:relative; overflow:hidden}
     .skeleton::after{content:""; position:absolute; inset:0; transform:translateX(-100%); background:linear-gradient(90deg,transparent,rgba(255,255,255,.07),transparent); animation:sh 1.2s infinite}
     @keyframes sh{to{transform:translateX(100%)}}
 
     .toast{position:fixed; left:50%; bottom:18px; transform:translateX(-50%); padding:10px 12px; border-radius:12px; background:rgba(0,0,0,.75); border:1px solid var(--line); opacity:0; transition:opacity .2s; z-index:120}
     .toast.show{opacity:1}
+
+    .overlay{position:fixed; inset:0; z-index:130; display:none; align-items:center; justify-content:center; background:rgba(2,8,12,.72)}
+    .overlay.show{display:flex}
+    .modal{width:min(900px,95vw); max-height:88vh; overflow:auto; border:1px solid var(--line); border-radius:14px; background:var(--panelA); box-shadow:var(--shadow)}
+    .modalHd{position:sticky; top:0; display:flex; justify-content:space-between; align-items:center; padding:10px 12px; border-bottom:1px solid var(--lineSoft); background:rgba(5,14,20,.92); z-index:2}
+    .modalBd{padding:12px}
+    .xBtn{border:none; background:transparent; color:var(--text); font-size:22px; cursor:pointer}
+
+    .drawer{position:fixed; top:0; right:-520px; width:min(520px,95vw); height:100vh; background:linear-gradient(180deg, rgba(18,12,30,.95), rgba(9,16,26,.95)); border-left:1px solid rgba(181,139,255,.3); z-index:140; transition:right .2s ease; box-shadow:var(--shadow); display:grid; grid-template-rows:auto 1fr}
+    .drawer.show{right:0}
+    .drawerHd{display:flex; justify-content:space-between; align-items:center; padding:10px 12px; border-bottom:1px solid var(--lineSoft)}
+    .drawerBd{padding:10px; overflow:auto}
+
+    .palette{width:min(760px,95vw); border:1px solid var(--line); border-radius:14px; background:var(--panelA); box-shadow:var(--shadow); overflow:hidden}
+    .paletteList{max-height:55vh; overflow:auto}
+    .paletteItem{padding:10px 12px; border-top:1px solid var(--lineSoft); cursor:pointer}
+    .paletteItem:hover{background:rgba(0,245,255,.08)}
+
+    .tourCard{width:min(440px,92vw)}
 
     @media (max-width:1300px){.filterGrid{grid-template-columns:repeat(5,minmax(120px,1fr))}.main{grid-template-columns:280px 1fr}}
     @media (max-width:980px){body{overflow:auto}.app{height:auto;min-height:100%}.searchRow{grid-template-columns:1fr}.filterGrid{grid-template-columns:repeat(2,minmax(120px,1fr))}.main{grid-template-columns:1fr}}
@@ -114,6 +137,8 @@
           </div>
           <div class="actions">
             <button class="btn secondary" id="focusSearchBtn">Focus Search</button>
+            <button class="btn secondary" id="openPaletteBtn">Command Palette</button>
+            <button class="btn warn" id="tourBtn">Start Tour</button>
             <button class="btn" id="refreshBtn">Refresh</button>
             <button class="btn secondary" id="resetBtn">Reset</button>
           </div>
@@ -134,12 +159,12 @@
     </header>
 
     <main class="main">
-      <section class="panel">
+      <section class="panel leftPanel">
         <div class="panelHd"><b>Incident Selection</b><span class="muted" id="listMeta">—</span></div>
         <div class="panelBd" id="incidentList"></div>
       </section>
 
-      <section class="panel">
+      <section class="panel centerPanel">
         <div class="panelHd"><b>Diamond Navigator</b><span class="muted" id="diamondMeta">No incident selected</span></div>
         <div class="panelBd">
           <div id="emptyState" class="card muted">Select an incident to explore adversary, capability, infrastructure, victim, behavior, and action-oriented guidance.</div>
@@ -152,7 +177,7 @@
         </div>
       </section>
 
-      <aside class="panel">
+      <aside class="panel rightPanel">
         <div class="panelHd"><b>Evidence & Related</b><span class="muted" id="relatedMeta">Awaiting selection</span></div>
         <div class="panelBd">
           <div class="card">
@@ -168,16 +193,60 @@
     </main>
   </div>
 
+  <aside id="quadDrawer" class="drawer">
+    <div class="drawerHd"><b id="quadDrawerTitle">Quadrant</b><button class="xBtn" id="closeDrawer">×</button></div>
+    <div class="drawerBd" id="quadDrawerBody"></div>
+  </aside>
+
+  <div id="techModal" class="overlay">
+    <div class="modal">
+      <div class="modalHd"><b id="techModalTitle">Technique Intelligence</b><button class="xBtn" data-close="techModal">×</button></div>
+      <div class="modalBd" id="techModalBody"></div>
+    </div>
+  </div>
+
+  <div id="relatedModal" class="overlay">
+    <div class="modal" style="max-width:680px">
+      <div class="modalHd"><b id="relatedModalTitle">Related Incident Quick Pivot</b><button class="xBtn" data-close="relatedModal">×</button></div>
+      <div class="modalBd" id="relatedModalBody"></div>
+    </div>
+  </div>
+
+  <div id="composerModal" class="overlay">
+    <div class="modal" style="max-width:860px">
+      <div class="modalHd"><b>Action Composer</b><button class="xBtn" data-close="composerModal">×</button></div>
+      <div class="modalBd" id="composerBody"></div>
+    </div>
+  </div>
+
+  <div id="paletteModal" class="overlay">
+    <div class="palette">
+      <div class="modalHd"><b>Command Palette</b><button class="xBtn" data-close="paletteModal">×</button></div>
+      <div style="padding:10px"><input id="paletteInput" class="paletteInput" placeholder="Type command…" /></div>
+      <div id="paletteList" class="paletteList"></div>
+    </div>
+  </div>
+
+  <div id="tourModal" class="overlay">
+    <div class="modal tourCard">
+      <div class="modalHd"><b id="tourTitle">Guided Workflow</b><button class="xBtn" data-close="tourModal">×</button></div>
+      <div class="modalBd">
+        <div id="tourDesc" class="muted"></div>
+        <div style="margin-top:10px; display:flex; justify-content:space-between; gap:8px">
+          <button class="btn secondary" id="tourPrev">Back</button>
+          <button class="btn" id="tourNext">Next</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <div class="toast" id="toast">Updated</div>
 
 <script>
-const FILTERS = [
-  ["severity","Severity"],["sector","Sector"],["country","Country"],["software","Software"],["actor","Threat Actor"],
-  ["malware","Malware/Tool"],["access","Access Vector"],["breach","Breach Type"],["timeRange","Time Range"]
-];
+const FILTERS = [["severity","Severity"],["sector","Sector"],["country","Country"],["software","Software"],["actor","Threat Actor"],["malware","Malware/Tool"],["access","Access Vector"],["breach","Breach Type"],["timeRange","Time Range"]];
 const TAB_ORDER = ["Overview","ATT&CK","Attack Path","Hunt Pack","Related Incidents","Pyramid of Pain","Raw Evidence"];
 let DOCS=[], FILTERED=[], SELECTED=null, RELATED=[];
-const state={filters:{},tab:"Overview",activeQuad:""};
+const state={filters:{},tab:"Overview",activeQuad:"", tourStep:0};
 
 const q=(id)=>document.getElementById(id);
 const esc=(s)=>String(s??"").replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[m]));
@@ -185,128 +254,130 @@ const uniq=(arr)=>[...new Set((arr||[]).filter(Boolean))];
 const sevRank=(s)=>({Critical:4,High:3,Moderate:2,Low:1}[s]||1);
 const pick=(arr,fallback="Not present in source document")=>(arr&&arr.length)?arr:[fallback];
 const fmt=(ts)=>{if(!ts)return"Unknown"; const d=new Date(ts); return isNaN(d)?ts:d.toLocaleString();};
+const closeOverlay=(id)=>q(id).classList.remove('show');
+const openOverlay=(id)=>q(id).classList.add('show');
 
-function toast(msg){ q('toast').textContent=msg; q('toast').classList.add('show'); setTimeout(()=>q('toast').classList.remove('show'), 1500); }
+function toast(msg){ q('toast').textContent=msg; q('toast').classList.add('show'); setTimeout(()=>q('toast').classList.remove('show'), 1600); }
 function setLoader(stage,pct,sub){ q('loaderStage').textContent=stage; q('loaderPct').textContent=`${pct}%`; q('loaderBar').style.width=`${pct}%`; if(sub) q('loaderSub').textContent=sub; }
 function hideLoader(){ q('loader').classList.add('hidden'); }
 
 function buildFilterControls(){
-  q('filterControls').innerHTML = FILTERS.map(([k,label])=>`
-    <div class="fItem">
-      <label for="f_${k}">${label}</label>
-      ${k==='timeRange' ? `<select id="f_${k}"><option value="all">All time</option><option value="30d">Last 30 days</option><option value="90d">Last 90 days</option><option value="365d">Last 365 days</option></select>` : `<select id="f_${k}"><option value="all">All</option></select>`}
-    </div>`).join('');
+  q('filterControls').innerHTML = FILTERS.map(([k,label])=>`<div class="fItem"><label for="f_${k}">${label}</label>${k==='timeRange' ? `<select id="f_${k}"><option value="all">All time</option><option value="30d">Last 30 days</option><option value="90d">Last 90 days</option><option value="365d">Last 365 days</option></select>` : `<select id="f_${k}"><option value="all">All</option></select>`}</div>`).join('');
   FILTERS.forEach(([k])=>q(`f_${k}`).addEventListener('change', applyFilters));
 }
-
-function normalizeForSearch(d){
-  return [d.Title,d.doc_summary,...(d.entities?.actors||[]),...(d.entities?.malware||[]),...(d.entities?.tools||[]),...(d.entities?.domains||[]),...(d.entities?.sectors||[])].join(' ').toLowerCase();
-}
+function normalizeForSearch(d){ return [d.Title,d.doc_summary,...(d.entities?.actors||[]),...(d.entities?.malware||[]),...(d.entities?.tools||[]),...(d.entities?.domains||[]),...(d.entities?.sectors||[])].join(' ').toLowerCase(); }
 
 function populateFilterOptions(){
   const map={severity:new Set(),sector:new Set(),country:new Set(),software:new Set(),actor:new Set(),malware:new Set(),access:new Set(),breach:new Set()};
-  DOCS.forEach(d=>{
-    map.severity.add(d.Severity);
-    (d.entities?.sectors||[]).forEach(x=>map.sector.add(x)); (d.entities?.countries||[]).forEach(x=>map.country.add(x));
-    (d.entities?.software||[]).forEach(x=>map.software.add(x)); (d.entities?.actors||[]).forEach(x=>map.actor.add(x));
-    uniq([...(d.entities?.malware||[]),...(d.entities?.tools||[])]).forEach(x=>map.malware.add(x));
-    (d.entities?.access_vectors||[]).forEach(x=>map.access.add(x)); (d.entities?.breach_types||[]).forEach(x=>map.breach.add(x));
-  });
-  Object.entries(map).forEach(([k,set])=>{
-    const el=q(`f_${k}`); if(!el) return;
-    const vals=[...set].filter(Boolean).sort((a,b)=>String(a).localeCompare(String(b)));
-    el.innerHTML = `<option value="all">All</option>` + vals.map(v=>`<option>${esc(v)}</option>`).join('');
-  });
+  DOCS.forEach(d=>{ map.severity.add(d.Severity); (d.entities?.sectors||[]).forEach(x=>map.sector.add(x)); (d.entities?.countries||[]).forEach(x=>map.country.add(x)); (d.entities?.software||[]).forEach(x=>map.software.add(x)); (d.entities?.actors||[]).forEach(x=>map.actor.add(x)); uniq([...(d.entities?.malware||[]),...(d.entities?.tools||[])]).forEach(x=>map.malware.add(x)); (d.entities?.access_vectors||[]).forEach(x=>map.access.add(x)); (d.entities?.breach_types||[]).forEach(x=>map.breach.add(x)); });
+  Object.entries(map).forEach(([k,set])=>{ const el=q(`f_${k}`); if(!el) return; const vals=[...set].filter(Boolean).sort((a,b)=>String(a).localeCompare(String(b))); el.innerHTML = `<option value="all">All</option>` + vals.map(v=>`<option>${esc(v)}</option>`).join(''); });
 }
-
-function inTimeRange(d,range){
-  if(range==='all') return true;
-  const ts = new Date(d.Timestamp||'1970-01-01'); if (isNaN(ts)) return false;
-  const days={"30d":30,"90d":90,"365d":365}[range]||99999;
-  return (Date.now()-ts.getTime()) <= days*86400000;
-}
-
-function filterMatch(d,key,val){
-  if(val==='all') return true;
-  const e=d.entities||{};
-  const map={severity:[d.Severity],sector:e.sectors||[],country:e.countries||[],software:e.software||[],actor:e.actors||[],malware:uniq([...(e.malware||[]),...(e.tools||[])]),access:e.access_vectors||[],breach:e.breach_types||[]};
-  return (map[key]||[]).map(x=>String(x).toLowerCase()).includes(String(val).toLowerCase());
-}
+function inTimeRange(d,range){ if(range==='all') return true; const ts = new Date(d.Timestamp||'1970-01-01'); if(isNaN(ts)) return false; const days={"30d":30,"90d":90,"365d":365}[range]||99999; return (Date.now()-ts.getTime())<=days*86400000; }
+function filterMatch(d,key,val){ if(val==='all') return true; const e=d.entities||{}; const map={severity:[d.Severity],sector:e.sectors||[],country:e.countries||[],software:e.software||[],actor:e.actors||[],malware:uniq([...(e.malware||[]),...(e.tools||[])]),access:e.access_vectors||[],breach:e.breach_types||[]}; return (map[key]||[]).map(x=>String(x).toLowerCase()).includes(String(val).toLowerCase()); }
 
 function applyFilters(){
   state.filters = Object.fromEntries(FILTERS.map(([k])=>[k, q(`f_${k}`)?.value || 'all']));
   const search=(q('q').value||'').toLowerCase().trim();
-  FILTERED = DOCS.filter(d=>{
-    if(!inTimeRange(d,state.filters.timeRange)) return false;
-    for(const [k] of FILTERS){ if(k!=='timeRange' && !filterMatch(d,k,state.filters[k])) return false; }
-    if(search && !normalizeForSearch(d).includes(search)) return false;
-    return true;
-  });
+  FILTERED = DOCS.filter(d=>{ if(!inTimeRange(d,state.filters.timeRange)) return false; for(const [k] of FILTERS){ if(k!=='timeRange' && !filterMatch(d,k,state.filters[k])) return false; } if(search && !normalizeForSearch(d).includes(search)) return false; return true; });
   sortAndRenderList();
   if(SELECTED && !FILTERED.find(x=>x.id===SELECTED.id)){ SELECTED=null; renderWorkspace(); }
 }
 
-function renderIncidentSkeleton(){
-  q('incidentList').innerHTML = Array.from({length:6}).map(()=>`<div class="incident skeleton" style="height:88px"></div>`).join('');
-}
+function renderIncidentSkeleton(){ q('incidentList').innerHTML = Array.from({length:6}).map(()=>`<div class="incident skeleton" style="height:88px"></div>`).join(''); }
 
 function sortAndRenderList(){
   const mode=q('sortBy').value;
   FILTERED.sort((a,b)=> mode==='severity' ? sevRank(b.Severity)-sevRank(a.Severity) : mode==='priority' ? (b.priority_score||0)-(a.priority_score||0) : (new Date(b.Timestamp||0)-new Date(a.Timestamp||0)));
-
-  q('incidentList').innerHTML = FILTERED.length ? FILTERED.map(d=>`
-    <div class="incident ${SELECTED?.id===d.id?'active':''}" data-id="${esc(d.id)}">
-      <div><b>${esc(d.Title)}</b></div>
-      <div class="muted" style="font-size:12px">${fmt(d.Timestamp)} • <span class="sev">${esc(d.Severity)}</span></div>
-      <div class="muted" style="font-size:12px">${esc(d.doc_summary || 'No evidence captured')}</div>
-    </div>`).join('') : `<div class="card muted">No incidents match the current filters.</div>`;
-
+  q('incidentList').innerHTML = FILTERED.length ? FILTERED.map(d=>`<div class="incident ${SELECTED?.id===d.id?'active':''}" data-id="${esc(d.id)}"><div><b>${esc(d.Title)}</b></div><div class="muted" style="font-size:12px">${fmt(d.Timestamp)} • <span class="sev">${esc(d.Severity)}</span></div><div class="muted" style="font-size:12px">${esc(d.doc_summary || 'No evidence captured')}</div></div>`).join('') : `<div class="card muted">No incidents match the current filters.</div>`;
   q('incidentList').querySelectorAll('.incident').forEach(el=>el.onclick=()=>{SELECTED=FILTERED.find(d=>d.id===el.dataset.id); renderWorkspace(); loadRelated(); sortAndRenderList();});
-  q('meta').textContent = `${FILTERED.length} / ${DOCS.length} incidents`;
-  q('listMeta').textContent = FILTERED.length ? 'Filtered' : 'No matches';
+  q('meta').textContent = `${FILTERED.length} / ${DOCS.length} incidents`; q('listMeta').textContent = FILTERED.length ? 'Filtered' : 'No matches';
+}
+
+function tabCounts(){
+  if(!SELECTED) return {"Overview":0,"ATT&CK":0,"Attack Path":0,"Hunt Pack":0,"Related Incidents":0,"Pyramid of Pain":0,"Raw Evidence":0};
+  const d=SELECTED;
+  return {
+    "Overview":2,
+    "ATT&CK": (d.attack?.techniques||[]).length,
+    "Attack Path": (d.attack_path||[]).length,
+    "Hunt Pack": (d.action_pack?.telemetry_focus||[]).length,
+    "Related Incidents": RELATED.length,
+    "Pyramid of Pain": (d.pyramid_of_pain?.domains||[]).length + (d.pyramid_of_pain?.ips||[]).length,
+    "Raw Evidence": 1
+  };
 }
 
 function renderDiamond(){
   const d=SELECTED?.diamond||{};
-  const blocks=[
-    ['adversary','Adversary',uniq([...(d.adversary?.aliases||[]),...(d.adversary?.threat_actors||[]),d.adversary?.motivation])],
-    ['capability','Capability',uniq([...(d.capability?.tools||[]),...(d.capability?.malware||[]),...(d.capability?.attack_techniques||[])])],
-    ['infrastructure','Infrastructure',uniq([...(d.infrastructure?.domains||[]),...(d.infrastructure?.ips||[]),...(d.infrastructure?.protocols||[])])],
-    ['victim','Victim',uniq([...(d.victim?.industry||[]),...(d.victim?.geography||[]),...(d.victim?.access_vectors||[])])]
-  ];
-  q('diamond').innerHTML = blocks.map(([k,t,vals])=>{
-    const list=(vals||[]).filter(Boolean).slice(0,8);
-    return `<div class="quad ${state.activeQuad===k?'active':''}" data-quad="${k}"><b>${t}</b><div>${list.length?list.map(x=>`<span class="pill">${esc(x)}</span>`).join(''):`<div class="gap">Unknown / Not enough evidence / Knowledge gap</div>`}</div></div>`;
-  }).join('');
-  q('diamond').querySelectorAll('.quad').forEach(el=>el.onclick=()=>showQuadrant(el.dataset.quad));
+  const blocks=[['adversary','Adversary',uniq([...(d.adversary?.aliases||[]),...(d.adversary?.threat_actors||[]),d.adversary?.motivation])],['capability','Capability',uniq([...(d.capability?.tools||[]),...(d.capability?.malware||[]),...(d.capability?.attack_techniques||[])])],['infrastructure','Infrastructure',uniq([...(d.infrastructure?.domains||[]),...(d.infrastructure?.ips||[]),...(d.infrastructure?.protocols||[])])],['victim','Victim',uniq([...(d.victim?.industry||[]),...(d.victim?.geography||[]),...(d.victim?.access_vectors||[])])]];
+  q('diamond').innerHTML = blocks.map(([k,t,vals])=>{ const list=(vals||[]).filter(Boolean).slice(0,8); return `<div class="quad ${state.activeQuad===k?'active':''}" data-quad="${k}"><b>${t}</b><div>${list.length?list.map(x=>`<span class="pill">${esc(x)}</span>`).join(''):`<div class="gap">Unknown / Not enough evidence / Knowledge gap</div>`}</div></div>`; }).join('');
+  q('diamond').querySelectorAll('.quad').forEach(el=>el.onclick=()=>openQuadrantDrawer(el.dataset.quad));
 }
 
-function showQuadrant(name){
+function openQuadrantDrawer(name){
+  if(!SELECTED) return;
   state.activeQuad=name;
   renderDiamond();
   const data=SELECTED?.diamond?.[name]||{};
-  const rows=Object.entries(data).map(([k,v])=>`<div class="card"><b>${esc(k.replaceAll('_',' '))}</b><div class="muted">${Array.isArray(v)?pick(v).map(x=>`<span class='pill'>${esc(x)}</span>`).join(''):esc(v||'Not present in source document')}</div></div>`).join('');
-  q('paneContainer').innerHTML = `<div class="card"><b>${esc(name[0].toUpperCase()+name.slice(1))} Drill-down</b>${rows}</div>` + q('paneContainer').innerHTML;
+  q('quadDrawerTitle').textContent = `${name[0].toUpperCase()+name.slice(1)} Context`;
+  q('quadDrawerBody').innerHTML = `<div class='card muted'>Use this to pivot into ATT&CK or related incident exploration.</div>` + Object.entries(data).map(([k,v])=>`<div class="card"><b>${esc(k.replaceAll('_',' '))}</b><div class="muted">${Array.isArray(v)?pick(v).map(x=>`<span class='pill'>${esc(x)}</span>`).join(''):esc(v||'Not present in source document')}</div></div>`).join('') + `<div style='display:flex;gap:8px;flex-wrap:wrap'><button class='btn secondary' id='drawerToAttack'>Open ATT&CK</button><button class='btn' id='drawerToRelated'>Open Related</button></div>`;
+  q('quadDrawer').classList.add('show');
+  q('drawerToAttack').onclick=()=>{state.tab='ATT&CK'; renderTabs(); renderTabPane(); q('quadDrawer').classList.remove('show');};
+  q('drawerToRelated').onclick=()=>{state.tab='Related Incidents'; renderTabs(); renderTabPane(); q('quadDrawer').classList.remove('show');};
 }
 
 function renderTabs(){
-  q('tabs').innerHTML = TAB_ORDER.map(t=>`<button class="tab ${state.tab===t?'active':''}" data-tab="${esc(t)}">${esc(t)}</button>`).join('');
+  const counts = tabCounts();
+  q('tabs').innerHTML = TAB_ORDER.map(t=>`<button class="tab ${state.tab===t?'active':''}" data-tab="${esc(t)}">${esc(t)} <span class='muted'>(${counts[t]||0})</span></button>`).join('');
   q('tabs').querySelectorAll('.tab').forEach(btn=>btn.onclick=()=>{state.tab=btn.dataset.tab; renderTabs(); renderTabPane();});
+}
+
+function openTechniqueModal(techId){
+  if(!SELECTED) return;
+  const t=(SELECTED.attack?.techniques||[]).find(x=>x.technique_id===techId);
+  const stageHits=(SELECTED.attack_path||[]).filter(s=>(s.Techniques||[]).includes(techId) || (s.Technique_Details||[]).some(td=>td.technique_id===techId));
+  const relatedByTech=DOCS.filter(d=>d.id!==SELECTED.id && (d.attack?.techniques||[]).some(x=>x.technique_id===techId)).slice(0,8);
+  q('techModalTitle').textContent = `${techId} • ${t?.name||'Technique Intelligence'}`;
+  q('techModalBody').innerHTML = `<div class='card'><b>Description</b><div>${esc(t?.description||'Not present in source document')}</div></div><div class='card'><b>Stages in Incident</b><div>${stageHits.length?stageHits.map(s=>`<span class='pill'>${esc(s.Stage)}</span>`).join(''):`<span class='muted'>Not present in source document</span>`}</div></div><div class='card'><b>Related incidents with same technique</b>${relatedByTech.length?relatedByTech.map(d=>`<div class='card'><b>${esc(d.Title)}</b><div class='muted'>${fmt(d.Timestamp)} • ${esc(d.Severity)}</div></div>`).join(''):`<div class='muted'>No related incidents found for this technique.</div>`}</div><div style='display:flex;gap:8px;flex-wrap:wrap'><button class='btn' id='addHuntQueue'>Add to Hunt Queue</button><button class='btn secondary' data-close='techModal'>Close</button></div>`;
+  openOverlay('techModal');
+  q('addHuntQueue').onclick=()=>toast(`${techId} added to hunt queue`);
+}
+
+function openRelatedQuickModal(item){
+  q('relatedModalTitle').textContent = item.title;
+  q('relatedModalBody').innerHTML = `<div class='card'><b>Why related</b><div>${esc(item.explanation||'No explanation')}</div></div><div class='card'><b>Score</b><div class='muted'>${item.score}</div></div><div style='display:flex;gap:8px;flex-wrap:wrap'><button class='btn' id='pivotRelatedBtn'>Pivot to incident</button><button class='btn secondary' id='compareRelatedBtn'>Compare side-by-side</button></div>`;
+  openOverlay('relatedModal');
+  q('pivotRelatedBtn').onclick=()=>{ const found=DOCS.find(d=>d.id===item.id); if(found){SELECTED=found; renderWorkspace(); loadRelated(); sortAndRenderList(); closeOverlay('relatedModal'); toast('Pivoted to related incident');} };
+  q('compareRelatedBtn').onclick=()=>{ toast('Comparison panel can be added next iteration'); };
+}
+
+function openActionComposer(){
+  if(!SELECTED) return;
+  const pack=SELECTED.action_pack||{};
+  const md = `# Hunt Action Pack\n\n## Incident\n- ${SELECTED.Title}\n\n## Telemetry Focus\n${pick(pack.telemetry_focus,'No telemetry guidance').map(x=>`- ${x}`).join('\n')}\n\n## Review Next\n${pick(pack.review_next,'No review actions').map(x=>`- ${x}`).join('\n')}\n\n## Indicators\n${pick(pack.key_indicators,'No key indicators').map(x=>`- ${x}`).join('\n')}`;
+  q('composerBody').innerHTML = `<div class='card'><b>Generated Action Pack</b><pre style='white-space:pre-wrap'>${esc(md)}</pre></div><button class='btn' id='copyComposer'>Copy Markdown</button>`;
+  openOverlay('composerModal');
+  q('copyComposer').onclick=async()=>{ try{ await navigator.clipboard.writeText(md); toast('Action pack copied'); }catch(e){ toast('Clipboard unavailable'); } };
 }
 
 function renderTabPane(){
   if(!SELECTED) return;
   const d=SELECTED, attack=d.attack||{}, path=d.attack_path||[], pack=d.action_pack||{}, pop=d.pyramid_of_pain||{};
+  const techHtml=(attack.techniques||[]).map(t=>`<div class='card attTech' data-tech='${esc(t.technique_id)}'><b>${esc(t.technique_id)} • ${esc(t.name)}</b><div class='muted'>${esc(t.description||'Not present in source document')}</div></div>`).join('') || `<div class='card muted'>No techniques captured.</div>`;
   const html={
     "Overview": `<div class='card'><b>Incident Summary</b><div>${esc(d.doc_summary||'No evidence captured')}</div></div><div class='card'><b>Diamond Summary</b><div>${esc(d.diamond_model_summary||'Knowledge gap')}</div></div>`,
-    "ATT&CK": `<div class='card'><b>Tactics</b><div>${(attack.tactics||[]).length?(attack.tactics||[]).map(t=>`<span class='pill'>${esc(t)}</span>`).join(''):`<div class='gap'>No tactics captured</div>`}</div></div>${(attack.techniques||[]).map(t=>`<div class='card'><b>${esc(t.technique_id)} • ${esc(t.name)}</b><div class='muted'>${esc(t.description||'Not present in source document')}</div></div>`).join('')||`<div class='card muted'>No techniques captured.</div>`}`,
+    "ATT&CK": `<div class='card'><b>Tactics</b><div>${(attack.tactics||[]).length?(attack.tactics||[]).map(t=>`<span class='pill'>${esc(t)}</span>`).join(''):`<div class='gap'>No tactics captured</div>`}</div></div>${techHtml}`,
     "Attack Path": `${path.map(s=>`<div class='card'><b>${esc(s.Stage)}</b><div>${esc(s.Description||'No stage narrative')}</div><div class='muted'>Detection: ${esc(s.Detection||'No evidence captured')}</div><div class='muted'>Remediation: ${esc(s.Remediation||'No evidence captured')}</div></div>`).join('')||`<div class='card muted'>No kill chain stages captured.</div>`}`,
-    "Hunt Pack": `<div class='card'><b>Likely Pattern</b><div>${esc(pack.threat_pattern||'Knowledge gap')}</div></div><div class='card'><b>Review Next</b><ul>${pick(pack.review_next).map(x=>`<li>${esc(x)}</li>`).join('')}</ul></div><div class='card'><b>Telemetry Focus</b><ul>${pick(pack.telemetry_focus).map(x=>`<li>${esc(x)}</li>`).join('')}</ul></div><div class='card'><b>Rule Availability</b><div class='muted'>${esc(pack.ready_made_rule_status||'No ready-made rule available in source data')}</div></div>`,
-    "Related Incidents": RELATED.length ? RELATED.map(r=>`<div class='card'><b>${esc(r.title)}</b><div class='muted'>${fmt(r.timestamp)} • ${esc(r.severity)} • score ${r.score}</div><div>${esc(r.explanation)}</div></div>`).join('') : `<div class='card muted'>No related incidents scored yet.</div>`,
+    "Hunt Pack": `<div class='card'><b>Likely Pattern</b><div>${esc(pack.threat_pattern||'Knowledge gap')}</div></div><div class='card'><b>Review Next</b><ul>${pick(pack.review_next).map(x=>`<li>${esc(x)}</li>`).join('')}</ul></div><div class='card'><b>Telemetry Focus</b><ul>${pick(pack.telemetry_focus).map(x=>`<li>${esc(x)}</li>`).join('')}</ul></div><div class='card'><b>Rule Availability</b><div class='muted'>${esc(pack.ready_made_rule_status||'No ready-made rule available in source data')}</div></div><button class='btn' id='openComposer'>Build Action Pack</button>`,
+    "Related Incidents": RELATED.length ? RELATED.map(r=>`<div class='card relCard' data-rel='${esc(r.id)}'><b>${esc(r.title)}</b><div class='muted'>${fmt(r.timestamp)} • ${esc(r.severity)} • score ${r.score}</div><div>${esc(r.explanation)}</div></div>`).join('') : `<div class='card muted'>No related incidents scored yet.</div>`,
     "Pyramid of Pain": `<div class='card'><b>Domains</b><div>${pick(pop.domains).map(x=>`<span class='pill'>${esc(x)}</span>`).join('')}</div></div><div class='card'><b>IPs</b><div>${pick(pop.ips).map(x=>`<span class='pill'>${esc(x)}</span>`).join('')}</div></div><div class='card'><b>Tools / TTPs</b><div>${pick([...(pop.tools||[]),...(pop.ttps||[])]).map(x=>`<span class='pill'>${esc(x)}</span>`).join('')}</div></div>`,
     "Raw Evidence": `<div class='card'><pre style='white-space:pre-wrap;margin:0'>${esc(JSON.stringify(d,null,2))}</pre></div>`
   };
   q('paneContainer').innerHTML = html[state.tab] || '';
+
+  q('paneContainer').querySelectorAll('.attTech').forEach(el=>el.onclick=()=>openTechniqueModal(el.dataset.tech));
+  q('paneContainer').querySelectorAll('.relCard').forEach(el=>{ const r=RELATED.find(x=>x.id===el.dataset.rel); if(r) el.onclick=()=>openRelatedQuickModal(r); });
+  const comp=q('openComposer'); if(comp) comp.onclick=openActionComposer;
 }
 
 function renderWorkspace(){
@@ -329,47 +400,54 @@ async function loadRelated(){
     const data = await res.json();
     RELATED = data.related || [];
     q('relatedMeta').textContent = `${RELATED.length} related`;
-    q('relatedList').innerHTML = RELATED.length ? RELATED.map(r=>`<div class='card'><b>${esc(r.title)}</b><div class='muted'>score ${r.score}</div><div class='muted'>${esc(r.explanation)}</div></div>`).join('') : `<div class='card muted'>No related incidents found.</div>`;
+    q('relatedList').innerHTML = RELATED.length ? RELATED.map(r=>`<div class='card relQuick' data-rel='${esc(r.id)}'><b>${esc(r.title)}</b><div class='muted'>score ${r.score}</div><div class='muted'>${esc(r.explanation)}</div></div>`).join('') : `<div class='card muted'>No related incidents found.</div>`;
+    q('relatedList').querySelectorAll('.relQuick').forEach(el=>{ const r=RELATED.find(x=>x.id===el.dataset.rel); if(r) el.onclick=()=>openRelatedQuickModal(r); });
+    renderTabs();
     if(state.tab==='Related Incidents') renderTabPane();
-  }catch(e){
-    q('relatedMeta').textContent='Unavailable';
-    q('relatedList').innerHTML = `<div class='card muted'>Unable to load related incidents.</div>`;
-  }
+  }catch(e){ q('relatedMeta').textContent='Unavailable'; q('relatedList').innerHTML = `<div class='card muted'>Unable to load related incidents.</div>`; }
 }
 
 async function loadBootstrap(){
   renderIncidentSkeleton();
-  let pct=8;
-  setLoader('Connecting to threat repository…', pct, 'Contacting backend and preparing your workspace.');
+  let pct=8; setLoader('Connecting to threat repository…', pct, 'Contacting backend and preparing your workspace.');
   const ticker=setInterval(()=>{ pct=Math.min(88,pct+Math.floor(Math.random()*8)); setLoader('Loading incident intelligence…', pct); }, 180);
   try{
-    const res = await fetch('/api/bootstrap');
-    if(!res.ok) throw new Error('bootstrap failed');
+    const res = await fetch('/api/bootstrap'); if(!res.ok) throw new Error('bootstrap failed');
     const data = await res.json();
     setLoader('Normalizing incidents…', 92, 'Building filters, diamond context, and ATT&CK drill-down.');
-    DOCS = data.docs || [];
-    populateFilterOptions();
-    FILTERED = [...DOCS];
-    sortAndRenderList();
-    setLoader('Finalizing analyst workspace…', 100, 'Ready.');
-    setTimeout(hideLoader, 280);
-    toast('Workbench loaded');
-  }catch(err){
-    setLoader('Unable to load data', 100, 'Backend is reachable but incident data is unavailable. Try Refresh.');
-    q('incidentList').innerHTML = `<div class='card muted'>Could not load incident dataset. Verify Elasticsearch and try Refresh.</div>`;
-    setTimeout(hideLoader, 800);
-  }finally{
-    clearInterval(ticker);
-  }
+    DOCS = data.docs || []; populateFilterOptions(); FILTERED = [...DOCS]; sortAndRenderList(); setLoader('Finalizing analyst workspace…', 100, 'Ready.'); setTimeout(hideLoader, 280); toast('Workbench loaded');
+  }catch(err){ setLoader('Unable to load data', 100, 'Backend is reachable but incident data is unavailable. Try Refresh.'); q('incidentList').innerHTML = `<div class='card muted'>Could not load incident dataset. Verify Elasticsearch and try Refresh.</div>`; setTimeout(hideLoader, 800);
+  }finally{ clearInterval(ticker); }
 }
 
-function resetFilters(){
-  q('q').value='';
-  FILTERS.forEach(([k])=>{ const el=q(`f_${k}`); if(el) el.value='all'; });
-  state.filters={};
-  applyFilters();
-  toast('Filters reset');
+function resetFilters(){ q('q').value=''; FILTERS.forEach(([k])=>{ const el=q(`f_${k}`); if(el) el.value='all'; }); state.filters={}; applyFilters(); toast('Filters reset'); }
+
+const COMMANDS = [
+  {label:'Open top critical/high incident', run:()=>{const top=FILTERED.find(d=>['Critical','High'].includes(d.Severity)) || FILTERED[0]; if(top){SELECTED=top; renderWorkspace(); loadRelated(); sortAndRenderList(); toast('Opened top incident');}}},
+  {label:'Filter severity: High + Critical', run:()=>{q('f_severity').value='High'; applyFilters(); toast('Severity filter applied');}},
+  {label:'Open Hunt Pack for selected incident', run:()=>{if(!SELECTED) return toast('Select an incident first'); state.tab='Hunt Pack'; renderTabs(); renderTabPane();}},
+  {label:'Open Related Incidents tab', run:()=>{if(!SELECTED) return toast('Select an incident first'); state.tab='Related Incidents'; renderTabs(); renderTabPane();}},
+  {label:'Reset all filters', run:()=>resetFilters()},
+  {label:'Start guided tour', run:()=>startTour()}
+];
+
+function renderPalette(){
+  const term=(q('paletteInput').value||'').toLowerCase();
+  const items=COMMANDS.filter(c=>c.label.toLowerCase().includes(term));
+  q('paletteList').innerHTML = items.map((c,i)=>`<div class='paletteItem' data-cmd='${i}'><b>${esc(c.label)}</b></div>`).join('') || `<div class='paletteItem muted'>No commands found.</div>`;
+  q('paletteList').querySelectorAll('.paletteItem[data-cmd]').forEach(el=>el.onclick=()=>{ items[Number(el.dataset.cmd)].run(); closeOverlay('paletteModal'); });
 }
+
+const TOUR_STEPS = [
+  {title:'Step 1: Tailor filters', desc:'Use aligned filters to focus incidents by severity, sector, country, access vector, and breach type.'},
+  {title:'Step 2: Select an incident', desc:'Pick a report from the left panel. This activates Diamond, ATT&CK, Attack Path, and Hunt Pack views.'},
+  {title:'Step 3: Use Diamond drawer', desc:'Click any quadrant to open contextual drill-down in the side drawer with pivot actions.'},
+  {title:'Step 4: Open ATT&CK technique modal', desc:'Inside ATT&CK tab, click a technique card to inspect stage impact and related incidents.'},
+  {title:'Step 5: Build action pack', desc:'In Hunt Pack tab click Build Action Pack to generate copy-ready markdown for operations.'},
+];
+
+function startTour(){ state.tourStep=0; openOverlay('tourModal'); renderTourStep(); }
+function renderTourStep(){ const s=TOUR_STEPS[state.tourStep]; q('tourTitle').textContent=s.title; q('tourDesc').textContent=s.desc; q('tourPrev').disabled=state.tourStep===0; q('tourNext').textContent=state.tourStep===TOUR_STEPS.length-1?'Finish':'Next'; }
 
 buildFilterControls();
 q('q').addEventListener('input', applyFilters);
@@ -377,7 +455,18 @@ q('sortBy').addEventListener('change', sortAndRenderList);
 q('refreshBtn').onclick = ()=>{ q('loader').classList.remove('hidden'); loadBootstrap(); };
 q('resetBtn').onclick = resetFilters;
 q('focusSearchBtn').onclick = ()=>q('q').focus();
-window.addEventListener('keydown', (e)=>{ if((e.ctrlKey||e.metaKey) && e.key.toLowerCase()==='k'){ e.preventDefault(); q('q').focus(); q('q').select(); }});
+q('openPaletteBtn').onclick=()=>{ openOverlay('paletteModal'); q('paletteInput').value=''; renderPalette(); q('paletteInput').focus(); };
+q('paletteInput').addEventListener('input', renderPalette);
+q('tourBtn').onclick=startTour;
+q('tourPrev').onclick=()=>{ state.tourStep=Math.max(0,state.tourStep-1); renderTourStep(); };
+q('tourNext').onclick=()=>{ if(state.tourStep>=TOUR_STEPS.length-1){ closeOverlay('tourModal'); toast('Tour completed'); return; } state.tourStep+=1; renderTourStep(); };
+q('closeDrawer').onclick=()=>q('quadDrawer').classList.remove('show');
+
+document.querySelectorAll('[data-close]').forEach(el=>el.onclick=()=>closeOverlay(el.getAttribute('data-close')));
+window.addEventListener('keydown', (e)=>{
+  if((e.ctrlKey||e.metaKey) && e.key.toLowerCase()==='k'){ e.preventDefault(); openOverlay('paletteModal'); q('paletteInput').value=''; renderPalette(); q('paletteInput').focus(); }
+  if(e.key==='Escape'){ ['paletteModal','techModal','composerModal','relatedModal','tourModal'].forEach(closeOverlay); q('quadDrawer').classList.remove('show'); }
+});
 
 loadBootstrap();
 </script>
