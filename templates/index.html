@@ -1892,14 +1892,14 @@ function asArray(x){ if(!x) return []; return Array.isArray(x) ? x : [x]; }
 
 const TOUR_STEPS = [
   {
-    id: "rangeFocus",
-    title: "Step 1: Select the time range first",
-    desc: "Start by setting the time filter first for your objective. Example: use 7d for active triage, 30d for campaign monitoring, 90d+ for trend analysis, or All to review full historical context."
+    id: "aggBox",
+    title: "Step 1: Use the full Aggregations panel",
+    desc: "Start in Aggregations and set your scope. Adjust the time filter first, then refine with Actor, Tool, Sector, Breach Type, Country, Software, Access Vector, and search."
   },
   {
     id: "matrixPanel",
-    title: "Step 2: Select filters, then use the Navigator",
-    desc: "After setting time range, move to Aggregations filters (Actor, Tool, Sector, Breach Type, Country, Software, Access Vector, or search). Then review technique cards and click the top-right icon on a technique card to view its incidents. Select an incident to highlight the ATT&CK flow, then open Attack Path and Hunt Pack for kill-chain context and remediation guidance."
+    title: "Step 2: Review the Navigator pane",
+    desc: "Move to the Navigator pane to review prioritized technique cards, then click the top-right icon on a technique card to view mapped incidents. Select an incident to highlight the ATT&CK flow, then open Attack Path and Hunt Pack for deeper operational context."
   }
 ];
 
@@ -1930,7 +1930,7 @@ function isTopFilterCompleted(){
   return state.sevMin !== "ALL" || state.allTime || state.rangeDays !== 7;
 }
 function canAdvanceTourStep(){
-  if(tourIdx === 0) return isTopFilterCompleted();
+  if(tourIdx === 0) return isAggregationCompleted();
   return true;
 }
 function endTour(){
@@ -1981,14 +1981,14 @@ function renderTour(){
   $("tourCard").classList.add("show");
   $("tourArrow").classList.add("show");
   $("tourDismiss").classList.add("show");
-  if(step.id === "rangeFocus") $("sideBody").scrollTo({ top:0, behavior:"smooth" });
+  if(step.id === "aggBox") $("sideBody").scrollTo({ top:0, behavior:"smooth" });
   if(step.id === "matrixPanel") $("matrixPanel").scrollIntoView({ behavior:"smooth", block:"start" });
   positionTour();
 }
 function startTour(){ tourActive = true; tourIdx = 0; renderTour(); }
 function nextTour(){
   if(!canAdvanceTourStep()){
-    toast("Adjust time range or severity to continue");
+    toast("Apply at least one Aggregations filter to continue");
     return;
   }
   if(tourIdx >= TOUR_STEPS.length - 1) endTour();
