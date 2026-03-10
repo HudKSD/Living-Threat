@@ -1945,7 +1945,7 @@ const TOUR_STEPS = [
   {
     id: "aggBox",
     title: "Step 1: Use the full Aggregations panel",
-    desc: "Start in Aggregations and set your scope. Adjust the time filter first, then refine with Actor, Tool, Sector, Breach Type, Country, Software, Access Vector, and search."
+    desc: "Use the full Aggregations panel as one step: set time range and any relevant filters (Actor, Tool, Sector, Breach Type, Country, Software, Access Vector, and search) to scope your analysis."
   },
   {
     id: "matrixPanel",
@@ -1981,7 +1981,7 @@ function isTopFilterCompleted(){
   return state.sevMin !== "ALL" || state.allTime || state.rangeDays !== 7;
 }
 function canAdvanceTourStep(){
-  if(tourIdx === 0) return isAggregationCompleted();
+  if(tourIdx === 0) return isAggregationCompleted() || isTopFilterCompleted();
   return true;
 }
 function endTour(){
@@ -2039,7 +2039,7 @@ function renderTour(){
 function startTour(){ tourActive = true; tourIdx = 0; renderTour(); }
 function nextTour(){
   if(!canAdvanceTourStep()){
-    toast("Apply at least one Aggregations filter to continue");
+    toast("Adjust Aggregations (time range or filters) to continue");
     return;
   }
   if(tourIdx >= TOUR_STEPS.length - 1) endTour();
@@ -3626,7 +3626,7 @@ function renderMatrix(docs, techStats, selDoc){
       if(prevTid) card.classList.add("flowTarget");
 
       const techMeta = techniqueMetaForCard(t.docs, t.tid);
-      const seq = Array.isArray(incidentFlow.sequence) ? incidentFlow.sequence : [];
+      const seq = Array.isArray(incidentFlow.ordered) ? incidentFlow.ordered : [];
       const seqCount = seq.length;
       let seqIdx = -1;
       if(seqCount){
