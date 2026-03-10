@@ -844,6 +844,22 @@
       line-height:1;
     }
     .cardDocBtn:hover{ border-color: rgba(0,245,255,.36); }
+    .cardTitleToggleBtn{
+      width:22px;
+      height:22px;
+      border-radius:8px;
+      border:1px solid rgba(255,255,255,.16);
+      background: rgba(0,0,0,.20);
+      color:rgba(214,247,255,.90);
+      display:grid;
+      place-items:center;
+      cursor:pointer;
+      font-size:12px;
+      line-height:1;
+    }
+    .cardTitleToggleBtn:hover{ border-color: rgba(255,90,122,.50); }
+    .techCard.titleCollapsed .techName,
+    .techCard.titleCollapsed .techDesc{ display:none; }
     .cardDocMenu{
       margin-top:7px;
       border:1px solid rgba(0,245,255,.18);
@@ -1488,6 +1504,7 @@
         <div class="panelTools">
           <div class="meta" id="selMeta">Loadingâ€¦</div>
           <div class="navActions">
+            <button class="btn danger" id="toggleCardsBtn" title="Expand/Collapse all technique cards">Expand cards</button>
             <button class="btn secondary beacon" id="pathBtn" disabled title="Critical: open attack path and hunt pack workflow">Attack Path</button>
             <button class="btn secondary" id="hidePathBtn" style="visibility:hidden;" title="Hide current attack path">Hide Path</button>
             <span class="badge" id="newBadge" style="visibility:hidden;">
@@ -1658,7 +1675,7 @@
         Choose the reporting window that fits your investigation.<br/><br/>
 
         <b>Step 3: Review the Navigator</b><br/>
-        Technique cards are arranged by ATT&CK tactic and prioritized visually (Red=Rank 1, Yellow=Rank 2, Blue=Rank 3).<br/><br/>
+        Technique cards are arranged by ATT&CK tactic and prioritized visually (Red=Rank 1, Yellow=Rank 2, Blue=Rank 3). Use <b>Expand/Collapse cards</b> to affect all cards, or click the top-corner card control to toggle one card at a time.<br/><br/>
 
         <b>Step 4: Select an incident report</b><br/>
         Selecting a report highlights the ATT&CK technique flow for that specific incident in the Navigator.<br/><br/>
@@ -1868,6 +1885,8 @@ const state = {
   autoCheck: true,
   newCount: 0,
   pathSummaryCollapsed: false,
+  cardTitlesCollapsed: false,
+  cardTitleOverrides: {},
 };
 
 const PREF_KEY_WORKFLOW_AUTO = "lmr.workflow.auto";
@@ -1899,7 +1918,7 @@ const TOUR_STEPS = [
   {
     id: "matrixPanel",
     title: "Step 2: Review the Navigator pane",
-    desc: "Move to the Navigator pane to review prioritized technique cards, then click the top-right icon on a technique card to view mapped incidents. Select an incident to highlight the ATT&CK flow, then open Attack Path and Hunt Pack for deeper operational context."
+    desc: "Move to the Navigator pane to review prioritized technique cards, then click the top-right icon on a technique card to view mapped incidents. Use Expand/Collapse cards to affect all cards at once, or use the top-corner control on any card to toggle only that card. Select an incident to highlight the ATT&CK flow, then open Attack Path and Hunt Pack for deeper operational context."
   }
 ];
 
@@ -2769,6 +2788,20 @@ function activeFilterItems(){
   return items;
 }
 
+function isCardTitleCollapsed(tid){
+  if(!tid) return !!state.cardTitlesCollapsed;
+  if(Object.prototype.hasOwnProperty.call(state.cardTitleOverrides, tid)) return !!state.cardTitleOverrides[tid];
+  return !!state.cardTitlesCollapsed;
+}
+function toggleCardTitleForAll(){
+  state.cardTitlesCollapsed = !state.cardTitlesCollapsed;
+  state.cardTitleOverrides = {};
+}
+function toggleCardTitleForTech(tid){
+  const next = !isCardTitleCollapsed(tid);
+  state.cardTitleOverrides[tid] = next;
+}
+
 function clearFilterChip(code){
   if(code === "q"){ state.q = ""; $("q").value = ""; }
   else if(code === "sev"){ state.sevMin = "ALL"; $("sev").value = "ALL"; }
@@ -2814,6 +2847,7 @@ function render(){
 
   $("pathBtn").disabled = !selDocNow;
   $("hidePathBtn").style.visibility = state.pathOn ? "visible" : "hidden";
+  $("toggleCardsBtn").textContent = state.cardTitlesCollapsed ? "Expand cards" : "Collapse cards";
   $("selMeta").textContent = selDocNow ? `Doc: ${selDocNow.Title} (${fmtDate(selDocNow.Timestamp)})` : "No doc selected";
 
   buildSideFilters(docs);
@@ -3581,10 +3615,11 @@ function renderMatrix(docs, techStats, selDoc){
           <span class="tid">${escapeHtml(techMeta.technique_id)}</span>
           ${rankBadge}
           <span class="score">w:${t.weight} â€¢ n:${t.count}</span>
+          <button class="cardTitleToggleBtn" type="button" title="Expand/Collapse this card" data-title-toggle>↕</button>
           <button class="cardDocBtn" type="button" title="Show top documents" data-doc-toggle>📄</button>
         </div>
-        <div style="font-weight:900; font-size:12px; line-height:1.25; margin-bottom:4px;">${escapeHtml(techMeta.technique_name)}</div>
-        <div style="font-size:11px; line-height:1.25; color:rgba(210,222,255,.86);">${escapeHtml(shortTitle(techMeta.technique_description, 160))}</div>
+        <div class="techName" style="font-weight:900; font-size:12px; line-height:1.25; margin-bottom:4px;">${escapeHtml(techMeta.technique_name)}</div>
+        <div class="techDesc" style="font-size:11px; line-height:1.25; color:rgba(210,222,255,.86);">${escapeHtml(shortTitle(techMeta.technique_description, 160))}</div>
         ${flowJumpText ? `<div class="flowJump" title="Incident flow continues to ${escapeHtml(nextTid)} in ${escapeHtml(nextTactic)}">${escapeHtml(flowJumpText)}</div>` : ""}
         <div class="cardDocMenu" data-doc-menu style="display:none;">
           ${topDocs.length
@@ -3593,8 +3628,10 @@ function renderMatrix(docs, techStats, selDoc){
         </div>
       `;
 
+      if(isCardTitleCollapsed(t.tid)) card.classList.add("titleCollapsed");
+
       card.addEventListener("click", (e)=>{
-        if(e.target.closest("[data-doc-toggle]") || e.target.closest("[data-doc-id]")) return;
+        if(e.target.closest("[data-doc-toggle]") || e.target.closest("[data-doc-id]") || e.target.closest("[data-title-toggle]")) return;
         state.selectedTechId = (state.selectedTechId===t.tid) ? null : t.tid;
         syncHash();
         render();
@@ -3602,6 +3639,15 @@ function renderMatrix(docs, techStats, selDoc){
 
       const menu = card.querySelector("[data-doc-menu]");
       const toggleBtn = card.querySelector("[data-doc-toggle]");
+      const titleToggleBtn = card.querySelector("[data-title-toggle]");
+      if(titleToggleBtn){
+        titleToggleBtn.addEventListener("click", (e)=>{
+          e.stopPropagation();
+          toggleCardTitleForTech(t.tid);
+          render();
+        });
+      }
+
       if(toggleBtn && menu){
         toggleBtn.addEventListener("click", (e)=>{
           e.stopPropagation();
@@ -3902,6 +3948,11 @@ $("hunt").addEventListener("change", ()=>{
   syncHash(); render();
 });
 
+$("toggleCardsBtn").addEventListener("click", ()=>{
+  toggleCardTitleForAll();
+  render();
+});
+
 $("pathBtn").addEventListener("click", ()=>{
   if($("pathBtn").disabled) return;
   state.pathOn = true;
@@ -3944,6 +3995,8 @@ $("clearAll").addEventListener("click", ()=>{
     sideTab:"focus",
     autoCheck: $("autoCheck").checked,
     newCount: 0,
+    cardTitlesCollapsed: false,
+    cardTitleOverrides: {},
   });
   $("range").value = "7";
   $("rangeV").textContent = "7d";
