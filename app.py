@@ -694,12 +694,47 @@ def build_catalog_for_docs(docs: List[Dict[str, Any]], name_hints: Dict[str, str
     return {"tactic_order": order, "techniques": techniques}
 
 
+def _default_case_studies_payload() -> Dict[str, Any]:
+    return {
+        "title": "Practical Case Studies: The Value of the Living MITRE Repository",
+        "intro": "The Living MITRE Repository turns static reports into an operational ATT&CK-mapped workflow for hunting, detection, response, architecture, and leadership decision support.",
+        "domains": [
+            "Threat hunting",
+            "Detection engineering",
+            "Incident response",
+            "CTI collaboration",
+            "Security architecture",
+            "Executive briefings",
+            "Training",
+            "Prioritization",
+        ],
+        "cases": [],
+        "deeper_value": [
+            "Reduces fragmentation by organizing incidents into a common behavioral structure.",
+            "Makes ATT&CK practical against real incidents.",
+            "Shortens time from intelligence reading to operational action.",
+        ],
+    }
+
+
+def _load_case_studies_payload() -> Dict[str, Any]:
+    path = os.path.join(app.root_path, "static", "case_studies.json")
+    try:
+        with open(path, "r", encoding="utf-8") as f:
+            payload = json.load(f)
+        if isinstance(payload, dict):
+            return payload
+    except Exception:
+        pass
+    return _default_case_studies_payload()
+
+
 # ------------------------------------------------------------
 # Routes
 # ------------------------------------------------------------
 @app.get("/")
 def home():
-    return render_template("index.html")
+    return render_template("index.html", case_studies_seed=_load_case_studies_payload())
 
 
 @app.get("/healthz")
@@ -821,15 +856,10 @@ def api_bootstrap():
 
 @app.get("/api/case_studies")
 def api_case_studies():
-    path = os.path.join(app.root_path, "static", "case_studies.json")
-    try:
-        with open(path, "r", encoding="utf-8") as f:
-            payload = json.load(f)
+    payload = _load_case_studies_payload()
+    if payload.get("cases"):
         return jsonify(payload)
-    except FileNotFoundError:
-        return jsonify({"error": "case_studies_not_found", "path": path}), 404
-    except Exception as e:
-        return jsonify({"error": "case_studies_load_failed", "details": str(e)}), 500
+    return jsonify(payload), 200
 
 @app.get("/api/heartbeat")
 def api_heartbeat():

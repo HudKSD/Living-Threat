@@ -1929,6 +1929,7 @@
 /* =========================================================
    DATA
    ========================================================= */
+const CASE_STUDIES_SEED = {{ (case_studies_seed or {})|tojson }};
 let DOCS = [];
 let TECH = {};
 let TACTIC_ORDER = [];
@@ -3946,6 +3947,9 @@ $("aboutBtn").addEventListener("click", ()=> $("aboutModal").showModal());
 
 let caseStudiesCache = null;
 async function fetchCaseStudiesPayload(){
+  if(CASE_STUDIES_SEED && Array.isArray(CASE_STUDIES_SEED.cases) && CASE_STUDIES_SEED.cases.length){
+    return CASE_STUDIES_SEED;
+  }
   const candidates = [
     new URL("api/case_studies", window.location.href).toString(),
     "/api/case_studies",
