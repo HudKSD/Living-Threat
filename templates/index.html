@@ -2655,8 +2655,16 @@ async function bootstrapFromServer({reason="Load"} = {}){
   setLoaderPct(85);
   setLoaderMsg("Renderingâ€¦");
 
-  loadHash();
-  render();
+  try{
+    loadHash();
+    render();
+  }catch(e){
+    console.error("Render failure during bootstrap", e);
+    setLoaderPct(100);
+    setLoaderMsg("Render failed. Reload the page.");
+    setTimeout(hideLoader, 900);
+    return false;
+  }
 
   setLoaderPct(100);
   setLoaderMsg("Done.");
@@ -3614,16 +3622,15 @@ function renderMatrix(docs, techStats, selDoc){
       if(selDoc && state.huntOn && !isDocHit) card.classList.add("dim");
       if(selDoc && state.pathOn && !isPathHit) card.classList.add("dim");
 
-      const nextTid = incidentFlow.nextByTid[t.tid] || null;
       const prevTid = incidentFlow.prevByTid[t.tid] || null;
       if(prevTid) card.classList.add("flowTarget");
-      const nextTactic = nextTid ? (TECH[nextTid]?.tactic || "Other") : null;
 
       const techMeta = techniqueMetaForCard(t.docs, t.tid);
-      const seqCount = incidentFlow.sequence.length;
+      const seq = Array.isArray(incidentFlow.sequence) ? incidentFlow.sequence : [];
+      const seqCount = seq.length;
       let seqIdx = -1;
       if(seqCount){
-        seqIdx = incidentFlow.sequence.indexOf(t.tid);
+        seqIdx = seq.indexOf(t.tid);
       }
 
       const rank = recommendedRank.get(t.tid) || null;
