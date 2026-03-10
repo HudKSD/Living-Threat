@@ -817,6 +817,20 @@ def api_bootstrap():
     return jsonify(payload)
 
 
+
+
+@app.get("/api/case_studies")
+def api_case_studies():
+    path = os.path.join(app.root_path, "static", "case_studies.json")
+    try:
+        with open(path, "r", encoding="utf-8") as f:
+            payload = json.load(f)
+        return jsonify(payload)
+    except FileNotFoundError:
+        return jsonify({"error": "case_studies_not_found", "path": path}), 404
+    except Exception as e:
+        return jsonify({"error": "case_studies_load_failed", "details": str(e)}), 500
+
 @app.get("/api/heartbeat")
 def api_heartbeat():
     # frontend currently sends since_seq/since_ts; keep since fallback for compatibility
