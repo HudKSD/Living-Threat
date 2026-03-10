@@ -1426,7 +1426,7 @@
       <div class="brand">
         <div class="title"><span class="dot"></span>Living MITRE Repository <span class="chip" id="envChip">connectingâ€¦</span><span class="chip" title="Live status indicator"><span class="liveDot"></span> live</span></div>
         <div class="sub">
-          A living threat repository where real-world incidents are continuously mapped to ATT&CK tactics and techniques, in a Navigator-style view. Incidents are aggregated, correlated, and mapped to ATT&CK tactics and techniques, allowing analysts to quickly move from raw reporting to structured threat context. Each tactic column contains technique cards linked to real incident reports. Selecting a report highlights the incidentâ€™s ATT&CK technique flow in the Navigator. The user can then open Attack Path for a Cyber Kill Chain view and Hunt Pack for deeper context, investigative guidance, and remediation information.
+          A living threat repository where real-world incidents are continuously mapped to ATT&amp;CK tactics and techniques, in a Navigator-style view. Filter the data, open a report, highlight its technique chain, and move into Attack Path and Hunt Pack for deeper operational context.
         </div>
       </div>
 
@@ -1758,7 +1758,7 @@
 <div class="tourArrow" id="tourArrow">➜</div>
 <button class="btn danger tourDismiss" id="tourDismiss">Exit walkthrough</button>
 <div class="tourCard" id="tourCard">
-  <div class="tourStep" id="tourStep">Step 1/3</div>
+  <div class="tourStep" id="tourStep">Step 1/2</div>
   <h4 id="tourTitle">Guided Setup</h4>
   <p id="tourDesc"></p>
   <label class="tourPref"><input type="checkbox" id="tourAutoStart" checked /> Auto-show workflow on page load</label>
@@ -1768,6 +1768,36 @@
     <button class="btn" id="tourNext">Next</button>
   </div>
 </div>
+
+<dialog id="introMessageModal">
+  <div class="modal" style="max-width:760px;">
+    <div class="modalHd">
+      <div class="h">Welcome</div>
+    </div>
+    <div class="modalBd" style="line-height:1.55; font-size:13px; color:rgba(214,247,255,.92);">
+      <p>Cybersecurity produces an enormous amount of intelligence every week.</p>
+      <p>Reports.<br/>Threat advisories.<br/>Incident write-ups.<br/>Vendor research.<br/>Blog posts.</p>
+      <p>But there is a fundamental problem.</p>
+      <p>Most of this intelligence is static.</p>
+      <p>Once published, it disappears into PDFs, bookmarks, and feeds. Security teams may read it once, extract a few indicators, and move on.</p>
+      <p>Yet the real purpose of threat intelligence is not simply to inform — it is to improve defensive decisions.</p>
+      <p>This is why we built something different.</p>
+      <p>Today I’m sharing the Living Threat Repository:</p>
+      <p>🔗 <a href="https://thelivingthreat.rabitanoor.com/" target="_blank" rel="noopener noreferrer">https://thelivingthreat.rabitanoor.com/</a></p>
+      <p>The idea is simple:</p>
+      <p>Instead of treating threat intelligence as static documents, the platform treats intelligence as a living structure that can be explored, mapped, and connected.</p>
+      <p>The repository maps real-world incidents to attacker behavior, allowing security professionals to:</p>
+      <p>• Explore how attacks unfold across the MITRE ATT&amp;CK tactics<br/>• Understand real incidents behind each technique<br/>• Study attacker behavior instead of isolated indicators<br/>• Bridge threat intelligence with security operations</p>
+      <p>The goal is to make threat intelligence operational, not archival.</p>
+      <p>Think of it as a living knowledge base of real attacks, designed to help analysts, engineers, and defenders understand how threats actually work.</p>
+      <p>If you work in:</p>
+      <p>• SOC operations<br/>• Threat hunting<br/>• Detection engineering<br/>• Security architecture<br/>• Cyber threat intelligence</p>
+      <div style="display:flex; justify-content:flex-end; margin-top:10px;">
+        <button class="btn" id="introContinueBtn">Continue to workflow</button>
+      </div>
+    </div>
+  </div>
+</dialog>
 
 <dialog id="actionsModal">
   <div class="modal">
@@ -1862,19 +1892,14 @@ function asArray(x){ if(!x) return []; return Array.isArray(x) ? x : [x]; }
 
 const TOUR_STEPS = [
   {
-    id: "aggBox",
-    title: "Step 1: Start with Aggregations",
-    desc: "Start with Aggregations to narrow scope before analysis. Example: set Severity=High+, Actor=LockBit, and Sector=Healthcare; or search 'ransomware + exfiltration'. You can also filter by Tool, Country, Breach Type, Software, and Access Vector."
-  },
-  {
     id: "rangeFocus",
-    title: "Step 2: Set time range",
-    desc: "Set the reporting window for your objective. Example: use 7d for active triage, 30d for campaign monitoring, 90d+ for trend analysis, or All to review full historical context."
+    title: "Step 1: Select the time range first",
+    desc: "Start by setting the time filter first for your objective. Example: use 7d for active triage, 30d for campaign monitoring, 90d+ for trend analysis, or All to review full historical context."
   },
   {
     id: "matrixPanel",
-    title: "Step 3: Use the Navigator",
-    desc: "Review prioritized technique cards (Rank 1/2/3), open report lists from card icons, select an incident to highlight ATT&CK flow, then open Attack Path and Hunt Pack for kill-chain context and remediation guidance."
+    title: "Step 2: Select filters, then use the Navigator",
+    desc: "After setting time range, move to Aggregations filters (Actor, Tool, Sector, Breach Type, Country, Software, Access Vector, or search). Then review technique cards and click the top-right icon on a technique card to view its incidents. Select an incident to highlight the ATT&CK flow, then open Attack Path and Hunt Pack for kill-chain context and remediation guidance."
   }
 ];
 
@@ -1905,8 +1930,7 @@ function isTopFilterCompleted(){
   return state.sevMin !== "ALL" || state.allTime || state.rangeDays !== 7;
 }
 function canAdvanceTourStep(){
-  if(tourIdx === 0) return isAggregationCompleted();
-  if(tourIdx === 1) return isTopFilterCompleted();
+  if(tourIdx === 0) return isTopFilterCompleted();
   return true;
 }
 function endTour(){
@@ -1957,14 +1981,14 @@ function renderTour(){
   $("tourCard").classList.add("show");
   $("tourArrow").classList.add("show");
   $("tourDismiss").classList.add("show");
-  if(step.id === "aggBox") $("sideBody").scrollTo({ top:0, behavior:"smooth" });
+  if(step.id === "rangeFocus") $("sideBody").scrollTo({ top:0, behavior:"smooth" });
   if(step.id === "matrixPanel") $("matrixPanel").scrollIntoView({ behavior:"smooth", block:"start" });
   positionTour();
 }
 function startTour(){ tourActive = true; tourIdx = 0; renderTour(); }
 function nextTour(){
   if(!canAdvanceTourStep()){
-    toast(tourIdx === 0 ? "Apply at least one Aggregations filter to continue" : "Adjust range or severity to continue");
+    toast("Adjust time range or severity to continue");
     return;
   }
   if(tourIdx >= TOUR_STEPS.length - 1) endTour();
@@ -2386,11 +2410,28 @@ function sevPill(sev){
 let loaderTimer = null;
 let loaderPct = 0;
 const LOADER_GUIDE_PARAGRAPHS = [
-  "This platform continuously converts real-world threat reporting into ATT&CK-mapped evidence so security teams can move from news to action quickly.",
-  "Use cases: triage emerging campaigns, prioritize high-impact incidents by severity and recency, and brief SOC/IR stakeholders with a shared operational view.",
-  "Analyst workflow: filter by environment-relevant facets, select a document, validate the attack path, then expand Hunt Pack for detections, remediation, and pivot points.",
-  "Operational value: maintain awareness of the changing cyber landscape, reduce blind spots across actors/tools/sectors, and accelerate detection engineering updates."
+  "A living threat repository where real-world incidents are continuously mapped to ATT&CK tactics and techniques, in a Navigator-style view. Filter the data, open a report, highlight its technique chain, and move into Attack Path and Hunt Pack for deeper operational context."
 ];
+
+function showIntroMessageGate(){
+  const modal = $("introMessageModal");
+  const btn = $("introContinueBtn");
+  if(!modal || !btn) return Promise.resolve();
+  return new Promise((resolve)=>{
+    const done = ()=>{
+      btn.removeEventListener("click", done);
+      modal.removeEventListener("close", done);
+      modal.removeEventListener("cancel", onCancel);
+      if(modal.open) modal.close();
+      resolve();
+    };
+    const onCancel = (e)=>{ e.preventDefault(); };
+    btn.addEventListener("click", done);
+    modal.addEventListener("close", done);
+    modal.addEventListener("cancel", onCancel);
+    modal.showModal();
+  });
+}
 
 function showLoader(title="Loading", msg="Startingâ€¦"){
   $("loaderTitle").textContent = title;
@@ -4118,8 +4159,11 @@ setMiniActiveByScroll();
   applyVisualPrefs();
   state.sideTab = "focus";
   syncSidebarTabs();
-  await bootstrapFromServer({reason:"Loading"});
-  if(getWorkflowAutoStart()) startTour();
+  const ok = await bootstrapFromServer({reason:"Loading"});
+  if(ok){
+    await showIntroMessageGate();
+    if(getWorkflowAutoStart()) startTour();
+  }
   if(state.autoCheck) startHeartbeat();
 })();
 </script>
