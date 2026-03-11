@@ -113,6 +113,21 @@
 
     .topNavActions{ display:flex; align-items:center; gap:8px; flex-wrap:wrap; margin-left:auto; justify-content:flex-end; }
     .topNavActions .btn{ white-space:nowrap; }
+    .moreMenu{ position:relative; }
+    .moreMenu > summary{ list-style:none; }
+    .moreMenu > summary::-webkit-details-marker{ display:none; }
+    .morePanel{
+      position:absolute; right:0; top:calc(100% + 8px);
+      min-width:170px;
+      display:flex; flex-direction:column; gap:6px;
+      padding:8px;
+      border-radius:12px;
+      border:1px solid rgba(0,245,255,.22);
+      background: rgba(4,14,22,.96);
+      box-shadow: var(--shadow);
+      z-index:45;
+    }
+    .morePanel .btn{ justify-content:flex-start; width:100%; }
     .brand{ display:flex; flex-direction:column; gap:4px; min-width:260px; flex:1; }
     .brand .title{ display:flex; align-items:center; gap:10px; font-weight:900; letter-spacing:.25px; font-size:14px; }
     .brand .title .dot{
@@ -286,6 +301,7 @@
       .brand{ min-width:0; width:100%; }
       .brand .sub{ font-size:11px; }
       .topNavActions{ width:100%; }
+      .morePanel{ right:0; left:auto; }
       .bar{
         min-width:0;
         width:100%;
@@ -574,10 +590,10 @@
       margin-bottom:10px;
       overflow:hidden;
     }
-    .box.selDocPanel{ border-color: rgba(0,245,255,.28); background: linear-gradient(180deg, rgba(0,245,255,.09), rgba(0,0,0,.14)); }
+     .box.selDocPanel{ border-color: rgba(255,90,122,.30); background: linear-gradient(180deg, rgba(255,90,122,.12), rgba(0,0,0,.14)); }
     .box.aggPanel{ border-color: rgba(119,255,176,.28); background: linear-gradient(180deg, rgba(119,255,176,.10), rgba(0,0,0,.14)); }
     .box.prioPanel{ border-color: rgba(255,90,122,.30); background: linear-gradient(180deg, rgba(255,90,122,.12), rgba(0,0,0,.14)); }
-    .box.focusPanel{ border-color: rgba(181,139,255,.30); background: linear-gradient(180deg, rgba(181,139,255,.11), rgba(0,0,0,.14)); }
+    .box.focusPanel{ border-color: rgba(255,90,122,.30); background: linear-gradient(180deg, rgba(255,90,122,.12), rgba(0,0,0,.14)); }
     .box.docsPanel{ border-color: rgba(255,204,102,.30); background: linear-gradient(180deg, rgba(255,204,102,.11), rgba(0,0,0,.14)); }
     .box h3{
       margin:0 0 8px;
@@ -1494,12 +1510,17 @@
       <div class="topNavActions">
         <button class="btn secondary" id="shareBtn">Share</button>
         <button class="btn beacon" id="refreshBtn" title="Critical: refresh latest intelligence dataset">Refresh</button>
-        <button class="btn secondary" id="helpBtn" title="Open platform guide">Help</button>
-        <button class="btn secondary" id="caseStudiesBtn" title="Open practical case studies">Case Studies</button>
         <button class="btn secondary" id="workflowBtn" title="Start guided workflow">Workflow</button>
-        <button class="btn secondary" id="compactBtn" title="Toggle compact mode">Compact</button>
-        <button class="btn secondary" id="contrastBtn" title="Toggle high contrast">Contrast</button>
-        <button class="btn secondary" id="aboutBtn" title="About this platform">About</button>
+        <details class="moreMenu" id="moreMenu">
+          <summary class="btn secondary" title="More options">☰ More</summary>
+          <div class="morePanel">
+            <button class="btn secondary" id="helpBtn" title="Open platform guide">Help</button>
+            <button class="btn secondary" id="caseStudiesBtn" title="Open practical case studies">Case Studies</button>
+            <button class="btn secondary" id="compactBtn" title="Toggle compact mode">Compact</button>
+            <button class="btn secondary" id="contrastBtn" title="Toggle high contrast">Contrast</button>
+            <button class="btn secondary" id="aboutBtn" title="About this platform">About</button>
+          </div>
+        </details>
       </div>
 
       <div class="bar">
@@ -4037,6 +4058,16 @@ $("closeHelp").addEventListener("click", ()=> $("helpModal").close());
 $("closeAbout").addEventListener("click", ()=> $("aboutModal").close());
 $("closeCaseStudies").addEventListener("click", ()=> $("caseStudiesModal").close());
 
+function closeMoreMenu(){
+  const m = $("moreMenu");
+  if(m && m.open) m.open = false;
+}
+document.addEventListener("click", (e)=>{
+  const m = $("moreMenu");
+  if(!m || !m.open) return;
+  if(!e.target.closest("#moreMenu")) closeMoreMenu();
+});
+
 function openActionsModal(){
   const host = $("actionsBody");
   host.innerHTML = `
@@ -4057,6 +4088,7 @@ function openActionsModal(){
     if(a==="cases") $("caseStudiesBtn").click();
     if(a==="workflow") $("workflowBtn").click();
     if(a==="about") $("aboutBtn").click();
+    closeMoreMenu();
     $("actionsModal").close();
   }));
   $("actionsModal").showModal();
@@ -4235,6 +4267,7 @@ document.addEventListener("keydown", (e)=>{
     if($("helpModal").open) $("helpModal").close();
     if($("aboutModal").open) $("aboutModal").close();
     if($("caseStudiesModal").open) $("caseStudiesModal").close();
+    closeMoreMenu();
     if($("switcherModal").open) $("switcherModal").close();
     closeDrawer();
     if(tourActive) endTour();
