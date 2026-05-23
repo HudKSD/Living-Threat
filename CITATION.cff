@@ -1,0 +1,23 @@
+
+cff-version: 1.2.0
+message: "If you use this project, please cite it as below."
+title: "Living Threat Repository"
+type: software
+authors:
+  - family-names: "Daannaa"
+    given-names: "Hud"
+repository-code: "https://github.com/HudKSD/Living-Threat"
+url: "https://thelivingthreat.rabitanoor.com/"
+doi: "10.5281/zenodo.20351268"
+abstract: "A living threat repository where real-world cyber incidents are continuously mapped to MITRE ATT&CK tactics and techniques in a Navigator-style view. The platform helps defenders filter threat intelligence, open reports, highlight technique chains, and move into Attack Path and Hunt Pack views for deeper operational context."
+keywords:
+  - cyber threat intelligence
+  - MITRE ATT&CK
+  - threat hunting
+  - attack path
+  - detection engineering
+  - security operations
+license: "MIT"
+version: "1.0.0"
+date-released: "2026-05-23"
+
