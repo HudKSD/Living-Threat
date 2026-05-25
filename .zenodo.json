@@ -1,0 +1,43 @@
+{
+  "title": "Living Threat Repository",
+  "upload_type": "software",
+  "description": "Living Threat Repository is a living cyber threat intelligence platform where real-world cyber incidents are continuously mapped to MITRE ATT&CK tactics and techniques in a Navigator-style view. The platform helps defenders move beyond static reports by transforming threat intelligence into an interactive, explorable, and operational knowledge structure. Users can filter intelligence, open reports, highlight technique chains, explore attack paths, and move into Hunt Pack views for deeper operational context.",
+  "creators": [
+    {
+      "name": "Daannaa, Hud"
+    }
+  ],
+  "keywords": [
+    "cyber threat intelligence",
+    "MITRE ATT&CK",
+    "threat hunting",
+    "attack path",
+    "detection engineering",
+    "security operations",
+    "incident analysis",
+    "threat actor behavior",
+    "intelligence-led defense",
+    "cybersecurity education"
+  ],
+  "license": "mit",
+  "access_right": "open",
+  "language": "eng",
+  "version": "1.0.0",
+  "related_identifiers": [
+    {
+      "identifier": "https://github.com/HudKSD/Living-Threat",
+      "relation": "isSupplementTo",
+      "resource_type": "software"
+    },
+    {
+      "identifier": "https://thelivingthreat.rabitanoor.com/",
+      "relation": "isSupplementTo",
+      "resource_type": "other"
+    },
+    {
+      "identifier": "https://living-threat.rabitanoor.com/",
+      "relation": "isSupplementTo",
+      "resource_type": "other"
+    }
+  ]
+}
