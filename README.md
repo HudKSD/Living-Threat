@@ -1,6 +1,6 @@
 # Living Threat Repository
 
-![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.20351268.svg)](https://doi.org/10.5281/zenodo.20351268)
+![DOI](https://doi.org/10.5281/zenodo.20351268)
 ![Status](https://img.shields.io/badge/status-active-success)
 ![Focus](https://img.shields.io/badge/focus-cyber%20threat%20intelligence-blue)
 ![Framework](https://img.shields.io/badge/framework-MITRE%20ATT%26CK-red)
