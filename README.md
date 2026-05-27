@@ -141,6 +141,55 @@ To create a living knowledge base of real-world cyber threats that helps defende
 
 ---
 
+## References and Knowledge Sources
+
+Living Threat Repository is informed by established cybersecurity frameworks, threat intelligence standards, and defensive analysis models.
+
+The platform does not claim ownership of MITRE ATT&CK or other referenced frameworks. These sources are used as public knowledge references to support structured analysis, mapping, and defensive understanding.
+
+### Core References
+
+- MITRE ATT&CK® Enterprise Matrix  
+  https://attack.mitre.org/matrices/enterprise/
+
+- MITRE ATT&CK® Tactics  
+  https://attack.mitre.org/tactics/
+
+- MITRE ATT&CK® Techniques  
+  https://attack.mitre.org/techniques/enterprise/
+
+- MITRE ATT&CK® Navigator  
+  https://mitre-attack.github.io/attack-navigator/
+
+- MITRE ATT&CK® Data and Tools  
+  https://attack.mitre.org/resources/attack-data-and-tools/
+
+- NIST SP 800-150: Guide to Cyber Threat Information Sharing  
+  https://csrc.nist.gov/pubs/sp/800/150/final
+
+- OASIS STIX 2.1: Structured Threat Information Expression  
+  https://oasis-open.github.io/cti-documentation/stix/intro.html
+
+- OASIS TAXII 2.1: Trusted Automated Exchange of Intelligence Information  
+  https://www.oasis-open.org/standard/taxii-version-2-1/
+
+- The Diamond Model of Intrusion Analysis  
+  https://www.activeresponse.org/wp-content/uploads/2013/07/diamond.pdf
+
+- Lockheed Martin Cyber Kill Chain®  
+  https://www.lockheedmartin.com/en-us/capabilities/cyber/cyber-kill-chain.html
+
+- Intelligence-Driven Computer Network Defense Informed by Analysis of Adversary Campaigns and Intrusion Kill Chains  
+  https://www.lockheedmartin.com/content/dam/lockheed-martin/rms/documents/cyber/LM-White-Paper-Intel-Driven-Defense.pdf
+
+- MITRE Cyber Analytics Repository  
+  https://car.mitre.org/
+
+- Sigma Detection Format  
+  https://github.com/SigmaHQ/sigma
+
+----
+
 ## Citation
 
 If you use this project, reference it in research, or build upon the idea, please cite it.
